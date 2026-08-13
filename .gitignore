@@ -1,0 +1,17 @@
+# MATLAB temporary files
+*.asv
+*.m~
+slprj/
+codegen/
+
+# Local build and editor state
+build/
+.vscode/
+.idea/
+Thumbs.db
+.DS_Store
+
+# Runtime scratch files
+tmp/
+*.tmp
+
