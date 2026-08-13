@@ -29,11 +29,12 @@
 - PNG已按原始分辨率进行视觉检查；曲线、坐标、标题、图例和150循环分界可读。
 - 原始SOH中存在早期尖峰和少数偏低轨迹，图中按原值保留。
 - 未运行清洗测试，原因是用户要求先观察原始数据。
+- 首次内容提交`48bfb5e`已成功推送至`origin/main`。
 
 ## 未处理事项
 
 - 数据清洗、变量质量审计、其余探索性图表和建模暂不执行，等待用户确认图1后继续。
-- 未创建Git提交，也未向远程推送；用户本次只要求初始化和关联远程。
+- 暂未执行数据清洗流水线，现有清洗代码仅为后续准备，尚未验证或生成清洗结果。
 
 ## 依据与工具
 
@@ -45,4 +46,3 @@
 - Source: `C:\Users\Aupassen\Desktop\Celianbei Math Modeling\A题\2026年度“策联杯”数学建模精英联赛-A题-附件\2026年度“策联杯”数学建模精英联赛-A题-附件\cycle_train.csv`
 - Tool: `functions.exec`调用`shell_command`，命令`git init -b main`、`git remote add origin ...`和MATLAB批处理，cwd `C:\Users\Aupassen\Desktop\Celianbei Math Modeling`
 - Tool: `view_image`，检查`C:\Users\Aupassen\Desktop\Celianbei Math Modeling\figures\fig01_raw_soh_curves.png`
-
