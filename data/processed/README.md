@@ -1,7 +1,9 @@
 # 处理后数据
 
-运行 `scripts/run_a_data_pipeline.m` 后，本目录将生成：
+运行 `scripts/q1/run_a_data_cleaning.m` 后，正式清洗结果写入`q1_cleaned/`：
 
-- `battery_summary_clean.csv`：类型统一、排序并增加质量标记后的电池摘要。
-- `cycle_train_clean.csv`：增加策略参数、测试标记、SOH复算值及质量标记的循环数据。
+- `q1_cleaned/battery_summary_clean.csv`：保留摘要字段，并增加C1缺失、前5循环基线和基线异常标记。
+- `q1_cleaned/cycle_train_clean.csv`：原始字段统一使用`_raw`后缀，清洗字段使用`_clean`或`_trend`后缀。
+
+清洗动作和质量统计位于`outputs/summary/q1_cleaning/`。官方原始CSV仍保存在`data/raw/`，清洗程序不会覆盖它们。
 

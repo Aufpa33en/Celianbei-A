@@ -1,0 +1,4 @@
+battery_id,cycle,variable,raw_value,clean_value,method,reason
+1,12,capacity,1.5390544,1.07430415,linear interpolation between adjacent valid cycles,local robust z > 8 and relative deviation > 2%
+2,12,IR,0,0.0168692075,linear interpolation after nonpositive value marked invalid,battery internal resistance must be positive
+3,12,IR,0,0.0166834345,linear interpolation after nonpositive value marked invalid,battery internal resistance must be positive

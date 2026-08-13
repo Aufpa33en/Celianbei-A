@@ -10,6 +10,8 @@
 - `data/processed/`：清洗后的数据。
 - `src/`：核心 MATLAB 函数。
 - `scripts/`：可直接运行的入口脚本。
+  - `scripts/q1/`—`scripts/q4/`：四个问题各自的程序入口。
+  - `scripts/visualization/`：原始数据诊断和论文绘图程序。
 - `tests/`：数据与流程校验。
 - `outputs/raw/`：逐次实验原始结果。
 - `outputs/summary/`：汇总指标和审计结果。
@@ -24,9 +26,9 @@
 在 MATLAB 中将当前目录切换到项目根目录，然后执行：
 
 ```matlab
-run("scripts/plot_raw_figure1.m")  % 仅绘制原始数据图1，不清洗
-run("scripts/run_a_data_pipeline.m")
-run("tests/test_a_data_pipeline.m")
+run("scripts/visualization/plot_raw_figure1.m")  % 仅绘制原始数据图，不清洗
+run("scripts/q1/run_a_data_cleaning.m")          % 正式清洗与审计输出
+run("tests/test_q1_cleaning.m")                  % 清洗结果验证
 ```
 
 流水线不会覆盖 `data/raw/` 中的文件，输出写入 `data/processed/`、`outputs/summary/` 和 `figures/`。

@@ -1,0 +1,11 @@
+metric,value
+summary_rows,49
+cycle_rows,9350
+capacity_points_repaired,1
+ir_points_repaired,2
+baseline_outlier_batteries,1
+C1_missing_batteries,3
+test_batteries,9
+training_batteries,40
+max_raw_soh_formula_residual,5.55111512312578e-16
+remaining_nonpositive_clean_ir,0

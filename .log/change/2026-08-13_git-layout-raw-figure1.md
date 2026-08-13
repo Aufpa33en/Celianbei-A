@@ -36,6 +36,15 @@
 - 数据清洗、变量质量审计、其余探索性图表和建模暂不执行，等待用户确认图1后继续。
 - 暂未执行数据清洗流水线，现有清洗代码仅为后续准备，尚未验证或生成清洗结果。
 
+## 后续修订（论文级原始数据图）
+
+- 根据用户反馈将原单坐标系叠加图替换为两张分工明确的论文图。
+- `fig01a_battery1_cycle12_anomaly`单独诊断电池1第12循环，联动容量、SOH、SOH_smooth、内阻、温度和充电时间。
+- `fig01b_normal_soh_by_policy`将其余48块电池按9种策略分面展示，每条曲线标明电池编号，测试电池使用虚线。
+- 两图均直接读取原始CSV；电池1只从正常尺度图中分离，并未从原始数据删除。
+- 建立`scripts/q1/`至`scripts/q4/`及`scripts/visualization/`，分别存放四问入口和跨问题绘图程序。
+- 新增`docs/raw_data_observation.md`，记录原始变量关系和异常候选证据。
+
 ## 依据与工具
 
 - Skill: `C:\Users\Aupassen\.codex\skills\math-modeling-stage-workflow\SKILL.md`
