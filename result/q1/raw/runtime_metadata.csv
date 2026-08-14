@@ -1,0 +1,8 @@
+﻿Parameter,Value
+command,/usr/bin/python3.12 scripts/q1/run_q1_final_analysis.py --bootstrap 2000 --seed 20260814
+inference_seconds,5.454784
+output_seconds,1.194468
+python,3.12.3
+platform,Linux-6.6.87.2-microsoft-standard-WSL2-x86_64-with-glibc2.39
+numpy,2.5.2
+pandas,3.0.5

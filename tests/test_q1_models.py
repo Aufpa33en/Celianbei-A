@@ -14,6 +14,7 @@ sys.path.insert(0, str(ROOT / "src"))
 
 from q1_models.core import MODEL_TYPES, ModelConfig, fit_population_model  # noqa: E402
 from q1_models.experiments import load_clean_data  # noqa: E402
+from q1_models.inference import _exact_permutation_p_value  # noqa: E402
 
 
 def synthetic_data() -> pd.DataFrame:
@@ -46,6 +47,14 @@ def main() -> None:
         prediction = {name: model.predict(name, [100])[0] for name in ("long", "middle", "short")}
         assert prediction["long"] > prediction["middle"] > prediction["short"], (model_type, prediction)
         assert all(0.9 < value < 1.02 for value in prediction.values())
+
+    separated_p = _exact_permutation_p_value(
+        np.array([0.99, 0.991, 0.992, 0.993]),
+        np.array([0.95, 0.951, 0.952, 0.953]),
+    )
+    assert np.isclose(separated_p, 2 / 70), separated_p
+    tied_p = _exact_permutation_p_value(np.array([1.0, 1.0]), np.array([1.0, 1.0]))
+    assert tied_p == 1.0, tied_p
 
     cycles, _ = load_clean_data(ROOT)
     assert len(cycles) == 9350

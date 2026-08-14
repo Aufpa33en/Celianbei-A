@@ -1,0 +1,10 @@
+﻿Policy,PointSOH200Rank,MeanRank,MedianRank,ProbabilityTop3,ProbabilityTop4,ProbabilityBottom3,ProbabilityBottom4,ProbabilityRank1,ProbabilityRank2,ProbabilityRank3,ProbabilityRank4,ProbabilityRank5,ProbabilityRank6,ProbabilityRank7,ProbabilityRank8,ProbabilityRank9,PrimaryGroup,BootstrapStableGroup80
+3_6C-80PER_3_6C,1,1.6305,1.0,0.914,0.986,0.0,0.0,0.697,0.0755,0.1415,0.072,0.014,0.0,0.0,0.0,0.0,typical_long,typical_long
+5C_67PER_4C_NEWSTRUCTURE,2,2.579,3.0,0.8575,0.9865,0.0,0.0,0.0885,0.4,0.369,0.129,0.0135,0.0,0.0,0.0,0.0,typical_long,typical_long
+5_3C_54PER_4C_NEWSTRUCTURE,3,2.7825,3.0,0.772,0.9695,0.0,0.0005,0.0875,0.3015,0.383,0.1975,0.03,0.0005,0.0,0.0,0.0,typical_long,not_stable_at_80_percent
+5_6C_36PER_4_3C_NEWSTRUCTURE,4,4.118,4.0,0.159,0.6865,0.0005,0.03,0.011,0.045,0.103,0.5275,0.2835,0.0295,0.0005,0.0,0.0,middle,not_stable_at_80_percent
+5_6C_19PER_4_6C_NEWSTRUCTURE,5,5.211,5.0,0.0005,0.0745,0.005,0.281,0.0,0.0,0.0005,0.074,0.6445,0.276,0.005,0.0,0.0,middle,not_stable_at_80_percent
+4_8C_80PER_4_8C_NEWSTRUCTURE,6,5.426,6.0,0.297,0.297,0.47,0.703,0.116,0.178,0.003,0.0,0.0,0.233,0.2305,0.222,0.0175,middle,not_stable_at_80_percent
+4_8C_80PER_4_8C,7,6.859,7.0,0.0,0.0,0.71,1.0,0.0,0.0,0.0,0.0,0.0,0.29,0.561,0.149,0.0,typical_short,not_stable_at_80_percent
+80PER_3_6C,8,7.4725,8.0,0.0,0.0,0.8145,0.9855,0.0,0.0,0.0,0.0,0.0145,0.171,0.1995,0.5575,0.0575,typical_short,typical_short
+3_7C_31PER_5_9C_NEWSTRUCTURE,9,8.9215,9.0,0.0,0.0,1.0,1.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0035,0.0715,0.925,typical_short,typical_short

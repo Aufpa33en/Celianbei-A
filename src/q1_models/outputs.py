@@ -3,7 +3,11 @@
 from __future__ import annotations
 
 from pathlib import Path
+import platform
+import sys
+import time
 
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from PIL import Image, ImageDraw, ImageFont
@@ -16,6 +20,231 @@ from .experiments import (
     observed_battery_metrics,
     strategy_distribution,
 )
+
+
+def write_authoritative_outputs(
+    project_root: Path,
+    tables: dict[str, pd.DataFrame],
+    command: str,
+    inference_seconds: float,
+) -> None:
+    """Write one traceable Q1 result tree from the authoritative inference context."""
+    started = time.perf_counter()
+    result_dir = project_root / "result" / "q1"
+    paper_dir = result_dir / "paper"
+    raw_dir = result_dir / "raw"
+    paper_dir.mkdir(parents=True, exist_ok=True)
+    raw_dir.mkdir(parents=True, exist_ok=True)
+
+    for name, table in tables.items():
+        table.to_csv(raw_dir / f"{name}.csv", index=False, encoding="utf-8-sig")
+
+    paper_tables = {
+        "model_comparison": tables["model_comparison"],
+        "strategy_scalar_estimates": tables["strategy_scalar_estimates"],
+        "strategy_rank_stability": tables["strategy_rank_stability"],
+        "authoritative_model_cv_by_policy": tables["authoritative_model_cv_by_policy"],
+        "q1_conclusions": tables["q1_conclusions"],
+    }
+    for name, table in paper_tables.items():
+        table.to_csv(paper_dir / f"{name}.csv", index=False, encoding="utf-8-sig")
+
+    _draw_final_strategy_curves(tables, paper_dir / "fig_q1_strategy_soh_curves.png")
+    _draw_final_model_comparison(tables, paper_dir / "fig_q1_model_comparison.png")
+    _draw_final_tradeoff(tables, paper_dir / "fig_q1_strategy_tradeoff.png")
+    _write_final_paper_report(paper_dir / "report.md", tables)
+
+    runtime = pd.DataFrame(
+        [
+            {"Parameter": "command", "Value": command},
+            {"Parameter": "inference_seconds", "Value": f"{inference_seconds:.6f}"},
+            {"Parameter": "output_seconds", "Value": f"{time.perf_counter() - started:.6f}"},
+            {"Parameter": "python", "Value": sys.version.split()[0]},
+            {"Parameter": "platform", "Value": platform.platform()},
+            {"Parameter": "numpy", "Value": np.__version__},
+            {"Parameter": "pandas", "Value": pd.__version__},
+        ]
+    )
+    runtime.to_csv(raw_dir / "runtime_metadata.csv", index=False, encoding="utf-8-sig")
+
+    _write_result_readme(result_dir / "README.md")
+    manifest_rows = []
+    for path in sorted(p for p in result_dir.rglob("*") if p.is_file()):
+        if path.name == "result_manifest.csv":
+            continue
+        manifest_rows.append(
+            {
+                "Path": str(path.relative_to(result_dir)),
+                "SizeBytes": path.stat().st_size,
+                "Role": "paper" if paper_dir in path.parents else "raw_or_supporting",
+            }
+        )
+    pd.DataFrame(manifest_rows).to_csv(
+        raw_dir / "result_manifest.csv", index=False, encoding="utf-8-sig"
+    )
+
+
+def _configure_matplotlib() -> None:
+    plt.rcParams.update(
+        {
+            "font.sans-serif": ["Noto Sans CJK SC", "WenQuanYi Micro Hei", "DejaVu Sans"],
+            "axes.unicode_minus": False,
+            "font.size": 10,
+            "axes.titlesize": 11,
+            "axes.labelsize": 10,
+        }
+    )
+
+
+def _draw_final_strategy_curves(tables: dict[str, pd.DataFrame], path: Path) -> None:
+    _configure_matplotlib()
+    curves = tables["strategy_curve_confidence_band"].copy()
+    policies = tables["strategy_rank_stability"].sort_values("PointSOH200Rank")["Policy"]
+    fig, axes = plt.subplots(3, 3, figsize=(12, 9), sharex=True, sharey=True, constrained_layout=True)
+    for ax, policy in zip(axes.flat, policies):
+        frame = curves.loc[curves["Policy"] == policy].sort_values("Cycle")
+        cycle = pd.to_numeric(frame["Cycle"], errors="raise").to_numpy(dtype=float)
+        estimate = pd.to_numeric(frame["SOHEstimate"], errors="raise").to_numpy(dtype=float)
+        low = pd.to_numeric(frame["CI95Low"], errors="raise").to_numpy(dtype=float)
+        high = pd.to_numeric(frame["CI95High"], errors="raise").to_numpy(dtype=float)
+        ax.fill_between(cycle, low, high, color="#4C78A8", alpha=0.22)
+        ax.plot(cycle, estimate, color="#1F5A99", linewidth=1.8)
+        ax.set_title(policy.replace("_NEWSTRUCTURE", "\nNEWSTRUCTURE"))
+        ax.grid(alpha=0.2)
+    fig.supxlabel("循环次数")
+    fig.supylabel("SOH")
+    fig.suptitle("不同快充策略的SOH平均轨迹与95%电池级bootstrap区间", fontsize=14)
+    fig.savefig(path, dpi=300, bbox_inches="tight", pad_inches=0.08)
+    plt.close(fig)
+
+
+def _draw_final_model_comparison(tables: dict[str, pd.DataFrame], path: Path) -> None:
+    _configure_matplotlib()
+    frame = tables["model_comparison"].sort_values("MeanBatteryRMSE").copy()
+    fig, ax = plt.subplots(figsize=(7.2, 4.5), constrained_layout=True)
+    colors = ["#2E7D32" if selected else "#7A8CA5" for selected in frame["Selected"]]
+    ax.bar(frame["Model"], frame["MeanBatteryRMSE"], color=colors, width=0.62)
+    ax.errorbar(
+        frame["Model"],
+        frame["MeanBatteryRMSE"],
+        yerr=frame["SEBatteryRMSE"],
+        fmt="none",
+        ecolor="#222222",
+        capsize=4,
+        linewidth=1.1,
+    )
+    for index, row in frame.reset_index(drop=True).iterrows():
+        ax.text(index, row["MeanBatteryRMSE"] + row["SEBatteryRMSE"] + 0.00012,
+                f"{row['MeanBatteryRMSE']:.6f}", ha="center", va="bottom", fontsize=9)
+    ax.set_ylabel("留一电池 RMSE")
+    ax.set_title("候选模型的电池级泛化误差（误差线为RMSE标准误）")
+    ax.grid(axis="y", alpha=0.2)
+    fig.savefig(path, dpi=300, bbox_inches="tight", pad_inches=0.08)
+    plt.close(fig)
+
+
+def _draw_final_tradeoff(tables: dict[str, pd.DataFrame], path: Path) -> None:
+    _configure_matplotlib()
+    scalars = tables["strategy_scalar_estimates"]
+    rank = tables["strategy_rank_stability"][["Policy", "PointSOH200Rank", "PrimaryGroup"]]
+    soh = scalars.loc[scalars["Metric"] == "SOH200", ["Policy", "Estimate", "CI95Low", "CI95High"]]
+    charge = scalars.loc[scalars["Metric"] == "MeanChargeTime", ["Policy", "Estimate"]].rename(
+        columns={"Estimate": "MeanChargeTime"}
+    )
+    frame = soh.merge(charge, on="Policy").merge(rank, on="Policy")
+    colors = {"typical_long": "#2E7D32", "middle": "#D89000", "typical_short": "#C62828"}
+    fig, ax = plt.subplots(figsize=(8.5, 5.2), constrained_layout=True)
+    annotation_offsets = {
+        1: (6, 6), 2: (-12, 12), 3: (-12, -12), 4: (8, 10), 5: (8, -12),
+        6: (6, 6), 7: (6, 6), 8: (6, 6), 9: (6, 6),
+    }
+    for _, row in frame.iterrows():
+        ax.errorbar(
+            row["MeanChargeTime"], row["Estimate"],
+            yerr=[[row["Estimate"] - row["CI95Low"]], [row["CI95High"] - row["Estimate"]]],
+            fmt="o", color=colors[row["PrimaryGroup"]], capsize=3, markersize=7,
+        )
+        rank_value = int(row["PointSOH200Rank"])
+        ax.annotate(f"S{rank_value}", (row["MeanChargeTime"], row["Estimate"]),
+                    xytext=annotation_offsets[rank_value], textcoords="offset points", fontsize=9)
+    handles = [
+        plt.Line2D([0], [0], marker="o", color="none", markerfacecolor=color, markeredgecolor=color,
+                   label=label, markersize=7)
+        for label, color in (("典型长寿命代理", colors["typical_long"]),
+                             ("中间组", colors["middle"]),
+                             ("典型短寿命代理", colors["typical_short"]))
+    ]
+    ax.legend(handles=handles, loc="lower center", bbox_to_anchor=(0.5, 1.02), ncol=3, frameon=False)
+    ax.set_xlabel("平均充电时间（min）")
+    ax.set_ylabel("第200循环 SOH")
+    ax.set_title("充电时间与前200循环健康保持的经验权衡")
+    ax.grid(alpha=0.2)
+    fig.savefig(path, dpi=300, bbox_inches="tight", pad_inches=0.10)
+    plt.close(fig)
+
+
+def _write_final_paper_report(path: Path, tables: dict[str, pd.DataFrame]) -> None:
+    comparison = tables["model_comparison"].sort_values("MeanBatteryRMSE")
+    ranks = tables["strategy_rank_stability"].sort_values("PointSOH200Rank")
+    residual = tables["residual_diagnostics_overall"].iloc[0]
+    significant = tables["pairwise_strategy_scalar_comparison"].query(
+        "Metric == 'SOH200' and SignificantAfterHolm"
+    )
+    selected = comparison.iloc[0]
+    top = "、".join(ranks.head(3)["Policy"])
+    bottom = "、".join(ranks.tail(3)["Policy"])
+    lines = [
+        "# 第一问：数据整理与快充策略寿命影响初步分析",
+        "",
+        "## 数据边界",
+        "",
+        "附件包含49块电池、9种快充策略和9350条循环记录。正式周期200比较只使用40块完整电池；9块仅观测至周期150的测试电池留给第三问。附件中没有任何电池达到80% SOH，因此本文将SOH200、周期1—200损失和末段斜率作为早期寿命代理，不把局部线性L80外推称为观测寿命。",
+        "",
+        "## 模型",
+        "",
+        "主模型采用两阶段函数型岭平滑。令 $x=t/200$，以 $B(x)=[1,x,x^2,x^3,(x-0.25)_+^3,(x-0.50)_+^3,(x-0.75)_+^3]$ 为基函数。对电池 $i$ 估计",
+        "",
+        "$$\\hat\\beta_i=\\arg\\min_{\\beta}\u2009\\lVert y_i-B_i\\beta\\rVert_2^2+\\lambda\\beta^{\\mathsf T}P\\beta,$$",
+        "",
+        "其中截距和一次项不惩罚，二次及以上项施加岭惩罚。策略 $s$ 的总体曲线为",
+        "",
+        "$$\\hat\\mu_s(t)=B(t)\\left(\\frac{1}{n_s}\\sum_{i\\in s}\\hat\\beta_i\\right),$$",
+        "",
+        "从而保证每块电池而不是每条循环记录等权。该模型与二次曲线模型、带电池随机截距和随机斜率的惩罚样条模型按相同划分比较。超参数由策略分层三折验证选择，主模型由留一电池RMSE确定。",
+        "",
+        "## 模型选择结果",
+        "",
+        f"函数型岭模型的留一电池RMSE为 {selected['MeanBatteryRMSE']:.6f}，样条基线为 {comparison.iloc[1]['MeanBatteryRMSE']:.6f}。前者按预设规则胜出，但绝对差仅 {comparison.iloc[1]['MeanBatteryRMSE'] - selected['MeanBatteryRMSE']:.6f}，应解释为实际性能近似并列。三种模型给出的SOH200策略排序一致。",
+        "",
+        "## 策略比较",
+        "",
+        f"SOH200点估计前三位为：{top}。后三位为：{bottom}。排名稳定性应结合 `strategy_rank_stability.csv` 中的Top/Bottom概率判断，不能只报告点排名。",
+        "",
+        f"对任意两策略，以电池级SOH200均值差为统计量，枚举合并样本的全部分组方式构造双侧精确置换检验；对36组策略对作Holm校正后，SOH200差异显著的策略对为 {len(significant)} 组。置信区间另由策略内整块电池bootstrap得到。该结果反映每策略仅2—7块完整电池带来的统计功效限制，不等于所有策略真实相同。",
+        "",
+        "## 解释与限制",
+        "",
+        f"主模型训练残差平均一阶相关为 {residual['BatteryMeanLag1Correlation']:.3f}，说明平滑后仍存在循环内序列相关；策略不确定性采用整块电池bootstrap处理，但模型没有显式估计AR(1)协方差。基线校正和剔除电池41的敏感性分析表明，中上游名次会交换，因此最可靠的是长/短寿命代理组，而不是组内精确名次。充电时间、温度和内阻关联仅有9个策略级样本，只作描述性机制线索，不作因果解释。",
+        "",
+        "## 论文取舍",
+        "",
+        "第一问最终回答限定为前200循环的健康保持、充电时间分布和典型策略分组。真实80% SOH寿命留待第三问作为带敏感性分析的外推任务，并明确其无法由当前附件直接验证。",
+    ]
+    path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+
+def _write_result_readme(path: Path) -> None:
+    path.write_text(
+        "# 第一问权威结果\n\n"
+        "`result/q1/` 是第一问当前唯一权威结果目录。\n\n"
+        "- `paper/`：可直接用于论文的报告、汇总表和300 dpi图片。\n"
+        "- `raw/`：完整推断表、逐电池/逐循环结果、参数、运行环境和完整性审计。\n"
+        "- `00_overview/`—`05_integrity_audit/`：上一轮Excel查看包，仅作辅助浏览；若与 `paper/` 或 `raw/` 冲突，以后两者为准。\n"
+        "- `original_q1_csv_archive.zip`：上一轮CSV归档，仅用于历史审计。\n\n"
+        "正式运行：`.venv/bin/python scripts/q1/run_q1_final_analysis.py --bootstrap 2000 --seed 20260814`。\n"
+        "当前附件没有观测到80% SOH终点，所有L80均为未验证外推代理。\n",
+        encoding="utf-8",
+    )
 
 
 def compare_and_write(project_root: Path, results: list[CandidateResult], seed: int = 20260814) -> pd.DataFrame:

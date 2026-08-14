@@ -1,0 +1,12 @@
+﻿Parameter,Value
+seed,20260814
+bootstrap_repetitions,2000
+alpha,0.05
+main_model,functional_ridge
+lambda_curve,0.0001
+response,SOH_clean
+q1_cycle200_cohort,40_complete_batteries_only
+q3_reserved_cohort,9_prediction_test_batteries_excluded
+bootstrap_unit,battery_within_policy
+pairwise_test,exact_battery_permutation
+multiple_comparison,Holm
