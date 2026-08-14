@@ -1,0 +1,2 @@
+﻿old_policy,new_policy,n_old,n_new,old_mean_rate,new_mean_rate,new_minus_old_rate,relative_change,exact_permutation_p,causal_status
+4_8C_80PER_4_8C,4_8C_80PER_4_8C_NEWSTRUCTURE,2,5,0.0001365583904115085,2.9906348998590133e-05,-0.00010665204141291836,-0.7809995496544037,0.047619047619047616,not_identified_structure_is_confounded_with_dataset_batch

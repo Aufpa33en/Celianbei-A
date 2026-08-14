@@ -17,3 +17,11 @@ python scripts/q2/run_q2_formal_validation.py --bootstrap 2000 --seed 20260814 -
 ```
 
 正式验证按策略内整块电池重采样，执行2000次bootstrap和6策略的720种精确置换。每次重复都重新选择岭参数和SOC暴露候选，输出写入`result/q2/03_formal_validation/`。
+
+## 合并稳健性入口
+
+```powershell
+python scripts/q2/run_q2_merged_robustness.py --permutations 20000 --seed 20260814
+```
+
+该入口提取第151—200循环末段退化率，执行九策略全局置换、4.8C匹配诊断和`J+H`模型的唯一坐标留出敏感性分析，输出写入`result/q2/05_merged_robustness/`。它补充而不替代正式高SOC暴露验证。

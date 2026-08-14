@@ -46,7 +46,24 @@ def main() -> None:
     assert selection["selected_explanatory_smoke_model"].sum() == 1
     assert selection["best_predictive_benchmark"].sum() == 1
     manifest = pd.read_csv(PROJECT_ROOT / "result" / "q2" / "result_manifest.csv")
-    assert len(manifest) == 12
+    required_paths = {
+        f"result/q2/{folder}/{filename}"
+        for folder, filename in (
+            ("00_design", "design_audit.csv"),
+            ("01_smoke_test", "battery_degradation_summary.csv"),
+            ("01_smoke_test", "strategy_degradation_summary.csv"),
+            ("01_smoke_test", "scalar_fold_predictions.csv"),
+            ("01_smoke_test", "hierarchical_fold_predictions.csv"),
+            ("02_model_selection", "scalar_model_comparison.csv"),
+            ("02_model_selection", "coefficient_stability.csv"),
+            ("02_model_selection", "hierarchical_model_comparison.csv"),
+            ("02_model_selection", "hierarchical_diagnostics.csv"),
+            ("02_model_selection", "smoke_model_selection.csv"),
+            ("02_model_selection", "selected_model_fit.csv"),
+            ("02_model_selection", "selected_model_predictions.csv"),
+        )
+    }
+    assert required_paths.issubset(set(manifest["relative_path"]))
     print("Q2 smoke tests passed")
 
 

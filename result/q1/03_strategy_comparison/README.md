@@ -14,7 +14,7 @@
 
 - 36 组策略对的逐循环差值、点置信区间和同时置信带。
 - 36 组策略对的曲线差异摘要。
-- 多个标量指标的两两比较、符号自助检验和 Holm 多重比较校正。
+- 本工作簿保留上一轮多个标量指标的两两比较，供历史查看。正式显著性以`result/q1/raw/pairwise_strategy_scalar_comparison.csv`中的双侧精确置换检验和 Holm 校正为准；bootstrap只用于置信区间。
 - 策略排名对 SOH 基线口径及异常电池处理的敏感性。
 
 工作簿 `strategy_comparison.xlsx`：
