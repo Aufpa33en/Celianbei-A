@@ -19,3 +19,13 @@ python scripts/q3/run_q3_smoke.py
 - 凸组合模型在`experiments.py`中复用B/C的交叉拟合预测，不重复训练基础模型。
 
 冻结配置见`src/q3_models/config.py`，数学推导与无泄漏验证协议见`docs/q3_literature_and_model_derivation.md`。
+
+## 正式全量入口
+
+`run_q3_full_validation.py`是新增入口，不覆盖现有smoke程序或结果。它依次执行40块完整电池外层LOBO、39块训练集内部模型族选择、策略分层bootstrap、C模型特征消融、部署模型冻结，以及9块真实测试电池预测。
+
+```powershell
+python scripts/q3/run_q3_full_validation.py --bootstrap 5000
+```
+
+结果分别写入`result/q3/02_full_validation/`和`result/q3/03_final_predictions/`；若权威目录已经存在，程序拒绝覆盖。
