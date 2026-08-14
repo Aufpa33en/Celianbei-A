@@ -10,6 +10,8 @@
 - 第二问smoke依赖：`environment/requirements-q2.txt`
 - 第二问smoke入口：`python scripts/q2/run_q2_smoke_test.py`
 - 第二问正式验证：`python scripts/q2/run_q2_formal_validation.py --bootstrap 2000 --seed 20260814 --workers 8`
+- 第三问smoke依赖：`environment/requirements-q3.txt`
+- 第三问smoke入口：`python scripts/q3/run_q3_smoke.py`
 
 建议在项目根目录执行：
 

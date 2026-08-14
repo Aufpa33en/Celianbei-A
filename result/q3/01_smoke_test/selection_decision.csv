@@ -1,0 +1,13 @@
+﻿version,model,selection_variant,smoke_score,weighted_worst_battery_rmse,provisional_rank,engineering_pass,failure_reason,final_model_selected,must_enter_full_validation,L,hyperparameters,total_wall_seconds
+q3_smoke_v1,P0_persistence,raw,0.0038926471249186973,0.012239610957507988,6,True,,False,True,,,5.968425800005207
+q3_smoke_v1,P1_linear,raw,0.0016441814721144883,0.004977405936675953,4,True,,False,True,,,5.968425800005207
+q3_smoke_v1,A_power,raw,0.0023286430262626544,0.005029578324411068,5,True,,False,True,,,5.968425800005207
+q3_smoke_v1,B_strategy,raw,0.0011874809573494216,0.004784457013327819,2,True,,False,True,50.0,lambda_gamma=1.0,5.968425800005207
+q3_smoke_v1,B_strategy,raw,0.0011874809573494216,0.004784457013327819,2,True,,False,True,100.0,lambda_gamma=10.0,5.968425800005207
+q3_smoke_v1,B_strategy,raw,0.0011874809573494216,0.004784457013327819,2,True,,False,True,150.0,lambda_gamma=10.0,5.968425800005207
+q3_smoke_v1,C_ridge,raw,0.0013457707854571124,0.0041249969974972754,3,True,,False,True,50.0,K=1;alpha=1.0,5.968425800005207
+q3_smoke_v1,C_ridge,raw,0.0013457707854571124,0.0041249969974972754,3,True,,False,True,100.0,K=1;alpha=10.0,5.968425800005207
+q3_smoke_v1,C_ridge,raw,0.0013457707854571124,0.0041249969974972754,3,True,,False,True,150.0,K=1;alpha=1.0,5.968425800005207
+q3_smoke_v1,D_ensemble,raw,0.001188515244922059,0.0038696469870447515,1,True,,False,True,50.0,w_strategy=0.0,5.968425800005207
+q3_smoke_v1,D_ensemble,raw,0.001188515244922059,0.0038696469870447515,1,True,,False,True,100.0,w_strategy=0.5,5.968425800005207
+q3_smoke_v1,D_ensemble,raw,0.001188515244922059,0.0038696469870447515,1,True,,False,True,150.0,w_strategy=0.2,5.968425800005207

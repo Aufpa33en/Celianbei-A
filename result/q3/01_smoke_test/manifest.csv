@@ -1,0 +1,7 @@
+﻿path,rows,columns,version,seed,smoke_battery_ids
+battery_metrics.csv,324,12,q3_smoke_v1,20260814,1;35;8;17;29;48;21;15;6
+model_summary.csv,36,9,q3_smoke_v1,20260814,1;35;8;17;29;48;21;15;6
+predictions_long.csv,8100,13,q3_smoke_v1,20260814,1;35;8;17;29;48;21;15;6
+runtime.csv,126,5,q3_smoke_v1,20260814,1;35;8;17;29;48;21;15;6
+selection_decision.csv,12,13,q3_smoke_v1,20260814,1;35;8;17;29;48;21;15;6
+smoke_report.md,68,1,q3_smoke_v1,20260814,1;35;8;17;29;48;21;15;6
