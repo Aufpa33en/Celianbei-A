@@ -10,6 +10,9 @@ build/
 .idea/
 Thumbs.db
 .DS_Store
+.venv/
+__pycache__/
+*.py[cod]
 
 # Runtime scratch files
 tmp/

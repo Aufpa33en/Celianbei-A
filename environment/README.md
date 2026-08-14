@@ -1,10 +1,19 @@
 # 复现环境
 
 - 操作系统：Windows
-- 主分析语言：MATLAB
-- 推荐 MATLAB 版本：R2022b 或更高
-- 入口：`scripts/run_a_data_pipeline.m`
-- 固定随机种子：`20260813`
+- 数据清洗与既有原始图：MATLAB R2022b或更高
+- 第一问模型比较：Python 3.11
+- Python依赖：`environment/requirements-q1.txt`
+- 第一问入口：`python scripts/q1/run_q1_model_comparison.py`
+- 第一问正式推断：`python scripts/q1/run_q1_final_analysis.py --bootstrap 2000 --seed 20260814`
+- 第一问固定随机种子：`20260814`
 
-当前流水线只使用 MATLAB 基础表格、绘图与文件读写能力。
+建议在项目根目录执行：
 
+```powershell
+python -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -r environment\requirements-q1.txt
+.\.venv\Scripts\python.exe scripts\q1\run_q1_model_comparison.py
+```
+
+模型拟合只依赖NumPy与pandas；Pillow仅用于生成论文PNG图，不依赖Matplotlib、SciPy或statsmodels。第一问正式整理结果位于 `result/q1/`。

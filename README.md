@@ -32,3 +32,12 @@ run("tests/test_q1_cleaning.m")                  % 清洗结果验证
 ```
 
 流水线不会覆盖 `data/raw/` 中的文件，输出写入 `data/processed/`、`outputs/summary/` 和 `figures/`。
+
+第一问模型比较使用Python：
+
+```powershell
+python scripts/q1/run_q1_model_comparison.py
+python tests/test_q1_models.py
+```
+
+三个候选模型也可分别从 `scripts/q1/models/` 独立运行。`outputs/summary/q1_models/` 保存探索性模型比较输出；第一问正式整理结果及说明位于 `result/q1/`。

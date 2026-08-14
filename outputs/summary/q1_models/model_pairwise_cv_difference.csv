@@ -1,0 +1,4 @@
+ModelA,ModelB,MeanRMSEDifference_AminusB,CI95Low,CI95High,AHasLowerRMSE,BHasLowerRMSE
+polynomial_mixed,spline_mixed,5.793142430503636e-05,3.979215494585287e-05,7.636268689124295e-05,False,True
+polynomial_mixed,functional_ridge,7.132472015042829e-05,4.755284547266346e-05,9.51340150862973e-05,False,True
+spline_mixed,functional_ridge,1.3393295845391935e-05,-1.030114738535593e-05,4.022190183087731e-05,False,False
