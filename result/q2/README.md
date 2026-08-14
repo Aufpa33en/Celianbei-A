@@ -2,7 +2,7 @@
 
 ## 当前阶段
 
-第二问已完成论文筛选、严格模型推导、三路独立核查、smoke test和2000次正式bootstrap/720种精确置换。正式验证结果位于`03_formal_validation/`，其结论优先于smoke阶段选择。
+第二问已完成论文筛选、严格模型推导、smoke test、2000次正式bootstrap/720种精确置换以及本地/远程结果合并审计。参数显著性以`03_formal_validation/`为准，论文文字以`04_paper_materials/第二问完整回答.md`为准，`05_merged_robustness/`只提供独立响应和候选失败证据。
 
 - 权威推导：`docs/q2_literature_screening_and_model_derivation.md`
 - 初步路线记录：`docs/q2_model_direction_and_literature.md`
@@ -17,7 +17,7 @@
 - `data/processed/q1_cleaned/battery_summary_clean.csv`
 - `result/q1/`中的策略曲线、SOH200估计和敏感性结果
 
-## 当前smoke结论
+## smoke阶段历史结论
 
 - 参数完整策略标签8个、唯一坐标7个。
 - 除3.6C基准外有7个等`T0`策略标签，但明确标注`NEWSTRUCTURE`的只有6个；主选择队列使用这6个同结构策略。
@@ -40,6 +40,7 @@
 - `02_model_selection/`：模型比较、系数稳定性、层次诊断和当前选择。
 - `03_formal_validation/`：正式bootstrap、精确置换、敏感性分析和最终判定。
 - `04_paper_materials/`：依据既有结果整理的第二问完整文字回答和证据索引；不存放数据或程序副本。
+- `05_merged_robustness/`：末段退化率全局置换、4.8C匹配诊断及`J+H`候选的坐标留出失败证据；不替代正式参数验证。
 - `result_manifest.csv`：每个CSV的路径、行数和列数。
 
 ## 候选模型
@@ -48,6 +49,7 @@
 2. 策略等权的`C1、q、C2`岭回归：描述性参数效应基线。
 3. 含策略、电池和AR(1)三层误差的约束退化混合模型：主候选。
 4. `J`、`H`、阶段暴露及固定高SOC阈值暴露：低维应力候选与敏感性分析。
+5. `J+H`末段对数退化率：合并时复核的候选；因同结构队列验证失败而否决。
 
 设计检查显示：8 个参数完整的策略标签只对应 7 个不同参数坐标；参数模型主验证必须按唯一坐标分组留出，共享坐标的两个策略同时留出。原始三参数的独立显著性无法可靠识别，只能报告条件关联、删除稳定性与不可辨识性。
 
@@ -59,4 +61,4 @@
 - SOC区间衰减特征；
 - 第二问五个小问的文字回答。
 
-smoke test的阶段性选择理由见`02_model_selection/模型选择说明.md`；最终判定见`03_formal_validation/正式验证结论.md`；按题目五个小问组织的论文材料见`04_paper_materials/第二问完整回答.md`。
+smoke test的阶段性选择理由见`02_model_selection/模型选择说明.md`；最终判定见`03_formal_validation/正式验证结论.md`；按题目五个小问组织的权威论文材料见`04_paper_materials/第二问完整回答.md`；合并稳健性证据见`05_merged_robustness/README.md`。

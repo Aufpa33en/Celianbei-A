@@ -4,15 +4,15 @@ from __future__ import annotations
 
 import argparse
 import sys
+import time
 from pathlib import Path
-
-import pandas as pd
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(PROJECT_ROOT / "src"))
 
 from q1_models.inference import InferenceSettings, file_hashes, run_final_inference  # noqa: E402
+from q1_models.outputs import write_authoritative_outputs  # noqa: E402
 
 
 def parse_args() -> argparse.Namespace:
@@ -25,7 +25,6 @@ def parse_args() -> argparse.Namespace:
 def main() -> None:
     args = parse_args()
     result_dir = PROJECT_ROOT / "result" / "q1"
-    result_dir.mkdir(parents=True, exist_ok=True)
     data_paths = sorted(path for path in (PROJECT_ROOT / "A题").rglob("*") if path.is_file())
     data_paths += sorted(path for path in (PROJECT_ROOT / "data" / "raw").rglob("*") if path.is_file())
     data_paths += sorted(
@@ -39,9 +38,9 @@ def main() -> None:
     programs_before = file_hashes(program_paths).rename(columns={"SHA256": "SHA256Before", "SizeBytes": "SizeBytesBefore"})
 
     settings = InferenceSettings(seed=args.seed, bootstrap_repetitions=args.bootstrap)
+    inference_started = time.perf_counter()
     tables = run_final_inference(PROJECT_ROOT, settings)
-    for name, table in tables.items():
-        table.to_csv(result_dir / f"{name}.csv", index=False, encoding="utf-8-sig")
+    inference_seconds = time.perf_counter() - inference_started
 
     data_after = file_hashes(data_paths).rename(columns={"SHA256": "SHA256After", "SizeBytes": "SizeBytesAfter"})
     programs_after = file_hashes(program_paths).rename(columns={"SHA256": "SHA256After", "SizeBytes": "SizeBytesAfter"})
@@ -55,30 +54,19 @@ def main() -> None:
         (program_check["SHA256Before"] == program_check["SHA256After"])
         & (program_check["SizeBytesBefore"] == program_check["SizeBytesAfter"])
     )
-    data_check.to_csv(result_dir / "data_integrity_check.csv", index=False, encoding="utf-8-sig")
-    program_check.to_csv(result_dir / "program_integrity_check.csv", index=False, encoding="utf-8-sig")
     if not data_check["Unchanged"].all():
         raise RuntimeError("experimental data changed during Q1 final analysis")
     if not program_check["UnchangedDuringRun"].all():
         raise RuntimeError("an existing experiment program changed during Q1 final analysis")
-
-    manifest_rows = []
-    for path in sorted(result_dir.glob("*.csv")):
-        if path.name == "result_manifest.csv":
-            continue
-        frame = pd.read_csv(path)
-        manifest_rows.append(
-            {
-                "File": path.name,
-                "Rows": len(frame),
-                "Columns": len(frame.columns),
-                "SizeBytes": path.stat().st_size,
-            }
-        )
-    manifest = pd.DataFrame(manifest_rows)
-    manifest.to_csv(result_dir / "result_manifest.csv", index=False, encoding="utf-8-sig")
+    tables["data_integrity_check"] = data_check
+    tables["program_integrity_check"] = program_check
+    command = (
+        f"{Path(sys.executable).resolve()} scripts/q1/run_q1_final_analysis.py "
+        f"--bootstrap {args.bootstrap} --seed {args.seed}"
+    )
+    write_authoritative_outputs(PROJECT_ROOT, tables, command, inference_seconds)
     print(f"Q1 final analysis complete: {result_dir}")
-    print(f"CSV files: {len(manifest) + 1}")
+    print(f"Inference tables: {len(tables)}")
     print("Experimental data unchanged: true")
     print("Existing experiment programs unchanged during run: true")
 

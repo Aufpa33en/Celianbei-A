@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hashlib
 from dataclasses import dataclass
+from itertools import combinations
 from pathlib import Path
 
 import numpy as np
@@ -53,7 +54,9 @@ def run_final_inference(project_root: Path, settings: InferenceSettings) -> dict
     bootstrap = _cluster_bootstrap(model_result, analysis_batteries, settings)
     curve_estimates = _curve_estimates(model_result, bootstrap, settings.alpha)
     scalar_estimates = _scalar_estimates(model_result, bootstrap, settings.alpha)
-    pairwise_scalar = _pairwise_scalar(model_result, bootstrap, settings.alpha)
+    pairwise_scalar = _pairwise_scalar(
+        model_result, bootstrap, analysis_batteries, settings.alpha
+    )
     pairwise_curve, pairwise_curve_cycle = _pairwise_curve(model_result, bootstrap, settings.alpha)
     rank_stability = _rank_stability(model_result, bootstrap)
     residual_battery, residual_policy, residual_overall = _residual_diagnostics(
@@ -91,6 +94,7 @@ def run_final_inference(project_root: Path, settings: InferenceSettings) -> dict
             {"Parameter": "q1_cycle200_cohort", "Value": "40_complete_batteries_only"},
             {"Parameter": "q3_reserved_cohort", "Value": "9_prediction_test_batteries_excluded"},
             {"Parameter": "bootstrap_unit", "Value": "battery_within_policy"},
+            {"Parameter": "pairwise_test", "Value": "exact_battery_permutation"},
             {"Parameter": "multiple_comparison", "Value": "Holm"},
         ]
     )
@@ -273,9 +277,15 @@ def _scalar_estimates(result: CandidateResult, bootstrap: dict, alpha: float) ->
     return pd.DataFrame(rows)
 
 
-def _pairwise_scalar(result: CandidateResult, bootstrap: dict, alpha: float) -> pd.DataFrame:
+def _pairwise_scalar(
+    result: CandidateResult,
+    bootstrap: dict,
+    batteries: pd.DataFrame,
+    alpha: float,
+) -> pd.DataFrame:
     policies = bootstrap["policies"]
     point = result.strategy_summary.set_index("Policy")
+    cell_values = _cell_scalar_values(result, batteries)
     definitions = {
         "SOH200": ("soh200", point["SOH200"]),
         "Loss1to200": ("loss", point["Loss1to200"]),
@@ -289,9 +299,10 @@ def _pairwise_scalar(result: CandidateResult, bootstrap: dict, alpha: float) -> 
             for j in range(i + 1, len(policies)):
                 samples = np.asarray(bootstrap[key][:, i] - bootstrap[key][:, j], dtype=float)
                 finite = samples[np.isfinite(samples)]
-                left_count = int(np.sum(finite <= 0))
-                right_count = int(np.sum(finite >= 0))
-                p_value = min(1.0, 2 * (min(left_count, right_count) + 1) / (len(finite) + 1))
+                p_value = _exact_permutation_p_value(
+                    cell_values[metric][policies[i]],
+                    cell_values[metric][policies[j]],
+                )
                 rows.append(
                     {
                         "Metric": metric,
@@ -300,15 +311,59 @@ def _pairwise_scalar(result: CandidateResult, bootstrap: dict, alpha: float) -> 
                         "Difference_AminusB": point_values.loc[policies[i]] - point_values.loc[policies[j]],
                         "CI95Low": np.quantile(finite, alpha / 2),
                         "CI95High": np.quantile(finite, 1 - alpha / 2),
-                        "BootstrapSignP": p_value,
+                        "ExactPermutationP": p_value,
                     }
                 )
-        p_values = np.array([row["BootstrapSignP"] for row in rows[metric_start:]])
+        p_values = np.array([row["ExactPermutationP"] for row in rows[metric_start:]])
         adjusted = _holm_adjust(p_values)
         for row, value in zip(rows[metric_start:], adjusted):
             row["HolmAdjustedP"] = value
             row["SignificantAfterHolm"] = bool(value < alpha)
     return pd.DataFrame(rows)
+
+
+def _cell_scalar_values(
+    result: CandidateResult, batteries: pd.DataFrame
+) -> dict[str, dict[str, np.ndarray]]:
+    """Return one scalar value per complete battery for exact group comparisons."""
+    model = result.final_model
+    if model.cell_coef is None or model.cell_policy is None:
+        raise TypeError("cell-level scalar comparisons require the functional two-stage model")
+    cycles = np.arange(1, 201, dtype=float)
+    curves = model.cell_coef @ make_basis(model.model_type, cycles).T
+    battery_charge = batteries.set_index("battery_id")["mean_chargetime"]
+    metrics = {
+        "SOH200": curves[:, -1],
+        "Loss1to200": curves[:, 0] - curves[:, -1],
+        "MeanSOH1to200": np.trapezoid(curves, cycles, axis=1) / 199.0,
+        "MeanChargeTime": battery_charge.loc[model.battery_ids].to_numpy(dtype=float),
+    }
+    return {
+        metric: {
+            policy: np.asarray(values[model.cell_policy == policy], dtype=float)
+            for policy in model.policy_names
+        }
+        for metric, values in metrics.items()
+    }
+
+
+def _exact_permutation_p_value(left: np.ndarray, right: np.ndarray) -> float:
+    """Two-sided exact permutation p-value for a difference in battery-level means."""
+    left = np.asarray(left, dtype=float)
+    right = np.asarray(right, dtype=float)
+    if not np.isfinite(left).all() or not np.isfinite(right).all():
+        raise ValueError("exact permutation test requires finite battery-level values")
+    combined = np.concatenate((left, right))
+    observed = abs(float(left.mean() - right.mean()))
+    extreme = 0
+    total = 0
+    all_sum = float(combined.sum())
+    for indices in combinations(range(len(combined)), len(left)):
+        left_sum = float(combined[list(indices)].sum())
+        difference = left_sum / len(left) - (all_sum - left_sum) / len(right)
+        extreme += abs(difference) >= observed - 1e-15
+        total += 1
+    return extreme / total
 
 
 def _pairwise_curve(result: CandidateResult, bootstrap: dict, alpha: float):
@@ -694,7 +749,7 @@ def _conclusion_table(result, rank_stability, pairwise_scalar, residual_policy, 
                 "Topic": "main_model",
                 "Statement": f"主模型为{result.model_type}；选择依据为留一电池RMSE。",
                 "EvidenceCSV": "model_comparison.csv",
-                "Caveat": "与spline_mixed统计上近似并列",
+                "Caveat": "与spline_mixed数值差异极小，实际性能近似并列",
             },
             {
                 "ConclusionId": "Q1-C02",
@@ -720,9 +775,9 @@ def _conclusion_table(result, rank_stability, pairwise_scalar, residual_policy, 
             {
                 "ConclusionId": "Q1-C05",
                 "Topic": "pairwise_difference",
-                "Statement": f"SOH200共有{len(significant_soh)}组策略对在Holm校正后显著。",
+                "Statement": f"SOH200共有{len(significant_soh)}组策略对在精确置换检验及Holm校正后显著。",
                 "EvidenceCSV": "pairwise_strategy_scalar_comparison.csv",
-                "Caveat": "bootstrap单位为策略内整块完整电池，每策略仅2至7块",
+                "Caveat": "置换和bootstrap单位均为整块完整电池，每策略仅2至7块",
             },
             {
                 "ConclusionId": "Q1-C06",

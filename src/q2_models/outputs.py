@@ -41,4 +41,10 @@ def write_outputs(project_root: Path, outputs: dict[str, pd.DataFrame]) -> None:
                 "columns": len(frame.columns),
             }
         )
-    pd.DataFrame(manifest_rows).to_csv(root / "result_manifest.csv", index=False, encoding="utf-8-sig")
+    manifest = pd.DataFrame(manifest_rows)
+    manifest_path = root / "result_manifest.csv"
+    if manifest_path.exists():
+        existing = pd.read_csv(manifest_path)
+        retained = existing[~existing["relative_path"].isin(manifest["relative_path"])]
+        manifest = pd.concat((manifest, retained), ignore_index=True)
+    manifest.to_csv(manifest_path, index=False, encoding="utf-8-sig")
