@@ -1,0 +1,9 @@
+﻿file,rows,columns
+bootstrap_replicates.csv,8000,17
+bootstrap_summary.csv,24,9
+bootstrap_selection_frequency.csv,5,6
+permutation_distribution.csv,720,7
+permutation_test_summary.csv,5,5
+sensitivity_model_comparison.csv,30,12
+formal_model_decision.csv,6,4
+runtime_checkpoints.csv,21,3

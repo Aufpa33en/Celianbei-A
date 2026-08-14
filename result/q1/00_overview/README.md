@@ -23,3 +23,5 @@
 | `OldManifest` | `result_manifest.csv` | 整理前 29 个非清单 CSV 的行列数和字节数 |
 
 建议先阅读 `Conclusions`，再用 `Settings`、`Cohort` 和 `Coverage` 核对结论边界。
+
+`Q1四小问文字回答.md` 将上述结果整理为对应原题四项任务的中文回答，可作为论文第一问结果分析部分的初稿。

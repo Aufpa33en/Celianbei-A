@@ -1,0 +1,13 @@
+﻿output_key,relative_path,rows,columns
+design_audit,result/q2/00_design/design_audit.csv,8,18
+battery_summary,result/q2/01_smoke_test/battery_degradation_summary.csv,40,26
+strategy_summary,result/q2/01_smoke_test/strategy_degradation_summary.csv,8,26
+scalar_predictions,result/q2/01_smoke_test/scalar_fold_predictions.csv,420,10
+scalar_metrics,result/q2/02_model_selection/scalar_model_comparison.csv,60,8
+coefficient_stability,result/q2/02_model_selection/coefficient_stability.csv,380,17
+hierarchical_predictions,result/q2/01_smoke_test/hierarchical_fold_predictions.csv,520,9
+hierarchical_metrics,result/q2/02_model_selection/hierarchical_model_comparison.csv,10,6
+hierarchical_diagnostics,result/q2/02_model_selection/hierarchical_diagnostics.csv,60,12
+model_selection,result/q2/02_model_selection/smoke_model_selection.csv,10,14
+selected_model_fit,result/q2/02_model_selection/selected_model_fit.csv,2,12
+selected_model_predictions,result/q2/02_model_selection/selected_model_predictions.csv,12,7

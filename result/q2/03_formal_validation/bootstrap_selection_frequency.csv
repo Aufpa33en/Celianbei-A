@@ -1,0 +1,6 @@
+﻿model,selection_count,selection_frequency,n_bootstrap,both_responses_improve_share,expected_sign_both_share
+ridge_Jhigh50,742,0.371,2000,0.924,1.0
+ridge_Jhigh60,472,0.236,2000,0.8245,1.0
+ridge_H,458,0.229,2000,0.5535,1.0
+ridge_Jhigh70,287,0.1435,2000,0.9585,1.0
+constant_mean,41,0.0205,2000,,
