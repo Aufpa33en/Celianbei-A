@@ -1,0 +1,10 @@
+﻿check,passed,detail
+selected_prediction_rows,True,observed=450 expected=450
+nine_frozen_test_batteries,True,"[np.int64(2), np.int64(5), np.int64(9), np.int64(10), np.int64(11), np.int64(14), np.int64(16), np.int64(24), np.int64(25)]"
+selected_groups_complete,True,groups=9 unique_keys=True
+selected_model_frozen,True,C_ridge
+no_truth_or_error_columns,True,test labels unavailable
+all_six_models_audited,True,rows=2700 groups=54 unique_keys=True
+finite_final_predictions,True,raw/projected finite
+intervals_present,True,selected model only
+protected_files_unchanged,True,passed=68/68

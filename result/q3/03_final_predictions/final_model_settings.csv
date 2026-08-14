@@ -1,0 +1,8 @@
+﻿version,parameter,value
+q3_full_v1,selected_model,C_ridge
+q3_full_v1,lambda_gamma,10.0
+q3_full_v1,K,1
+q3_full_v1,alpha,10.0
+q3_full_v1,w_strategy,0.2
+q3_full_v1,B_slope_window,20
+q3_full_v1,D_inner_strategy_equal_rmse,0.0006247692565413616
