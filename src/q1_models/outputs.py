@@ -87,13 +87,29 @@ def write_authoritative_outputs(
 def _configure_matplotlib() -> None:
     plt.rcParams.update(
         {
-            "font.sans-serif": ["Noto Sans CJK SC", "WenQuanYi Micro Hei", "DejaVu Sans"],
+            "font.sans-serif": [
+                "Microsoft YaHei", "SimHei", "Noto Sans CJK SC",
+                "WenQuanYi Micro Hei", "DejaVu Sans",
+            ],
             "axes.unicode_minus": False,
             "font.size": 10,
             "axes.titlesize": 11,
             "axes.labelsize": 10,
         }
     )
+
+
+POLICY_LABELS = {
+    "3_6C-80PER_3_6C": "3.6C→3.6C（80%）",
+    "80PER_3_6C": "0→3.6C（80%）",
+    "4_8C_80PER_4_8C": "4.8C→4.8C（80%）",
+    "4_8C_80PER_4_8C_NEWSTRUCTURE": "4.8C→4.8C（80%，新）",
+    "5C_67PER_4C_NEWSTRUCTURE": "5.0C→4.0C（67%，新）",
+    "5_3C_54PER_4C_NEWSTRUCTURE": "5.3C→4.0C（54%，新）",
+    "5_6C_36PER_4_3C_NEWSTRUCTURE": "5.6C→4.3C（36%，新）",
+    "5_6C_19PER_4_6C_NEWSTRUCTURE": "5.6C→4.6C（19%，新）",
+    "3_7C_31PER_5_9C_NEWSTRUCTURE": "3.7C→5.9C（31%，新）",
+}
 
 
 def _draw_final_strategy_curves(tables: dict[str, pd.DataFrame], path: Path) -> None:
@@ -109,7 +125,7 @@ def _draw_final_strategy_curves(tables: dict[str, pd.DataFrame], path: Path) -> 
         high = pd.to_numeric(frame["CI95High"], errors="raise").to_numpy(dtype=float)
         ax.fill_between(cycle, low, high, color="#4C78A8", alpha=0.22)
         ax.plot(cycle, estimate, color="#1F5A99", linewidth=1.8)
-        ax.set_title(policy.replace("_NEWSTRUCTURE", "\nNEWSTRUCTURE"))
+        ax.set_title(POLICY_LABELS.get(policy, policy))
         ax.grid(alpha=0.2)
     fig.supxlabel("循环次数")
     fig.supylabel("SOH")
@@ -121,24 +137,43 @@ def _draw_final_strategy_curves(tables: dict[str, pd.DataFrame], path: Path) -> 
 def _draw_final_model_comparison(tables: dict[str, pd.DataFrame], path: Path) -> None:
     _configure_matplotlib()
     frame = tables["model_comparison"].sort_values("MeanBatteryRMSE").copy()
-    fig, ax = plt.subplots(figsize=(7.2, 4.5), constrained_layout=True)
+    display = {
+        "functional_ridge": "函数型岭",
+        "spline_mixed": "惩罚样条",
+        "polynomial_mixed": "二次曲线",
+    }
+    fig, (ax, ax_delta) = plt.subplots(1, 2, figsize=(10.5, 4.6), constrained_layout=True)
     colors = ["#2E7D32" if selected else "#7A8CA5" for selected in frame["Selected"]]
-    ax.bar(frame["Model"], frame["MeanBatteryRMSE"], color=colors, width=0.62)
+    labels = [display.get(value, value) for value in frame["Model"]]
     ax.errorbar(
-        frame["Model"],
         frame["MeanBatteryRMSE"],
-        yerr=frame["SEBatteryRMSE"],
-        fmt="none",
-        ecolor="#222222",
+        labels,
+        xerr=frame["SEBatteryRMSE"],
+        fmt="none", ecolor="#444444",
         capsize=4,
         linewidth=1.1,
     )
-    for index, row in frame.reset_index(drop=True).iterrows():
-        ax.text(index, row["MeanBatteryRMSE"] + row["SEBatteryRMSE"] + 0.00012,
-                f"{row['MeanBatteryRMSE']:.6f}", ha="center", va="bottom", fontsize=9)
-    ax.set_ylabel("留一电池 RMSE")
-    ax.set_title("候选模型的电池级泛化误差（误差线为RMSE标准误）")
-    ax.grid(axis="y", alpha=0.2)
+    ax.scatter(frame["MeanBatteryRMSE"], labels, c=colors, s=70, zorder=3)
+    for _, row in frame.iterrows():
+        ax.annotate(f"{row['MeanBatteryRMSE']:.6f}",
+                    (row["MeanBatteryRMSE"], display.get(row["Model"], row["Model"])),
+                    xytext=(5, 7), textcoords="offset points", fontsize=9)
+    ax.set_xlabel("留一电池 RMSE（误差线为电池间标准误）")
+    ax.set_title("绝对误差：三模型高度重叠")
+    ax.grid(axis="x", alpha=0.2)
+
+    paired = tables["model_pairwise_cv_difference"].copy()
+    paired = paired.loc[paired["ModelB"].eq("functional_ridge")].reset_index(drop=True)
+    delta_labels = [f"{display.get(a, a)} − 函数型岭" for a in paired["ModelA"]]
+    delta = paired["MeanRMSEDifference_AminusB"].to_numpy(dtype=float)
+    low = paired["CI95Low"].to_numpy(dtype=float)
+    high = paired["CI95High"].to_numpy(dtype=float)
+    ax_delta.errorbar(delta, delta_labels, xerr=np.vstack((delta - low, high - delta)),
+                      fmt="o", color="#1F5A99", capsize=4)
+    ax_delta.axvline(0.0, color="#555555", linewidth=1, linestyle="--")
+    ax_delta.set_xlabel("配对 RMSE 差（正值表示函数型岭更低）")
+    ax_delta.set_title("配对差异：统计可辨，实际量级很小")
+    ax_delta.grid(axis="x", alpha=0.2)
     fig.savefig(path, dpi=300, bbox_inches="tight", pad_inches=0.08)
     plt.close(fig)
 
@@ -153,7 +188,10 @@ def _draw_final_tradeoff(tables: dict[str, pd.DataFrame], path: Path) -> None:
     )
     frame = soh.merge(charge, on="Policy").merge(rank, on="Policy")
     colors = {"typical_long": "#2E7D32", "middle": "#D89000", "typical_short": "#C62828"}
-    fig, ax = plt.subplots(figsize=(8.5, 5.2), constrained_layout=True)
+    fig, (ax, key_ax) = plt.subplots(
+        1, 2, figsize=(11.2, 5.4), gridspec_kw={"width_ratios": [3.4, 1.6]},
+        constrained_layout=True,
+    )
     annotation_offsets = {
         1: (6, 6), 2: (-12, 12), 3: (-12, -12), 4: (8, 10), 5: (8, -12),
         6: (6, 6), 7: (6, 6), 8: (6, 6), 9: (6, 6),
@@ -165,7 +203,7 @@ def _draw_final_tradeoff(tables: dict[str, pd.DataFrame], path: Path) -> None:
             fmt="o", color=colors[row["PrimaryGroup"]], capsize=3, markersize=7,
         )
         rank_value = int(row["PointSOH200Rank"])
-        ax.annotate(f"S{rank_value}", (row["MeanChargeTime"], row["Estimate"]),
+        ax.annotate(f"R{rank_value}", (row["MeanChargeTime"], row["Estimate"]),
                     xytext=annotation_offsets[rank_value], textcoords="offset points", fontsize=9)
     handles = [
         plt.Line2D([0], [0], marker="o", color="none", markerfacecolor=color, markeredgecolor=color,
@@ -179,6 +217,14 @@ def _draw_final_tradeoff(tables: dict[str, pd.DataFrame], path: Path) -> None:
     ax.set_ylabel("第200循环 SOH")
     ax.set_title("充电时间与前200循环健康保持的经验权衡")
     ax.grid(alpha=0.2)
+    key_ax.axis("off")
+    key_ax.set_title("点位编号（按SOH200排名）", loc="left", fontsize=10)
+    ranked = frame.sort_values("PointSOH200Rank")
+    mapping = [
+        f"R{int(row.PointSOH200Rank)}  {POLICY_LABELS.get(row.Policy, row.Policy)}"
+        for row in ranked.itertuples()
+    ]
+    key_ax.text(0.0, 0.96, "\n\n".join(mapping), va="top", ha="left", fontsize=9)
     fig.savefig(path, dpi=300, bbox_inches="tight", pad_inches=0.10)
     plt.close(fig)
 
@@ -237,12 +283,20 @@ def _write_result_readme(path: Path) -> None:
     path.write_text(
         "# 第一问权威结果\n\n"
         "`result/q1/` 是第一问当前唯一权威结果目录。\n\n"
-        "- `paper/`：可直接用于论文的报告、汇总表和300 dpi图片。\n"
-        "- `raw/`：完整推断表、逐电池/逐循环结果、参数、运行环境和完整性审计。\n"
+        "- `paper/`：论文入口；保存报告、核心汇总表和300 dpi图片。\n"
+        "- `raw/`：审计入口；保存完整推断表、逐电池/逐循环结果、参数、运行环境和清单。\n"
         "- `00_overview/`—`05_integrity_audit/`：上一轮Excel查看包，仅作辅助浏览；若与 `paper/` 或 `raw/` 冲突，以后两者为准。\n"
         "- `original_q1_csv_archive.zip`：上一轮CSV归档，仅用于历史审计。\n\n"
-        "正式运行：`.venv/bin/python scripts/q1/run_q1_final_analysis.py --bootstrap 2000 --seed 20260814`。\n"
-        "当前附件没有观测到80% SOH终点，所有L80均为未验证外推代理。\n",
+        "## 输入、模型与结论边界\n\n"
+        "- 输入：`data/processed/q1_cleaned/cycle_train_clean.csv`和"
+        "`battery_summary_clean.csv`；响应变量为`SOH_clean`。\n"
+        "- 队列：40块完整电池用于正式推断；9块`prediction_test=1`电池留给第三问。\n"
+        "- 主模型：两阶段函数型岭平滑；2000次策略内整块电池bootstrap用于区间和排名稳定性。\n"
+        "- 显著性：以整块电池为单位执行双侧精确置换，并按指标作Holm校正。\n\n"
+        "正式运行：`python scripts/q1/run_q1_final_analysis.py --bootstrap 2000 --seed 20260814`；"
+        "也可用当前系统虚拟环境中的Python替换`python`。\n"
+        "当前附件没有观测到80% SOH终点，所有L80均为未验证外推代理；"
+        "可靠结论限定于1—200循环内的健康状态差异。\n",
         encoding="utf-8",
     )
 
