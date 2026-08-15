@@ -16,6 +16,7 @@ from q2_models.lifetime_validation import (  # noqa: E402
     LifetimeValidationSettings,
     run_lifetime_validation,
 )
+from q2_models.lifetime_outputs import draw_lifetime_evidence, write_lifetime_conclusion  # noqa: E402
 
 
 def main() -> None:
@@ -31,6 +32,10 @@ def main() -> None:
     output_dir.mkdir(parents=True, exist_ok=True)
     for name, table in tables.items():
         table.to_csv(output_dir / f"{name}.csv", index=False, encoding="utf-8-sig")
+    write_lifetime_conclusion(output_dir / "正式验证结论.md", tables)
+    paper_figure_dir = PROJECT_ROOT / "result" / "q2" / "04_paper_materials" / "figures"
+    paper_figure_dir.mkdir(parents=True, exist_ok=True)
+    draw_lifetime_evidence(paper_figure_dir / "fig_q2_t80_parameter_evidence.png", tables)
     manifest_rows = pd.DataFrame(
         [
             {

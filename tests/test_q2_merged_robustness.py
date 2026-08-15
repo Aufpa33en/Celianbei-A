@@ -72,18 +72,20 @@ def main() -> None:
     )
     q1_soh200 = q1_pairwise[q1_pairwise["Metric"].eq("SOH200")]
     assert not q1_soh200["SignificantAfterHolm"].astype(bool).any()
+    q1_lifetime = pd.read_csv(
+        PROJECT_ROOT / "result" / "q1" / "raw" / "pairwise_strategy_lifetime_comparison.csv"
+    )
+    assert not q1_lifetime["SignificantAfterHolm"].astype(bool).any()
     paper = (
         PROJECT_ROOT / "result" / "q2" / "04_paper_materials" / "第二问完整回答.md"
     ).read_text(encoding="utf-8")
-    assert "16 组经 Holm" not in paper
-    assert "尾部比例为0.06528" in paper
-    assert "不是精确`p`值" in paper
-    assert "尾部比例为`0.000050`" in paper
-    assert "不是确认性`p`值" in paper
-    assert "96.591%—99.668%" in paper
-    assert "末段退化率存在全局策略差异" not in paper
-    assert "37.4% SOC换向阈值" in paper
-    assert "最小可达双侧离散值" in paper
+    assert "预测循环数T80" in paper
+    assert "[-10.96%, 48.28%]" in paper
+    assert "尾部比例为0.1556" in paper
+    assert "不能称为确认性p值" in paper
+    assert "删除3.7C-31%-5.9C极端策略后，没有解释模型优于常数基线" in paper
+    assert "独立显著效应" in paper
+    assert "因果效应量" in paper
     print("Q2 merged robustness tests passed")
 
 
