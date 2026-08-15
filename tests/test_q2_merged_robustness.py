@@ -62,6 +62,8 @@ def main() -> None:
     assert "不是精确`p`值" in paper
     assert "尾部比例为`0.000050`" in paper
     assert "不是确认性`p`值" in paper
+    assert "96.591%—99.668%" in paper
+    assert "末段退化率存在全局策略差异" not in paper
     assert "37.4% SOC换向阈值" in paper
     print("Q2 merged robustness tests passed")
 
