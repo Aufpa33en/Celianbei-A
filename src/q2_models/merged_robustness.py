@@ -157,6 +157,9 @@ def matched_4p8_comparison(battery: pd.DataFrame) -> pd.DataFrame:
         mask = np.zeros(len(combined), dtype=bool)
         mask[list(old_indices)] = True
         null.append(float(combined[~mask].mean() - combined[mask].mean()))
+    exact_p = float(np.mean(np.abs(null) >= abs(observed) - 1e-15))
+    attainable_p = [float(np.mean(np.abs(null) >= abs(value) - 1e-15)) for value in null]
+    minimum_attainable_p = min(attainable_p)
     return pd.DataFrame(
         [
             {
@@ -168,7 +171,10 @@ def matched_4p8_comparison(battery: pd.DataFrame) -> pd.DataFrame:
                 "new_mean_rate": new.mean(),
                 "new_minus_old_rate": observed,
                 "relative_change": observed / old.mean(),
-                "exact_permutation_p": np.mean(np.abs(null) >= abs(observed) - 1e-15),
+                "exact_permutation_p": exact_p,
+                "n_label_assignments": len(null),
+                "minimum_attainable_two_sided_p": minimum_attainable_p,
+                "p_at_minimum_resolution": bool(np.isclose(exact_p, minimum_attainable_p)),
                 "causal_status": "not_identified_structure_is_confounded_with_dataset_batch",
             }
         ]
@@ -317,7 +323,7 @@ def write_merged_robustness(project_root: Path, outputs: dict[str, pd.DataFrame]
         "- `paper/`：末段退化率策略汇总、假设标签可交换的全局诊断、4.8C匹配诊断，以及J+H坐标留出汇总和逐折样本量。\n"
         "- `raw/`：40块完整电池的末段退化率、对数模型资格/排除原因和运行环境/参数。非正速率保留原值但不进入对数诊断。\n\n"
         "全局标签置换因协议组固定、样本数和方差不等而不提供确认性p值。正式参数结论仍以高SOC暴露族的选择校正诊断及其边界为准。J+H模型在当前6策略同结构队列中每折仅5个训练点拟合3个系数，无法获得可信验证；"
-        "4.8C匹配结果只反映结构/批次联合差异。\n",
+        "4.8C匹配结果只反映结构/批次联合差异；n=2对n=5仅有21种标签分配，当前双侧p值已处于可达分辨率下界。\n",
         encoding="utf-8",
     )
     q2_root = project_root / "result" / "q2"

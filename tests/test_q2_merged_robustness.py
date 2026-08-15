@@ -60,6 +60,9 @@ def main() -> None:
     matched = outputs["matched_4p8_comparison"].iloc[0]
     assert matched["relative_change"] < -0.7
     assert matched["causal_status"].startswith("not_identified")
+    assert matched["n_label_assignments"] == 21
+    assert matched["minimum_attainable_two_sided_p"] == 1 / 21
+    assert bool(matched["p_at_minimum_resolution"])
     global_diagnostic = outputs["global_strategy_permutation"].iloc[0]
     assert global_diagnostic["artifact_role"] == "diagnostic_not_confirmatory_test"
     assert not bool(global_diagnostic["confirmatory_p_value_available"])
@@ -80,6 +83,7 @@ def main() -> None:
     assert "96.591%—99.668%" in paper
     assert "末段退化率存在全局策略差异" not in paper
     assert "37.4% SOC换向阈值" in paper
+    assert "最小可达双侧离散值" in paper
     print("Q2 merged robustness tests passed")
 
 
