@@ -74,10 +74,14 @@ def main() -> None:
     output = PROJECT_ROOT / "result" / "q2" / "03_formal_validation"
     raw = pd.read_csv(output / "bootstrap_replicates.csv")
     permutation = pd.read_csv(output / "permutation_distribution.csv")
+    permutation_summary = pd.read_csv(output / "permutation_test_summary.csv")
     decision = pd.read_csv(output / "formal_model_decision.csv")
     assert raw["replicate"].nunique() == 2000
     assert len(raw) == 8000
     assert len(permutation) == 720
+    assert "exact_p_one_sided" not in permutation_summary
+    assert not permutation_summary["confirmatory_p_value_available"].astype(bool).any()
+    assert permutation_summary["artifact_role"].eq("diagnostic_not_confirmatory_test").all()
     assert decision["decision"].eq(
         "do_not_claim_independent_parameter_effect; descriptive_association_only"
     ).all()

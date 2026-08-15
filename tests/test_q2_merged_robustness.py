@@ -44,7 +44,8 @@ def main() -> None:
         PROJECT_ROOT / "result" / "q2" / "04_paper_materials" / "第二问完整回答.md"
     ).read_text(encoding="utf-8")
     assert "16 组经 Holm" not in paper
-    assert "p=0.06528" in paper
+    assert "尾部比例为0.06528" in paper
+    assert "不是精确`p`值" in paper
     assert "p=0.000050" in paper
     assert "37.4% SOC换向阈值" in paper
     print("Q2 merged robustness tests passed")

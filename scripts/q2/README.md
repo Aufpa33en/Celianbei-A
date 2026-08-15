@@ -16,7 +16,7 @@ python scripts/q2/run_q2_smoke_test.py
 python scripts/q2/run_q2_formal_validation.py --bootstrap 2000 --seed 20260814 --workers 8
 ```
 
-正式验证按策略内整块电池重采样，执行2000次bootstrap和6策略的720种精确置换。每次重复都重新选择岭参数和SOC暴露候选，输出写入`result/q2/03_formal_validation/`。
+正式验证按策略内整块电池重采样，执行2000次bootstrap。另保留6个策略均值的720种标签排列，仅用于展示“若策略均值可交换”时统计量的位置；由于策略样本量、方差不同且策略并非随机分配，该尾部比例不是确认性`p`值。每次bootstrap都重新选择岭参数和SOC暴露候选，输出写入`result/q2/03_formal_validation/`。
 
 ## 合并稳健性入口
 

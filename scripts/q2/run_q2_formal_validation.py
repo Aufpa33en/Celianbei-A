@@ -34,7 +34,7 @@ def main() -> None:
     decision = outputs["formal_model_decision"]["decision"].iloc[0]
     print("[Q2 formal] bootstrap selection frequency")
     print(frequency.to_string(index=False))
-    print("\n[Q2 formal] exact permutation tests")
+    print("\n[Q2 formal] hypothetical policy-mean exchangeability diagnostic (not a confirmatory test)")
     print(permutation.to_string(index=False))
     print(f"\n[Q2 formal] decision: {decision}")
     print(f"[Q2 formal] output: {PROJECT_ROOT / 'result' / 'q2' / '03_formal_validation'}")

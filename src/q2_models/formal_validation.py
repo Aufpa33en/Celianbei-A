@@ -409,7 +409,7 @@ def _direction_score(y: np.ndarray, x: np.ndarray, groups: np.ndarray) -> float:
     return float(min(scores))
 
 
-def run_exact_permutation(cohort: CohortArrays) -> tuple[pd.DataFrame, pd.DataFrame]:
+def run_exchangeability_sensitivity(cohort: CohortArrays) -> tuple[pd.DataFrame, pd.DataFrame]:
     observed_scores = np.array(
         [_direction_score(cohort.response, cohort.exposure[:, index], cohort.groups) for index in range(len(MODEL_NAMES))]
     )
@@ -429,25 +429,32 @@ def run_exact_permutation(cohort: CohortArrays) -> tuple[pd.DataFrame, pd.DataFr
             }
         )
     distribution = pd.DataFrame(rows)
-    adjusted_p = float(np.mean(distribution["max_direction_score"] >= observed_max))
+    adjusted_tail_fraction = float(np.mean(distribution["max_direction_score"] >= observed_max))
+    diagnostic_fields = {
+        "artifact_role": "diagnostic_not_confirmatory_test",
+        "exchangeability_assumption": "six_policy_means_exchangeable_despite_unequal_n_and_variance",
+        "confirmatory_p_value_available": False,
+    }
     summary_rows = [
         {
-            "test": "max_over_four_exposures",
+            "diagnostic": "max_over_four_exposures",
             "model": "selected_family",
             "observed_score": observed_max,
-            "exact_p_one_sided": adjusted_p,
-            "n_permutations": len(distribution),
+            "hypothetical_exchangeability_tail_fraction": adjusted_tail_fraction,
+            "n_label_permutations": len(distribution),
+            **diagnostic_fields,
         }
     ]
     for model, observed in zip(MODEL_NAMES, observed_scores):
         values = distribution[f"score_{model}"].to_numpy(dtype=float)
         summary_rows.append(
             {
-                "test": "single_exposure_unadjusted",
+                "diagnostic": "single_exposure_unadjusted",
                 "model": model,
                 "observed_score": float(observed),
-                "exact_p_one_sided": float(np.mean(values >= observed)),
-                "n_permutations": len(values),
+                "hypothetical_exchangeability_tail_fraction": float(np.mean(values >= observed)),
+                "n_label_permutations": len(values),
+                **diagnostic_fields,
             }
         )
     return distribution, pd.DataFrame(summary_rows)
@@ -516,14 +523,12 @@ def sensitivity_table(battery: pd.DataFrame, strategy: pd.DataFrame) -> pd.DataF
 
 def formal_decision(
     frequency: pd.DataFrame,
-    permutation_summary: pd.DataFrame,
     sensitivity: pd.DataFrame,
 ) -> pd.DataFrame:
     exposure_frequency = frequency[frequency["model"].isin(MODEL_NAMES)].sort_values(
         "selection_frequency", ascending=False
     )
     top = exposure_frequency.iloc[0]
-    adjusted = permutation_summary[permutation_summary["test"].eq("max_over_four_exposures")].iloc[0]
     without_extreme = sensitivity[
         sensitivity["cohort"].eq("explicit_new_without_3_7C")
         & sensitivity["selected_explanatory"].astype(bool)
@@ -537,20 +542,11 @@ def formal_decision(
         "top_exposure_selection_frequency_ge_0_50": bool(top["selection_frequency"] >= 0.50),
         "top_exposure_both_improve_share_ge_0_80": bool(top["both_responses_improve_share"] >= 0.80),
         "top_exposure_expected_sign_share_ge_0_90": bool(top["expected_sign_both_share"] >= 0.90),
-        "selection_adjusted_p_le_0_05": bool(adjusted["exact_p_one_sided"] <= 0.05),
+        "confirmatory_randomization_basis_available": False,
         "high_SOC_family_survives_excluding_3_7C": str(without_extreme["model"]).startswith("ridge_"),
         "high_SOC_family_survives_excluding_battery41": str(without_battery41["model"]).startswith("ridge_"),
     }
-    if all(criteria.values()):
-        decision = f"select_{top['model']}_as_final_explanatory_model"
-    elif (
-        top["expected_sign_both_share"] >= 0.90
-        and adjusted["exact_p_one_sided"] <= 0.10
-        and criteria["high_SOC_family_survives_excluding_3_7C"]
-    ):
-        decision = "retain_high_SOC_exposure_as_association_with_threshold_uncertainty"
-    else:
-        decision = "do_not_claim_independent_parameter_effect; descriptive_association_only"
+    decision = "do_not_claim_independent_parameter_effect; descriptive_association_only"
     rows = [
         {
             "decision": decision,
@@ -584,9 +580,9 @@ def run_formal_validation(
         checkpoint_path=output_root / "bootstrap_replicates.csv",
     )
     summary, frequency = summarize_bootstrap(bootstrap)
-    permutation_distribution, permutation_summary = run_exact_permutation(main)
+    permutation_distribution, permutation_summary = run_exchangeability_sensitivity(main)
     sensitivity = sensitivity_table(battery, strategy)
-    decision = formal_decision(frequency, permutation_summary, sensitivity)
+    decision = formal_decision(frequency, sensitivity)
     runtime = pd.concat(
         [
             runtime,
