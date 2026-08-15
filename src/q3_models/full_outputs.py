@@ -44,7 +44,7 @@ def _manifest(directory: Path, project_root: Path, seed: int) -> pd.DataFrame:
                 "sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
                 "version": FULL_VERSION,
                 "seed": seed,
-                "git_commit_at_run": commit,
+                "git_head_at_manifest_generation": commit,
             }
         )
     return pd.DataFrame(rows)

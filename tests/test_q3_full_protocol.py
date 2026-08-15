@@ -87,6 +87,10 @@ def main() -> None:
         settings["parameter_role"].eq("frozen_nonselected_candidate"), "parameter"
     ].str.match(r"^[BCD]_").all()
     assert pd.read_csv(final_dir / "integrity_checks.csv")["passed"].astype(bool).all()
+    for directory in (full_dir, final_dir):
+        manifest = pd.read_csv(directory / "manifest.csv")
+        assert "git_head_at_manifest_generation" in manifest.columns
+        assert "git_commit_at_run" not in manifest.columns
     print("Q3 full protocol tests passed")
 
 
