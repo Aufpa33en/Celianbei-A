@@ -877,13 +877,22 @@ def run_final_prediction(
                          "seconds": time.perf_counter() - predict_started})
     hyper = pd.DataFrame(
         [
-            {"version": config.version, "parameter": "selected_model", "value": selected_model},
-            {"version": config.version, "parameter": "lambda_gamma", "value": selected_lambda},
-            {"version": config.version, "parameter": "K", "value": selected_c[0]},
-            {"version": config.version, "parameter": "alpha", "value": selected_c[1]},
-            {"version": config.version, "parameter": "w_strategy", "value": selected_weight},
-            {"version": config.version, "parameter": "B_slope_window", "value": 20},
-            {"version": config.version, "parameter": "D_inner_strategy_equal_rmse", "value": frozen_row["inner_D_strategy_equal_rmse"]},
+            {"version": config.version, "parameter": "selected_model", "value": selected_model,
+             "parameter_role": "deployment_identity"},
+            {"version": config.version, "parameter": "P1_linear_trend_window", "value": 50,
+             "parameter_role": "used_by_selected_model"},
+            {"version": config.version, "parameter": "D_lambda_gamma", "value": selected_lambda,
+             "parameter_role": "frozen_nonselected_candidate"},
+            {"version": config.version, "parameter": "C_K", "value": selected_c[0],
+             "parameter_role": "frozen_nonselected_candidate"},
+            {"version": config.version, "parameter": "C_alpha", "value": selected_c[1],
+             "parameter_role": "frozen_nonselected_candidate"},
+            {"version": config.version, "parameter": "D_w_strategy", "value": selected_weight,
+             "parameter_role": "frozen_nonselected_candidate"},
+            {"version": config.version, "parameter": "B_slope_window", "value": 20,
+             "parameter_role": "frozen_nonselected_candidate"},
+            {"version": config.version, "parameter": "D_inner_strategy_equal_rmse", "value": frozen_row["inner_D_strategy_equal_rmse"],
+             "parameter_role": "nonselected_candidate_diagnostic"},
         ]
     )
     runtime_rows.append({"version": config.version, "scope": "final", "stage": "final_compute_total",

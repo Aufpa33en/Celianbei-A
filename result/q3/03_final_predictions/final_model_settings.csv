@@ -1,8 +1,9 @@
-﻿version,parameter,value
-q3_full_v2,selected_model,P1_linear
-q3_full_v2,lambda_gamma,10.0
-q3_full_v2,K,1
-q3_full_v2,alpha,10.0
-q3_full_v2,w_strategy,0.3
-q3_full_v2,B_slope_window,20
-q3_full_v2,D_inner_strategy_equal_rmse,0.0006275837565774374
+﻿version,parameter,value,parameter_role
+q3_full_v2,selected_model,P1_linear,deployment_identity
+q3_full_v2,P1_linear_trend_window,50,used_by_selected_model
+q3_full_v2,D_lambda_gamma,10.0,frozen_nonselected_candidate
+q3_full_v2,C_K,1,frozen_nonselected_candidate
+q3_full_v2,C_alpha,10.0,frozen_nonselected_candidate
+q3_full_v2,D_w_strategy,0.3,frozen_nonselected_candidate
+q3_full_v2,B_slope_window,20,frozen_nonselected_candidate
+q3_full_v2,D_inner_strategy_equal_rmse,0.0006275837565774374,nonselected_candidate_diagnostic

@@ -61,6 +61,8 @@ C模型仅动态特征、动态加连续策略、完整策略特征在L=150的�
 
 运行版本为`q3_full_v2`，随机种子`20260814`，复算起点提交为`d3eca3c`。权威数值位于`result/q3/02_full_validation`和`result/q3/03_final_predictions`。
 
+`final_model_settings.csv`把P1实际部署参数与未选中B/C/D候选的冻结复算参数分开标记；只有`P1_linear_trend_window=50`属于当前部署模型，带B/C/D前缀的值不应解释为P1超参数。
+
 ## 7. 论文图示
 
 - [不同早期长度下的六模型误差](../result/q3/03_final_predictions/figures/fig_q3_early_length_rmse.png)

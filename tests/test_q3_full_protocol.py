@@ -77,6 +77,15 @@ def main() -> None:
     assert calibration["interval_status"].eq(
         "post_selection_diagnostic_not_independent_coverage"
     ).all()
+    settings = pd.read_csv(final_dir / "final_model_settings.csv")
+    assert settings.loc[settings["parameter"].eq("P1_linear_trend_window"), "value"].eq("50").all()
+    assert settings.loc[settings["parameter"].eq("P1_linear_trend_window"), "parameter_role"].eq(
+        "used_by_selected_model"
+    ).all()
+    assert not {"lambda_gamma", "K", "alpha", "w_strategy"}.intersection(settings["parameter"])
+    assert settings.loc[
+        settings["parameter_role"].eq("frozen_nonselected_candidate"), "parameter"
+    ].str.match(r"^[BCD]_").all()
     assert pd.read_csv(final_dir / "integrity_checks.csv")["passed"].astype(bool).all()
     print("Q3 full protocol tests passed")
 
