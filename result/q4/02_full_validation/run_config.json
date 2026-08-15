@@ -32,8 +32,8 @@
   "cycle_charge_time_metric_role": "sensitivity_only",
   "time_equivalence_minutes": 0.01,
   "unique_recommendation_probability_threshold": 0.95,
-  "q3_counterfactual_role": "not_used_no_early_trajectory_for_new_policy",
-  "continuous_model_conclusion": "single_J_ridge_failed_broader_classes_untested",
   "weighted_score_role": "diagnostic_weight_sensitivity_not_primary_recommendation",
-  "weighted_score_normalization": "minmax_all_9_observed_policies_including_dominated"
+  "weighted_score_normalization": "minmax_all_9_observed_policies_including_dominated",
+  "q3_counterfactual_role": "not_used_no_early_trajectory_for_new_policy",
+  "continuous_model_conclusion": "single_J_ridge_failed_broader_classes_untested"
 }
