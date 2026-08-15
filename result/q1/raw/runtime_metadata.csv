@@ -1,8 +1,8 @@
 ﻿Parameter,Value
-command,C:\Users\Aupassen\Desktop\Celianbei Math Modeling\.venv\Scripts\python.exe scripts/q1/run_q1_final_analysis.py --bootstrap 2000 --seed 20260814
-inference_seconds,3.828602
-output_seconds,1.808033
-python,3.11.9
-platform,Windows-10-10.0.26200-SP0
-numpy,2.4.6
-pandas,3.0.5
+command,D:\Anaconda\python.exe scripts/q1/run_q1_final_analysis.py --bootstrap 2000 --seed 20260814
+inference_seconds,2.678006
+output_seconds,1.622885
+python,3.13.9
+platform,Windows-11-10.0.26200-SP0
+numpy,2.3.5
+pandas,2.3.3

@@ -236,6 +236,9 @@ def _write_final_paper_report(path: Path, tables: dict[str, pd.DataFrame]) -> No
     significant = tables["pairwise_strategy_scalar_comparison"].query(
         "Metric == 'SOH200' and SignificantAfterHolm"
     )
+    bootstrap_excluding_zero = tables["pairwise_strategy_scalar_comparison"].query(
+        "Metric == 'SOH200' and BootstrapCIExcludesZero"
+    )
     selected = comparison.iloc[0]
     top = "、".join(ranks.head(3)["Policy"])
     bottom = "、".join(ranks.tail(3)["Policy"])
@@ -266,7 +269,7 @@ def _write_final_paper_report(path: Path, tables: dict[str, pd.DataFrame]) -> No
         "",
         f"SOH200点估计前三位为：{top}。后三位为：{bottom}。排名稳定性应结合 `strategy_rank_stability.csv` 中的Top/Bottom概率判断，不能只报告点排名。",
         "",
-        f"对任意两策略，以电池级SOH200均值差为统计量，枚举合并样本的全部分组方式构造双侧精确置换检验；对36组策略对作Holm校正后，SOH200差异显著的策略对为 {len(significant)} 组。置信区间另由策略内整块电池bootstrap得到。该结果反映每策略仅2—7块完整电池带来的统计功效限制，不等于所有策略真实相同。",
+        f"对任意两策略，以电池级SOH200均值差为统计量，枚举合并样本的全部分组方式构造双侧精确置换检验；对36组策略对作Holm校正后，SOH200差异显著的策略对为 {len(significant)} 组。另有 {len(bootstrap_excluding_zero)} 组策略对的策略内整块电池bootstrap 95%区间不跨0，但这些区间没有作多重比较校正，不是同时置信区间，不能据此改报为 {len(bootstrap_excluding_zero)} 组确证差异。精确置换在每策略仅2—7块完整电池时分辨率较粗，因此两种不确定性摘要应并列报告；0组Holm确证差异既不等于所有策略真实相同，也不构成等价性证据。",
         "",
         "## 解释与限制",
         "",

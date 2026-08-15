@@ -299,6 +299,8 @@ def _pairwise_scalar(
             for j in range(i + 1, len(policies)):
                 samples = np.asarray(bootstrap[key][:, i] - bootstrap[key][:, j], dtype=float)
                 finite = samples[np.isfinite(samples)]
+                ci_low = np.quantile(finite, alpha / 2)
+                ci_high = np.quantile(finite, 1 - alpha / 2)
                 p_value = _exact_permutation_p_value(
                     cell_values[metric][policies[i]],
                     cell_values[metric][policies[j]],
@@ -309,8 +311,9 @@ def _pairwise_scalar(
                         "PolicyA": policies[i],
                         "PolicyB": policies[j],
                         "Difference_AminusB": point_values.loc[policies[i]] - point_values.loc[policies[j]],
-                        "CI95Low": np.quantile(finite, alpha / 2),
-                        "CI95High": np.quantile(finite, 1 - alpha / 2),
+                        "CI95Low": ci_low,
+                        "CI95High": ci_high,
+                        "BootstrapCIExcludesZero": bool(ci_low > 0 or ci_high < 0),
                         "ExactPermutationP": p_value,
                     }
                 )
@@ -738,6 +741,10 @@ def _conclusion_table(result, rank_stability, pairwise_scalar, residual_policy, 
     significant_soh = pairwise_scalar.loc[
         (pairwise_scalar["Metric"] == "SOH200") & pairwise_scalar["SignificantAfterHolm"]
     ]
+    bootstrap_excluding_zero_soh = pairwise_scalar.loc[
+        (pairwise_scalar["Metric"] == "SOH200")
+        & pairwise_scalar["BootstrapCIExcludesZero"]
+    ]
     mechanism = associations.loc[
         associations["Feature"].str.startswith(("IR", "Temperature", "ChargeTime"))
     ].copy()
@@ -775,9 +782,15 @@ def _conclusion_table(result, rank_stability, pairwise_scalar, residual_policy, 
             {
                 "ConclusionId": "Q1-C05",
                 "Topic": "pairwise_difference",
-                "Statement": f"SOH200共有{len(significant_soh)}组策略对在精确置换检验及Holm校正后显著。",
+                "Statement": (
+                    f"SOH200共有{len(significant_soh)}组策略对在精确置换检验及Holm校正后显著；"
+                    f"另有{len(bootstrap_excluding_zero_soh)}组未作多重校正的电池bootstrap区间不跨0。"
+                ),
                 "EvidenceCSV": "pairwise_strategy_scalar_comparison.csv",
-                "Caveat": "置换和bootstrap单位均为整块完整电池，每策略仅2至7块",
+                "Caveat": (
+                    "两种结果不能互相替代：bootstrap区间不是同时置信区间，精确置换在每策略仅2至7块电池时分辨率很粗；"
+                    "0组确证差异不代表策略等价"
+                ),
             },
             {
                 "ConclusionId": "Q1-C06",

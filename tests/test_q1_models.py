@@ -60,6 +60,16 @@ def main() -> None:
     assert len(cycles) == 9350
     assert cycles["battery_id"].nunique() == 49
     assert cycles["policy"].nunique() == 9
+
+    pairwise_path = ROOT / "result" / "q1" / "raw" / "pairwise_strategy_scalar_comparison.csv"
+    if pairwise_path.exists():
+        pairwise = pd.read_csv(pairwise_path)
+        expected = (pairwise["CI95Low"] > 0) | (pairwise["CI95High"] < 0)
+        assert "BootstrapCIExcludesZero" in pairwise.columns
+        assert pairwise["BootstrapCIExcludesZero"].astype(bool).equals(expected)
+        soh200 = pairwise.loc[pairwise["Metric"] == "SOH200"]
+        assert not soh200["SignificantAfterHolm"].astype(bool).any()
+        assert soh200["BootstrapCIExcludesZero"].astype(bool).any()
     print("Q1 model tests passed")
 
 
