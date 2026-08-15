@@ -2,6 +2,10 @@
 
 存放A题问题4关于充电时间—寿命衰减多目标优化和推荐策略比较的程序。
 
+正式优化的充电时间主指标统一采用`battery_summary_clean.csv`中的逐电池
+`mean_chargetime`，与问题1、2保持一致；前200循环的逐循环充电时间均值只作
+覆盖区间敏感性分析。
+
 - `run_q4_smoke.py`：2000次bootstrap与5点权重粗网格的模型排错入口。
 - `run_q4_full_validation.py`：5000次策略内整块bootstrap、11点正式权重扫描、M1坐标LOSO压力测试和不确定性汇总的全量入口。
 

@@ -44,6 +44,7 @@ def collect_policy_observations(project_root: Path) -> tuple[list[PolicyObservat
     rows = []
     observations: list[PolicyObservation] = []
     for policy, group in meta.loc[meta["battery_id"].isin(complete_ids)].groupby("policy", sort=True):
+        metadata_by_battery = group.set_index("battery_id")
         battery_rows = []
         for battery_id in sorted(group["battery_id"].astype(int)):
             record = records[battery_id]
@@ -52,13 +53,15 @@ def collect_policy_observations(project_root: Path) -> tuple[list[PolicyObservat
             if time_column not in cycles.columns:
                 raise KeyError("Q4 requires chargetime_raw (or legacy chargetime) in cleaned cycle data")
             time_series = pd.to_numeric(cycles[time_column], errors="coerce")
-            time_value = float(time_series.mean())
+            time_value = float(metadata_by_battery.loc[battery_id, "mean_chargetime"])
+            cycle_time_value = float(time_series.mean())
             loss_value = float(1.0 - record.relative_at(200))
             late_values = record.relative_soh[150:200]
             x = np.arange(151, 201, dtype=float)
             xc = x - x.mean()
             slope = float(xc @ (late_values - late_values.mean()) / (xc @ xc))
             battery_rows.append({"battery_id": battery_id, "time": time_value,
+                                 "cycle_time_sensitivity": cycle_time_value,
                                  "loss": loss_value, "late_slope_loss": max(0.0, -slope)})
         values = pd.DataFrame(battery_rows)
         first = group.iloc[0]

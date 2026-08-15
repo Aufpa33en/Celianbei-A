@@ -34,9 +34,13 @@ def test_q4_full_validation_protocol() -> None:
     assert len(constraints) == 40
     assert constraints.groupby("loss_limit")["selection_frequency"].sum().round(12).eq(1.0).all()
     sensitivity = pd.read_csv(target / "time_model_sensitivity.csv")
+    assert sensitivity["primary_equals_summary"].astype(bool).all()
+    assert summary.set_index("policy")["time_mean"].sort_index().equals(
+        sensitivity.set_index("policy")["summary_time_mean"].sort_index()
+    )
     cycle_front = set(sensitivity.loc[sensitivity["pareto_cycle_time"].astype(bool), "policy"])
-    summary_front = set(sensitivity.loc[sensitivity["pareto_summary_time"].astype(bool), "policy"])
-    assert cycle_front == summary_front
+    primary_front = set(sensitivity.loc[sensitivity["pareto_primary_time"].astype(bool), "policy"])
+    assert cycle_front == primary_front
     uncertainty = pd.read_csv(target / "policy_uncertainty.csv")
     assert uncertainty["interval_type"].eq("strategy_mean_whole_battery_bootstrap").all()
     manifest = pd.read_csv(target / "manifest.csv")

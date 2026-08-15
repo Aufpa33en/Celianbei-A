@@ -24,7 +24,7 @@ from q4_models.core import (  # noqa: E402
     pareto_mask,
 )
 
-FORMAL_VERSION = "q4_full_v2"
+FORMAL_VERSION = "q4_full_v3"
 FORMAL_LAMBDAS = np.arange(0.0, 1.000001, 0.1)
 RIDGE_GRID = (0.01, 0.1, 1.0, 10.0)
 LOSS_LIMITS = (0.0005, 0.0010, 0.0015, 0.0017)
@@ -116,25 +116,31 @@ def selection_frequencies(boot: pd.DataFrame, repetitions: int) -> tuple[pd.Data
     return weighted, pd.DataFrame(constrained_rows)
 
 
-def time_model_sensitivity(summary: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame]:
+def time_model_sensitivity(summary: pd.DataFrame, battery: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame]:
     meta = pd.read_csv(ROOT / "data" / "processed" / "q1_cleaned" / "battery_summary_clean.csv")
     official = (meta.loc[meta["prediction_test"].eq(0)]
                 .groupby("policy", as_index=False)["mean_chargetime"].mean()
                 .rename(columns={"mean_chargetime": "summary_time_mean"}))
+    cycle = (battery.groupby("policy", as_index=False)["cycle_time_sensitivity"].mean()
+             .rename(columns={"cycle_time_sensitivity": "cycle_time_mean"}))
     table = summary[["policy", "c1", "q1", "c2", "time_mean", "loss_mean"]].merge(
-        official, on="policy", how="left")
-    table = table.rename(columns={"time_mean": "cycle_time_mean"})
+        official, on="policy", how="left").merge(cycle, on="policy", how="left")
+    table = table.rename(columns={"time_mean": "primary_time_mean"})
     q = table["q1"] / 100.0
     table["t0_nominal"] = 60.0 * (q / table["c1"] + (0.8 - q) / table["c2"])
-    table["cycle_minus_t0"] = table["cycle_time_mean"] - table["t0_nominal"]
+    table["primary_minus_t0"] = table["primary_time_mean"] - table["t0_nominal"]
     table["summary_minus_t0"] = table["summary_time_mean"] - table["t0_nominal"]
     table["cycle_minus_summary"] = table["cycle_time_mean"] - table["summary_time_mean"]
+    table["primary_equals_summary"] = np.isclose(
+        table["primary_time_mean"], table["summary_time_mean"], rtol=0.0, atol=1e-12
+    )
+    table["pareto_primary_time"] = pareto_mask(table["primary_time_mean"], table["loss_mean"])
     table["pareto_cycle_time"] = pareto_mask(table["cycle_time_mean"], table["loss_mean"])
     table["pareto_summary_time"] = pareto_mask(table["summary_time_mean"], table["loss_mean"])
-    fastest = float(table["cycle_time_mean"].min())
-    table["cycle_time_equivalent_fastest"] = table["cycle_time_mean"] <= fastest + TIME_EQUIVALENCE_MINUTES
+    fastest = float(table["primary_time_mean"].min())
+    table["primary_time_equivalent_fastest"] = table["primary_time_mean"] <= fastest + TIME_EQUIVALENCE_MINUTES
     decisions = []
-    for metric in ("cycle_time_mean", "summary_time_mean"):
+    for metric in ("primary_time_mean", "cycle_time_mean"):
         for weight in FORMAL_LAMBDAS:
             idx = choose_scalar(table[metric].to_numpy(), table["loss_mean"].to_numpy(),
                                 table["policy"].astype(str).tolist(), float(weight))
@@ -221,7 +227,8 @@ def integrity_checks(summary: pd.DataFrame, battery: pd.DataFrame, boot: pd.Data
         {"check": "late_slope_bootstrapped", "passed": bool(boot["late_slope_loss"].notna().all()), "detail": "strategy mean per replicate"},
         {"check": "point_recommendations_pareto", "passed": recommendation_policies.issubset(pareto_policies), "detail": len(recommendation_policies)},
         {"check": "m1_coordinate_folds", "passed": len(loso) == 7 and len(repeated_coordinate) == 1, "detail": "7 unique coordinates; duplicate coordinate jointly held out"},
-        {"check": "time_metric_pareto_stable", "passed": set(time_table.loc[time_table["pareto_cycle_time"], "policy"]) == set(time_table.loc[time_table["pareto_summary_time"], "policy"]), "detail": "cycle versus battery_summary time"},
+        {"check": "primary_time_matches_q1_q2", "passed": bool(time_table["primary_equals_summary"].all()), "detail": "Q4 primary equals battery_summary mean_chargetime"},
+        {"check": "time_metric_pareto_stable", "passed": set(time_table.loc[time_table["pareto_cycle_time"], "policy"]) == set(time_table.loc[time_table["pareto_primary_time"], "policy"]), "detail": "cycle sensitivity versus primary battery_summary time"},
         {"check": "protected_inputs_unchanged", "passed": before == protected_hashes(), "detail": "data, q4 source, smoke outputs"},
     ])
 
@@ -253,7 +260,7 @@ def main() -> None:
     uncertainty = policy_uncertainty(battery, boot)
     recommendations = point_recommendations(summary)
     selection_frequency, constraint_frequency = selection_frequencies(boot, args.bootstrap)
-    time_table, time_decisions = time_model_sensitivity(summary)
+    time_table, time_decisions = time_model_sensitivity(summary, battery)
     scale_sensitivity = scaling_sensitivity(summary)
     slope_sensitivity, typical_comparison = slope_and_typical_comparisons(summary)
     checks = integrity_checks(summary, battery, boot, loso, recommendations, time_table, before, args.bootstrap)
@@ -277,6 +284,8 @@ def main() -> None:
                   "formal_lambda_grid": FORMAL_LAMBDAS.tolist(), "ridge_grid": list(RIDGE_GRID),
                   "loss_limits": list(LOSS_LIMITS),
                   "loss_limit_type": "illustrative_decision_scenario_not_safety_standard",
+                  "primary_charge_time_metric": "battery_summary_clean.mean_chargetime",
+                  "cycle_charge_time_metric_role": "sensitivity_only",
                   "time_equivalence_minutes": TIME_EQUIVALENCE_MINUTES}
     frames = {"policy_summary.csv": summary, "battery_observations.csv": battery,
               "bootstrap_pareto.csv": boot, "policy_uncertainty.csv": uncertainty,
@@ -294,7 +303,18 @@ def main() -> None:
     temp.mkdir(parents=True)
     for name, frame in frames.items():
         frame.to_csv(temp / name, index=False, encoding="utf-8-sig")
-    report = f"""# Q4 全量验证结果\n\n版本`{FORMAL_VERSION}`，整块电池bootstrap {args.bootstrap}次，随机种子{SEED}，运行{elapsed:.3f}秒。\n\nM0离散观测策略Pareto为主模型；M1单J模型的oracle坐标压力测试失败，正式淘汰为优化器。点估计Pareto策略为：{', '.join(summary.loc[summary['pareto'], 'policy'].astype(str))}。\n\n权重结论依赖标准化集合，`scaling_sensitivity.csv`只作敏感性；正式决策应报告Pareto前沿、退化约束和bootstrap稳定性。四个退化上限是说明规则用法的决策场景，不是工程安全标准。四个约10.043分钟策略在0.01分钟容差内视为实际近似并列。\n\n`time_model_sensitivity.csv`同时保存逐循环均值、battery_summary均值和T0；`typical_strategy_comparison.csv`对比推荐策略与典型长/短寿命策略。推荐只适用于9个已有策略，不能解释为三参数因果最优。\n"""
+    report = f"""# Q4 全量验证结果
+
+版本`{FORMAL_VERSION}`，整块电池bootstrap {args.bootstrap}次，随机种子{SEED}，运行{elapsed:.3f}秒。
+
+M0离散观测策略Pareto为主模型；M1单J模型的oracle坐标压力测试失败，正式淘汰为优化器。点估计Pareto策略为：{', '.join(summary.loc[summary['pareto'], 'policy'].astype(str))}。
+
+充电时间主指标统一采用`battery_summary_clean.csv`中的逐电池`mean_chargetime`，与问题1、2一致。前200循环的逐循环均值仅作覆盖窗口敏感性，不能替代主指标。按主指标和0.01分钟容差，只有5.3C-54%-4C与5C-67%-4C属于最快近似并列组。
+
+权重结论依赖标准化集合，`scaling_sensitivity.csv`只作敏感性；正式决策应报告Pareto前沿、退化约束和bootstrap稳定性。四个退化上限是说明规则用法的决策场景，不是工程安全标准。
+
+`time_model_sensitivity.csv`同时保存主指标、逐循环敏感性均值和T0；`typical_strategy_comparison.csv`对比推荐策略与典型长/短寿命策略。推荐只适用于9个已有策略，不能解释为三参数因果最优。
+"""
     (temp / "full_report.md").write_text(report, encoding="utf-8")
     (temp / "run_config.json").write_text(json.dumps(run_config, ensure_ascii=False, indent=2), encoding="utf-8")
     manifest_rows = [{"path": path.name, "sha256": _sha256(path),
