@@ -94,6 +94,8 @@ def run_final_inference(project_root: Path, settings: InferenceSettings) -> dict
     pairwise_lifetimes = pairwise_lifetime_comparison(battery_lifetimes)
     cohort = batteries[["battery_id", "policy", "prediction_test"]].copy()
     cohort["IncludedInQ1Cycle200Inference"] = cohort["prediction_test"] == 0
+    cohort["IncludedInQ1LifetimeInference"] = True
+    cohort["LifetimePrefixCycle"] = lifetime_settings.prefix_cycle
     cohort["ExclusionReason"] = np.where(
         cohort["prediction_test"] == 0,
         "included_complete_to_cycle_200",
@@ -101,8 +103,9 @@ def run_final_inference(project_root: Path, settings: InferenceSettings) -> dict
     )
     conclusions = _conclusion_table(
         model_result,
-        rank_stability,
-        pairwise_scalar,
+        lifetime_rank_stability,
+        pairwise_lifetimes,
+        lifetime_validation_summary,
         residual_policy,
         associations,
     )
@@ -824,17 +827,23 @@ def _model_validation_tables(
     }
 
 
-def _conclusion_table(result, rank_stability, pairwise_scalar, residual_policy, associations):
-    ordered = rank_stability.sort_values("MeanRank")
-    long_group = rank_stability.loc[rank_stability["PrimaryGroup"] == "typical_long", "Policy"].tolist()
-    short_group = rank_stability.loc[rank_stability["PrimaryGroup"] == "typical_short", "Policy"].tolist()
-    significant_soh = pairwise_scalar.loc[
-        (pairwise_scalar["Metric"] == "SOH200") & pairwise_scalar["SignificantAfterHolm"]
+def _conclusion_table(
+    result,
+    lifetime_rank_stability,
+    pairwise_lifetimes,
+    lifetime_validation_summary,
+    residual_policy,
+    associations,
+):
+    ordered = lifetime_rank_stability.sort_values("PointT80Rank")
+    long_group = ordered.head(3)["Policy"].tolist()
+    short_group = ordered.tail(3)["Policy"].tolist()
+    significant_lifetime = pairwise_lifetimes.loc[
+        pairwise_lifetimes["SignificantAfterHolm"].astype(bool)
     ]
-    bootstrap_excluding_zero_soh = pairwise_scalar.loc[
-        (pairwise_scalar["Metric"] == "SOH200")
-        & pairwise_scalar["BootstrapCIExcludesZero"]
-    ]
+    selected_window = lifetime_validation_summary.loc[
+        lifetime_validation_summary["Selected"].astype(bool)
+    ].iloc[0]
     mechanism = associations.loc[
         associations["Feature"].str.startswith(("IR", "Temperature", "ChargeTime"))
     ].copy()
@@ -843,45 +852,42 @@ def _conclusion_table(result, rank_stability, pairwise_scalar, residual_policy, 
         [
             {
                 "ConclusionId": "Q1-C01",
-                "Topic": "main_model",
+                "Topic": "lifetime_model",
                 "Statement": (
-                    f"主模型为两阶段函数型曲线（内部标识{result.model_type}，"
-                    f"lambda_curve={result.best_config.lambda_curve:g}）；选择依据为外层留一电池、内层重新调参的RMSE。"
+                    f"循环寿命主模型使用前150循环末段{int(selected_window['Window'])}循环线性趋势与SOH=0.8的交点；"
+                    f"151至200循环策略等权回测RMSE为{selected_window['StrategyEqualRMSE']:.6f}。"
                 ),
-                "EvidenceCSV": "model_comparison.csv;selection_pipeline_summary.csv",
-                "Caveat": "40个外层折均由训练数据选择函数型家族；与spline_mixed的绝对RMSE差仍小",
+                "EvidenceCSV": "lifetime_window_validation_summary.csv;battery_lifetime_estimates.csv",
+                "Caveat": "回测验证近端趋势预测，不是对真实T80终点的直接验证",
             },
             {
                 "ConclusionId": "Q1-C02",
                 "Topic": "model_agreement",
                 "Statement": "三种候选模型的SOH200策略排序完全一致。",
                 "EvidenceCSV": "model_agreement.csv",
-                "Caveat": "一致性只覆盖0至200循环",
+                "Caveat": "SOH曲线模型为辅助分析，一致性只覆盖0至200循环",
             },
             {
                 "ConclusionId": "Q1-C03",
                 "Topic": "typical_long",
                 "Statement": "；".join(long_group) if long_group else "没有策略达到80% bootstrap稳定阈值",
-                "EvidenceCSV": "strategy_rank_stability.csv",
-                "Caveat": "基于SOH200点估计前三名；同时查看bootstrap排名概率，不等同真实EOL寿命",
+                "EvidenceCSV": "strategy_lifetime_summary.csv;strategy_lifetime_rank_stability.csv",
+                "Caveat": "基于电池级预测T80的策略中位数前三名；同时查看bootstrap排名概率",
             },
             {
                 "ConclusionId": "Q1-C04",
                 "Topic": "typical_short",
                 "Statement": "；".join(short_group) if short_group else "没有策略达到80% bootstrap稳定阈值",
-                "EvidenceCSV": "strategy_rank_stability.csv",
-                "Caveat": "基于SOH200点估计后三名；同时查看bootstrap排名概率，不等同真实EOL寿命",
+                "EvidenceCSV": "strategy_lifetime_summary.csv;strategy_lifetime_rank_stability.csv",
+                "Caveat": "基于电池级预测T80的策略中位数后三名；同时查看bootstrap排名概率",
             },
             {
                 "ConclusionId": "Q1-C05",
                 "Topic": "pairwise_difference",
-                "Statement": (
-                    f"SOH200共有{len(significant_soh)}组策略对在精确置换检验及Holm校正后显著；"
-                    f"另有{len(bootstrap_excluding_zero_soh)}组未作多重校正的电池bootstrap区间不跨0。"
-                ),
-                "EvidenceCSV": "pairwise_strategy_scalar_comparison.csv",
+                "Statement": f"预测T80共有{len(significant_lifetime)}组策略对在精确置换检验及Holm校正后显著。",
+                "EvidenceCSV": "pairwise_strategy_lifetime_comparison.csv",
                 "Caveat": (
-                    "两种结果不能互相替代：bootstrap区间不是同时置信区间，精确置换在每策略仅2至7块电池时分辨率很粗；"
+                    "精确置换在每策略仅3至8块电池时分辨率很粗，且响应本身是模型外推值；"
                     "0组确证差异不代表策略等价"
                 ),
             },
@@ -903,8 +909,8 @@ def _conclusion_table(result, rank_stability, pairwise_scalar, residual_policy, 
                 "ConclusionId": "Q1-C08",
                 "Topic": "eol_boundary",
                 "Statement": "当前49块电池均未观测到80% SOH终点。",
-                "EvidenceCSV": "data_coverage.csv",
-                "Caveat": "局部线性L80只能作为未验证外推代理",
+                "EvidenceCSV": "data_coverage.csv;lifetime_window_sensitivity.csv",
+                "Caveat": "T80是早期SOH趋势外推；必须同时报告窗口敏感性和电池bootstrap不确定性",
             },
         ]
     )
