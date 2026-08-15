@@ -1,0 +1,5 @@
+﻿version,model,status,detail
+q4_smoke_v1,M0_discrete_pareto,primary,9 observed strategies; Pareto + constrained choice
+q4_smoke_v1,M1_single_J_ridge,sensitivity,7 unique complete coordinates; coordinate LOSO is extrapolation pressure test
+q4_smoke_v1,B_shortest_time,baseline,minimum observed mean charge time
+q4_smoke_v1,C_lowest_loss,baseline,minimum observed SOH200 relative loss

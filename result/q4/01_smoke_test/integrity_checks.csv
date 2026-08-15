@@ -1,0 +1,7 @@
+﻿check,passed,detail
+nine_policies,True,9
+complete_batteries_only,True,40
+finite_time_loss,True,finite observed proxies
+pareto_nonempty,True,3
+bootstrap_rows,True,18000
+missing_c1_not_in_m1,True,missing coordinate retained only in M0

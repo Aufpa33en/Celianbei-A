@@ -1,0 +1,5 @@
+﻿version,model,status,metric,value,reason
+q4_smoke_v1,M0_discrete_pareto,pass_primary,pareto_count,3.0,uses observed 9-strategy time-degradation points; no continuous causal claim
+q4_smoke_v1,M1_single_J_ridge,pass_sensitivity,coordinate_loso_rmse,0.015826649124149304,extrapolation pressure test; mean improvement over constant=-0.00680609
+q4_smoke_v1,B_shortest_time,baseline_only,minimum_observed_time,10.042734458333337,single-objective boundary
+q4_smoke_v1,C_lowest_loss,baseline_only,minimum_observed_loss,0.00042827118143756726,single-objective boundary

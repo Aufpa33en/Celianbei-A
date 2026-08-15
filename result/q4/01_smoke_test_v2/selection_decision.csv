@@ -1,0 +1,2 @@
+﻿version,selected_model,selection_variant,reason,m1_mean_improvement_over_constant,m1_mean_loso_rmse,pareto_count_point,bootstrap_repetitions
+q4_smoke_v1,M0_discrete_pareto,observed_policy_pareto,M1 is only an extrapolation pressure test; free continuous response surface is not identifiable,-0.006806089410952189,0.015826649124149304,3,2000
