@@ -320,10 +320,11 @@ def write_merged_robustness(project_root: Path, outputs: dict[str, pd.DataFrame]
             continue
         frame = pd.read_csv(path)
         relative = path.relative_to(project_root)
+        relative_posix = relative.as_posix()
         manifest.append(
             {
-                "output_key": str(relative.with_suffix("")).replace("/", "__"),
-                "relative_path": str(relative),
+                "output_key": relative.with_suffix("").as_posix().replace("/", "__"),
+                "relative_path": relative_posix,
                 "rows": len(frame),
                 "columns": len(frame.columns),
             }

@@ -66,6 +66,7 @@ def main() -> None:
             ("02_model_selection", "selected_model_predictions.csv"),
         )
     }
+    assert not manifest["relative_path"].str.contains("\\", regex=False).any()
     assert required_paths.issubset(set(manifest["relative_path"]))
     print("Q2 smoke tests passed")
 
