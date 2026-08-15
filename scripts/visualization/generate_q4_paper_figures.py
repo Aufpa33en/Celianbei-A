@@ -56,6 +56,11 @@ def _sha256(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
+def _canonical_text_sha256(path: Path) -> str:
+    canonical = "\n".join(path.read_text(encoding="utf-8").splitlines()) + "\n"
+    return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
+
+
 def _write_figure_manifest(paths: tuple[Path, ...]) -> None:
     script_path = Path(__file__).resolve()
     rows = []
@@ -68,7 +73,8 @@ def _write_figure_manifest(paths: tuple[Path, ...]) -> None:
             "source_files": ";".join(sources),
             "source_sha256": ";".join(_sha256(RESULT / name) for name in sources),
             "generator": script_path.relative_to(ROOT).as_posix(),
-            "generator_sha256": _sha256(script_path),
+            "generator_sha256": _canonical_text_sha256(script_path),
+            "generator_hash_normalization": "utf8_lf_final_newline",
         })
     pd.DataFrame(rows).to_csv(
         FIGURE_DIR / "figure_manifest.csv", index=False, encoding="utf-8-sig", lineterminator="\n"

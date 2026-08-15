@@ -36,7 +36,11 @@ def main() -> None:
         for source_name, expected_hash in zip(source_names, source_hashes):
             assert hashlib.sha256((result_root / source_name).read_bytes()).hexdigest() == expected_hash
         generator = ROOT / row["generator"]
-        assert hashlib.sha256(generator.read_bytes()).hexdigest() == row["generator_sha256"]
+        canonical_generator = "\n".join(
+            generator.read_text(encoding="utf-8").splitlines()
+        ) + "\n"
+        assert row["generator_hash_normalization"] == "utf8_lf_final_newline"
+        assert hashlib.sha256(canonical_generator.encode("utf-8")).hexdigest() == row["generator_sha256"]
     print("Q4 paper figure integrity tests passed")
 
 
