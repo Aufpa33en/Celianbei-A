@@ -20,3 +20,12 @@ tmp/
 
 # Superseded local figure exports
 figures/archive/
+
+# LaTeX build artifacts
+*.aux
+*.log
+*.out
+*.synctex
+*.synctex.gz
+*.fls
+*.fdb_latexmk
