@@ -30,6 +30,10 @@ def main() -> None:
 
     # Optimized implementation must reproduce the original smoke metrics.
     new = sensitivity_table(battery, strategy)
+    assert not new.loc[new["model"].eq("constant_mean"), "selected_explanatory"].astype(bool).any()
+    assert new.groupby(["cohort", "exclude_battery41"])["selected_by_cv"].sum().eq(1).all()
+    selected_constant = new["model"].eq("constant_mean") & new["selected_by_cv"].astype(bool)
+    assert selected_constant.any()
     new = new[
         new["cohort"].eq("explicit_new_structure")
         & ~new["exclude_battery41"]

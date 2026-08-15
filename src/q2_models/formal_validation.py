@@ -482,7 +482,8 @@ def sensitivity_table(battery: pd.DataFrame, strategy: pd.DataFrame) -> pd.DataF
                 "soh200_rmse": result["constant_rmse"][1],
                 "relative_loss_improvement": 0.0,
                 "soh200_improvement": 0.0,
-                "selected_explanatory": result["selected"] == "constant_mean",
+                "selected_by_cv": result["selected"] == "constant_mean",
+                "selected_explanatory": False,
                 "n_policy": len(cohort.policy),
                 "n_coordinate": len(np.unique(cohort.groups)),
             }
@@ -496,6 +497,7 @@ def sensitivity_table(battery: pd.DataFrame, strategy: pd.DataFrame) -> pd.DataF
                 "soh200_rmse": nearest_rmse[1],
                 "relative_loss_improvement": 1.0 - nearest_rmse[0] / result["constant_rmse"][0],
                 "soh200_improvement": 1.0 - nearest_rmse[1] / result["constant_rmse"][1],
+                "selected_by_cv": False,
                 "selected_explanatory": False,
                 "n_policy": len(cohort.policy),
                 "n_coordinate": len(np.unique(cohort.groups)),
@@ -511,6 +513,7 @@ def sensitivity_table(battery: pd.DataFrame, strategy: pd.DataFrame) -> pd.DataF
                     "soh200_rmse": row["rmse"][1],
                     "relative_loss_improvement": row["improvement"][0],
                     "soh200_improvement": row["improvement"][1],
+                    "selected_by_cv": row["model"] == result["selected"],
                     "relative_loss_coef_standardized": row["coef_standardized"][0],
                     "soh200_coef_standardized": row["coef_standardized"][1],
                     "selected_explanatory": row["model"] == result["selected"],
@@ -531,12 +534,12 @@ def formal_decision(
     top = exposure_frequency.iloc[0]
     without_extreme = sensitivity[
         sensitivity["cohort"].eq("explicit_new_without_3_7C")
-        & sensitivity["selected_explanatory"].astype(bool)
+        & sensitivity["selected_by_cv"].astype(bool)
     ].iloc[0]
     without_battery41 = sensitivity[
         sensitivity["cohort"].eq("explicit_new_structure")
         & sensitivity["exclude_battery41"].astype(bool)
-        & sensitivity["selected_explanatory"].astype(bool)
+        & sensitivity["selected_by_cv"].astype(bool)
     ].iloc[0]
     criteria = {
         "top_exposure_selection_frequency_ge_0_50": bool(top["selection_frequency"] >= 0.50),
