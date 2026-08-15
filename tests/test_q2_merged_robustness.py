@@ -19,6 +19,7 @@ def main() -> None:
     battery = outputs["battery_late_rate"]
     strategy = outputs["strategy_late_rate"]
     sensitivity = outputs["jh_coordinate_sensitivity"]
+    fold_diagnostics = outputs["jh_coordinate_fold_diagnostics"]
     assert len(battery) == 40
     assert battery["policy"].nunique() == 9
     assert battery["late_degradation_rate"].gt(0).all()
@@ -32,6 +33,15 @@ def main() -> None:
     ].iloc[0]
     assert all_complete["coordinate_equal_log_RMSE"] < 0.5
     assert explicit["coordinate_equal_log_RMSE"] > 4.0
+    explicit_folds = fold_diagnostics[
+        fold_diagnostics["cohort"].eq("explicit_new_structure")
+        & fold_diagnostics["model"].eq("log_rate_J_H")
+    ]
+    assert len(explicit_folds) == 6
+    assert explicit_folds["n_train_policy_rows"].eq(5).all()
+    assert explicit_folds["n_parameters_including_intercept"].eq(3).all()
+    assert explicit_folds["residual_df_proxy"].eq(2).all()
+    assert explicit_folds["validation_support"].eq("very_low_df_diagnostic_only").all()
     matched = outputs["matched_4p8_comparison"].iloc[0]
     assert matched["relative_change"] < -0.7
     assert matched["causal_status"].startswith("not_identified")

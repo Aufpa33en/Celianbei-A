@@ -20,6 +20,7 @@ result\q2\03_formal_validation\permutation_test_summary,result\q2\03_formal_vali
 result\q2\03_formal_validation\runtime_checkpoints,result\q2\03_formal_validation\runtime_checkpoints.csv,21,3
 result\q2\03_formal_validation\sensitivity_model_comparison,result\q2\03_formal_validation\sensitivity_model_comparison.csv,30,13
 result\q2\05_merged_robustness\paper\global_strategy_permutation,result\q2\05_merged_robustness\paper\global_strategy_permutation.csv,1,10
+result\q2\05_merged_robustness\paper\jh_coordinate_fold_diagnostics,result\q2\05_merged_robustness\paper\jh_coordinate_fold_diagnostics.csv,36,8
 result\q2\05_merged_robustness\paper\jh_coordinate_sensitivity,result\q2\05_merged_robustness\paper\jh_coordinate_sensitivity.csv,6,7
 result\q2\05_merged_robustness\paper\matched_4p8_comparison,result\q2\05_merged_robustness\paper\matched_4p8_comparison.csv,1,10
 result\q2\05_merged_robustness\paper\strategy_late_rate,result\q2\05_merged_robustness\paper\strategy_late_rate.csv,9,13

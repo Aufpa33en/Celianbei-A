@@ -174,8 +174,10 @@ def matched_4p8_comparison(battery: pd.DataFrame) -> pd.DataFrame:
     )
 
 
-def jh_coordinate_sensitivity(strategy: pd.DataFrame) -> pd.DataFrame:
-    """Audit the discarded J+H model with coordinate-level held-out groups."""
+def jh_coordinate_sensitivity(
+    strategy: pd.DataFrame, return_folds: bool = False
+) -> pd.DataFrame | tuple[pd.DataFrame, pd.DataFrame]:
+    """Audit the J+H candidate and expose the sample size of every held-coordinate fold."""
     complete = strategy[strategy["C1"].notna()].copy()
     cohorts = {
         "all_complete": complete,
@@ -185,6 +187,7 @@ def jh_coordinate_sensitivity(strategy: pd.DataFrame) -> pd.DataFrame:
         ],
     }
     rows = []
+    fold_rows = []
     for cohort_name, frame in cohorts.items():
         frame = frame.reset_index(drop=True)
         for model, features in (("constant_mean", ()), ("log_rate_J_H", ("J", "H"))):
@@ -207,6 +210,24 @@ def jh_coordinate_sensitivity(strategy: pd.DataFrame) -> pd.DataFrame:
                     )
                     predicted_log = test_design @ np.linalg.lstsq(design, y, rcond=None)[0]
                 prediction[test.index] = np.exp(predicted_log)
+                n_parameters = 1 + len(features)
+                residual_df_proxy = len(train) - n_parameters
+                fold_rows.append(
+                    {
+                        "cohort": cohort_name,
+                        "model": model,
+                        "held_coordinate": coordinate,
+                        "n_train_policy_rows": len(train),
+                        "n_test_policy_rows": len(test),
+                        "n_parameters_including_intercept": n_parameters,
+                        "residual_df_proxy": residual_df_proxy,
+                        "validation_support": (
+                            "very_low_df_diagnostic_only"
+                            if residual_df_proxy <= 2
+                            else "limited_coordinate_validation"
+                        ),
+                    }
+                )
             log_mse = []
             rate_mse = []
             for coordinate in frame["coordinate_id"].unique():
@@ -232,6 +253,8 @@ def jh_coordinate_sensitivity(strategy: pd.DataFrame) -> pd.DataFrame:
         / baseline.loc[row["cohort"], "coordinate_equal_log_RMSE"],
         axis=1,
     )
+    if return_folds:
+        return result, pd.DataFrame(fold_rows)
     return result
 
 
@@ -244,12 +267,14 @@ def run_merged_robustness(
     batteries = pd.read_csv(source / "battery_summary_clean.csv")
     battery = extract_late_rate(cycles, batteries)
     strategy = strategy_late_rate(battery)
+    jh_summary, jh_folds = jh_coordinate_sensitivity(strategy, return_folds=True)
     outputs = {
         "battery_late_rate": battery,
         "strategy_late_rate": strategy,
         "global_strategy_permutation": global_strategy_permutation(battery, repetitions, seed),
         "matched_4p8_comparison": matched_4p8_comparison(battery),
-        "jh_coordinate_sensitivity": jh_coordinate_sensitivity(strategy),
+        "jh_coordinate_sensitivity": jh_summary,
+        "jh_coordinate_fold_diagnostics": jh_folds,
     }
     outputs["runtime_metadata"] = pd.DataFrame(
         [
@@ -276,15 +301,15 @@ def write_merged_robustness(project_root: Path, outputs: dict[str, pd.DataFrame]
     outputs["runtime_metadata"].to_csv(raw / "runtime_metadata.csv", index=False, encoding="utf-8-sig")
     for name in (
         "strategy_late_rate", "global_strategy_permutation", "matched_4p8_comparison",
-        "jh_coordinate_sensitivity",
+        "jh_coordinate_sensitivity", "jh_coordinate_fold_diagnostics",
     ):
         outputs[name].to_csv(paper / f"{name}.csv", index=False, encoding="utf-8-sig")
     root.joinpath("README.md").write_text(
         "# Q2合并稳健性分析\n\n"
         "本目录补充远程正式验证，但不替代`03_formal_validation/`。\n\n"
-        "- `paper/`：末段退化率策略汇总、假设标签可交换的全局诊断、4.8C匹配诊断和J+H坐标留出敏感性。\n"
+        "- `paper/`：末段退化率策略汇总、假设标签可交换的全局诊断、4.8C匹配诊断，以及J+H坐标留出汇总和逐折样本量。\n"
         "- `raw/`：40块完整电池的末段退化率和运行环境/参数。\n\n"
-        "全局标签置换因协议组固定、样本数和方差不等而不提供确认性p值。正式参数结论仍以高SOC暴露族的选择校正诊断及其边界为准。J+H模型因不能通过同结构队列敏感性验证而被否决；"
+        "全局标签置换因协议组固定、样本数和方差不等而不提供确认性p值。正式参数结论仍以高SOC暴露族的选择校正诊断及其边界为准。J+H模型在当前6策略同结构队列中每折仅5个训练点拟合3个系数，无法获得可信验证；"
         "4.8C匹配结果只反映结构/批次联合差异。\n",
         encoding="utf-8",
     )
