@@ -10,7 +10,7 @@ late_slope_bootstrapped,True,strategy mean per replicate
 point_recommendations_pareto,True,3
 weighted_normalization_machine_readable,True,weighted score is diagnostic; all-policy minmax scope exposed
 m1_coordinate_folds,True,7 unique coordinates; duplicate coordinate jointly held out
-m1_failure_concentration_exposed,True,"fold-level prediction, extrapolation and squared-error share recorded"
+m1_failure_concentration_exposed,True,worst-fold SSE share=0.721803; excluding worst M1 RMSE=0.009652 > baseline=0.009324
 fast_pair_point_pareto_roles,True,point Pareto recommendation separated from non-Pareto uncertainty sensitivity
 fast_pair_difference_intervals_cross_zero,True,time and loss pairwise bootstrap intervals overlap zero
 q3_not_used_as_counterfactual,True,"Q3 is conditional prediction, not a policy response surface"

@@ -76,6 +76,9 @@ def test_q4_full_validation_protocol() -> None:
     assert bool(worst["prediction_below_zero"])
     remaining = m1.loc[~m1["worst_fold"].astype(bool)]
     assert remaining["rmse"].mean() > remaining["constant_rmse"].mean()
+    concentration_check = checks.loc[checks["check"].eq("m1_failure_concentration_exposed")].iloc[0]
+    assert "excluding worst M1 RMSE=" in concentration_check["detail"]
+    assert " > baseline=" in concentration_check["detail"]
     assert fast_pair["q3_role"].eq("not_used_no_early_trajectory_for_new_policy").all()
     manifest = pd.read_csv(target / "manifest.csv")
     assert "run_config.json" in set(manifest["path"])
