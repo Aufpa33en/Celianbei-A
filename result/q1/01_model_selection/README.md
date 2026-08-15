@@ -14,7 +14,7 @@
 
 ## 得到的结果
 
-按留一电池平均 RMSE 选择 `functional_ridge`，其 RMSE 为 `0.004338`；`spline_mixed` 为 `0.004342`，二者非常接近。三种模型的周期 200 策略排序一致。
+按当前嵌套选择流水线的外层留一电池平均 RMSE 选择 `functional_ridge`，其 RMSE 为 `0.004325`；`spline_mixed` 为 `0.004342`，二者非常接近。`functional_ridge`是历史模型标识，当前冻结的`lambda_curve=0`对应无惩罚函数型解。三种模型的周期 200 策略排序一致。
 
 工作簿 `model_selection.xlsx`：
 
