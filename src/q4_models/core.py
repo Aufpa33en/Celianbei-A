@@ -107,8 +107,15 @@ def choose_scalar(time: np.ndarray, loss: np.ndarray, policies: list[str], weigh
     return order[0]
 
 
-def bootstrap_pareto(frame: pd.DataFrame, repetitions: int = 2000, seed: int = SEED) -> pd.DataFrame:
+def bootstrap_pareto(
+    frame: pd.DataFrame,
+    repetitions: int = 2000,
+    seed: int = SEED,
+    lambda_grid: np.ndarray | None = None,
+    loss_limits: tuple[float, ...] = (),
+) -> pd.DataFrame:
     rng = np.random.default_rng(seed)
+    lambda_grid = LAMBDA_GRID if lambda_grid is None else np.asarray(lambda_grid, dtype=float)
     policies = sorted(frame["policy"].unique())
     records = {policy: frame.loc[frame["policy"].eq(policy)].reset_index(drop=True) for policy in policies}
     rows = []
@@ -118,14 +125,24 @@ def bootstrap_pareto(frame: pd.DataFrame, repetitions: int = 2000, seed: int = S
             data = records[policy]
             idx = rng.integers(0, len(data), size=len(data))
             sample = data.iloc[idx]
-            summary.append((policy, float(sample["time"].mean()), float(sample["loss"].mean())))
+            late_slope = float(sample["late_slope_loss"].mean()) if "late_slope_loss" in sample else np.nan
+            summary.append((policy, float(sample["time"].mean()), float(sample["loss"].mean()), late_slope))
         t = np.array([row[1] for row in summary]); d = np.array([row[2] for row in summary])
         front = pareto_mask(t, d)
-        choices = {w: summary[choose_scalar(t, d, policies, w)][0] for w in LAMBDA_GRID}
-        for (policy, time_value, loss_value), is_front in zip(summary, front):
+        choices = {w: summary[choose_scalar(t, d, policies, w)][0] for w in lambda_grid}
+        constrained_choices = {}
+        for limit in loss_limits:
+            feasible = np.flatnonzero(d <= limit)
+            constrained_choices[limit] = (
+                min(feasible, key=lambda i: (t[i], d[i], policies[i])) if len(feasible) else None
+            )
+        for index, ((policy, time_value, loss_value, late_slope), is_front) in enumerate(zip(summary, front)):
             rows.append({"version": Q4_VERSION, "replicate": rep, "policy": policy,
-                         "time": time_value, "loss": loss_value, "pareto": bool(is_front),
-                         **{f"selected_lambda_{w:.2f}": choices[w] == policy for w in LAMBDA_GRID}})
+                         "time": time_value, "loss": loss_value, "late_slope_loss": late_slope,
+                         "pareto": bool(is_front),
+                         **{f"selected_lambda_{w:.2f}": choices[w] == policy for w in lambda_grid},
+                         **{f"selected_loss_limit_{limit:.4f}": constrained_choices[limit] == index
+                            for limit in loss_limits}})
     return pd.DataFrame(rows)
 
 
@@ -141,7 +158,11 @@ def fit_single_exposure(train: pd.DataFrame, exposure: str, lam: float) -> tuple
     return float(coef[0]), float(coef[1]), mean, scale
 
 
-def loso_single_exposure(frame: pd.DataFrame, exposure: str = "j") -> pd.DataFrame:
+def loso_single_exposure(
+    frame: pd.DataFrame,
+    exposure: str = "j",
+    ridge_grid: tuple[float, ...] = (0.01, 0.1, 1.0, 10.0),
+) -> pd.DataFrame:
     usable = frame.dropna(subset=[exposure, "coordinate", "loss_mean"]).copy()
     usable["coordinate_key"] = usable["coordinate"].astype(str)
     rows = []
@@ -149,7 +170,7 @@ def loso_single_exposure(frame: pd.DataFrame, exposure: str = "j") -> pd.DataFra
         train = usable.loc[usable["coordinate_key"].ne(held_out)]
         test = usable.loc[usable["coordinate_key"].eq(held_out)]
         best = None
-        for lam in (0.01, 0.1, 1.0, 10.0):
+        for lam in ridge_grid:
             intercept, slope, mean, scale = fit_single_exposure(train, exposure, lam)
             if len(test) == 0 or scale < 1e-8:
                 pred = np.full(len(test), intercept)

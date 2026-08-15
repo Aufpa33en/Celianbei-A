@@ -1,0 +1,9 @@
+﻿check,passed,detail
+nine_policies,True,9
+complete_batteries_only,True,40
+finite_policy_metrics,True,finite time/loss/slope
+pareto_nonempty,True,3
+bootstrap_rows,True,45000
+formal_lambda_grid,True,"0.0,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.0"
+missing_c1_not_in_m1,True,missing coordinate retained only in M0; 7 complete-coordinate folds
+protected_inputs_unchanged,True,"data, q4 source, smoke outputs"

@@ -1,0 +1,32 @@
+{
+  "version": "q4_full_v2",
+  "seed": 20260815,
+  "bootstrap": 5000,
+  "formal_lambda_grid": [
+    0.0,
+    0.1,
+    0.2,
+    0.30000000000000004,
+    0.4,
+    0.5,
+    0.6000000000000001,
+    0.7000000000000001,
+    0.8,
+    0.9,
+    1.0
+  ],
+  "ridge_grid": [
+    0.01,
+    0.1,
+    1.0,
+    10.0
+  ],
+  "loss_limits": [
+    0.0005,
+    0.001,
+    0.0015,
+    0.0017
+  ],
+  "loss_limit_type": "illustrative_decision_scenario_not_safety_standard",
+  "time_equivalence_minutes": 0.01
+}

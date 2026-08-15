@@ -1,0 +1,3 @@
+﻿version,model,status,detail
+q4_full_v1,M0_discrete_pareto,primary,observed 9-policy Pareto and bootstrap
+q4_full_v1,M1_single_J_ridge,sensitivity,coordinate LOSO oracle pressure test; no continuous recommendation

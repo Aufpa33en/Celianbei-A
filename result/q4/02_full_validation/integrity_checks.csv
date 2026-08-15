@@ -1,0 +1,13 @@
+﻿check,passed,detail
+nine_policies,True,9
+exact_complete_battery_ids,True,40
+test_battery_ids_excluded,True,prediction_test=1 intersection empty
+finite_policy_metrics,True,finite time/loss/slope
+bootstrap_replicates_complete,True,45000
+each_lambda_selects_one,True,11
+constraint_rules_bootstrapped,True,4
+late_slope_bootstrapped,True,strategy mean per replicate
+point_recommendations_pareto,True,3
+m1_coordinate_folds,True,7 unique coordinates; duplicate coordinate jointly held out
+time_metric_pareto_stable,True,cycle versus battery_summary time
+protected_inputs_unchanged,True,"data, q4 source, smoke outputs"

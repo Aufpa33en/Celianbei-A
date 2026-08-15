@@ -16,3 +16,8 @@ def test_q4_smoke_protocol() -> None:
     assert len(summary) == 9 and summary["pareto"].any()
     boot = pd.read_csv(target / "bootstrap_pareto.csv")
     assert len(boot) == 18000
+
+
+if __name__ == "__main__":
+    test_q4_smoke_protocol()
+    print("Q4 smoke protocol tests passed")
