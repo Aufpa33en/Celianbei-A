@@ -8,8 +8,9 @@ projected_monotone,True,passed=720/720
 nested_selector_groups_complete,True,rows=6000 groups=120 unique_keys=True
 outer_train_isolation,True,fold_rows=120
 single_candidate_comparison_winner,True,selected=['C_ridge']
-single_deployment_freeze,True,['C_ridge']
-deployment_family_from_outer_lobo,True,freeze=C_ridge outer_lobo=C_ridge
+single_deployment_freeze,True,['P1_linear']
+single_L150_deployment_candidate,True,selected_rows=1
+deployment_family_from_L150_outer_lobo,True,freeze=P1_linear L150_outer_lobo=P1_linear
 deployment_hyperparameters_frozen,True,freeze row equals L=150 tuning row
 record_shapes,True,49/49
 protected_files_unchanged,True,passed=76/76

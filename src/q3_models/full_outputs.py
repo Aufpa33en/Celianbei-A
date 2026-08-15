@@ -71,6 +71,7 @@ def full_integrity_checks(
     selector = results["nested_selector_predictions.csv"]
     tuning = results["outer_tuning.csv"]
     selection = results["selection_decision.csv"]
+    deployment_candidates = results["deployment_candidate_comparison.csv"]
     checks: list[tuple[str, bool, str]] = []
     checks.append(("candidate_prediction_rows", len(pred) == 36000, f"observed={len(pred)} expected=36000"))
     group_sizes = pred.groupby(["model", "L", "battery_id"])["cycle"].nunique()
@@ -102,9 +103,14 @@ def full_integrity_checks(
     checks.append(("single_deployment_freeze", len(results["deployment_freeze.csv"]) == 1,
                    str(results["deployment_freeze.csv"]["selected_model"].tolist())))
     frozen_model = str(results["deployment_freeze.csv"]["selected_model"].iloc[0])
-    comparison_model = str(selection.loc[selection["selected"].astype(bool), "model"].iloc[0])
-    checks.append(("deployment_family_from_outer_lobo", frozen_model == comparison_model,
-                   f"freeze={frozen_model} outer_lobo={comparison_model}"))
+    selected_candidates = deployment_candidates.loc[
+        deployment_candidates["selected_for_L150_deployment"].astype(bool)
+    ]
+    checks.append(("single_L150_deployment_candidate", len(selected_candidates) == 1,
+                   f"selected_rows={len(selected_candidates)}"))
+    deployment_model = str(selected_candidates["model"].iloc[0])
+    checks.append(("deployment_family_from_L150_outer_lobo", frozen_model == deployment_model,
+                   f"freeze={frozen_model} L150_outer_lobo={deployment_model}"))
     frozen = results["deployment_freeze.csv"].iloc[0]
     tuning150 = results["deployment_tuning.csv"].loc[results["deployment_tuning.csv"]["L"].eq(150)].iloc[0]
     freeze_matches = (
@@ -133,26 +139,32 @@ def _full_report(results: dict[str, pd.DataFrame], checks: pd.DataFrame) -> str:
     selection = results["selection_decision.csv"].sort_values("final_rank")
     raw = results["model_summary.csv"].query("prediction_variant == 'raw'")
     nested = results["nested_selector_summary.csv"].query("prediction_variant == 'raw'")
+    deployment = results["deployment_candidate_comparison.csv"].sort_values("strategy_equal_rmse")
     freeze = results["deployment_freeze.csv"].iloc[0]
     pair = results["pairwise_selection.csv"].iloc[0]
     lines = [
         "# 第三问40电池全量嵌套LOBO报告", "",
         "## 验证边界", "",
         "40块完整电池逐块作为外层目标；每折只用其余39块重新选择B的λ、C的K/α、D的权重，并同时在39块内部选择模型族。9块真实测试电池未参与本阶段任何拟合、标准化、PCA、调参或区间校准。误差均在还原后的绝对SOH上计算，raw为唯一选模口径。", "",
-        "## 六模型共同比较", "",
+        "## 多早期长度鲁棒性比较（非部署决策）", "",
         "| 排名 | 模型 | 加权策略等权RMSE | L=150策略等权RMSE | 加权最差电池RMSE |", "|---:|---|---:|---:|---:|",
     ]
     for row in selection.itertuples(index=False):
         lines.append(f"| {row.final_rank} | {row.model} | {row.weighted_score:.6f} | {row.L150_strategy_equal_rmse:.6f} | {row.weighted_worst_battery_rmse:.6f} |")
+    lines.extend(["", "该0.15/0.25/0.60综合分数只回答模型对不同观测长度是否稳健，不再用来冻结最终模型；最终任务固定拥有150个已观测循环。", "",
+                  "## L=150部署候选比较", "",
+                  "| 模型 | 策略等权RMSE | 最差电池RMSE | 2%并列范围 | 最终冻结 |", "|---|---:|---:|---|---|"])
+    for row in deployment.itertuples(index=False):
+        lines.append(f"| {row.model} | {row.strategy_equal_rmse:.6f} | {row.worst_battery_rmse:.6f} | {bool(row.within_tie_tolerance)} | {bool(row.selected_for_L150_deployment)} |")
     lines.extend(["", "## 嵌套模型族选择器", ""])
     for row in nested.sort_values("L").itertuples(index=False):
         lines.append(f"- L={row.L}：策略等权RMSE={row.strategy_equal_rmse:.6f}，池化RMSE={row.pooled_rmse:.6f}，最差电池RMSE={row.worst_battery_rmse:.6f}。")
     lines.extend([
         "", "## 不确定性和冻结", "",
         f"候选比较前两名为{pair.model_a}与{pair.model_b}；分层整块电池bootstrap的加权分数差95%区间为[{pair.bootstrap_ci95_low:.6f}, {pair.bootstrap_ci95_high:.6f}]。该区间用于判断领先是否稳定，不把模型差异写成逐循环独立的显著性。",
-        f"依据40次真正外层LOBO的冻结规则，部署模型为`{freeze.selected_model}`；模型族冻结后，才用全部40块电池内部OOF确定其部署超参数。最终9电池预测只能使用该冻结模型，不能查看预测曲线后改选。", "",
+        f"依据与最终信息集一致的L=150外层LOBO冻结规则，部署模型为`{freeze.selected_model}`；冻结后才用全部40块电池内部OOF确定部署超参数。最终9电池预测只能使用该模型，不能查看预测曲线后改选。", "",
         "## C模型特征消融", "",
-        "消融固定为描述性分析，不参与模型族选择：比较仅早期动态特征、加入连续策略特征、再加入策略独热编码。结果位于`c_ablation_summary.csv`。", "",
+        "消融用于检验C模型内部特征架构，不把事后形成的消融变体追加为新候选：比较仅早期动态特征、加入连续策略特征、再加入策略独热编码。结果位于`c_ablation_summary.csv`，若简化变体有稳定优势，应在后续预注册为独立候选后重新验证。", "",
         "## 完整性门", "",
         f"完整性检查{int(checks['passed'].sum())}/{len(checks)}项通过。只有全部通过才允许发布本目录并进入9块真实测试电池预测。", "",
         "## EOL边界", "",
@@ -170,7 +182,7 @@ def write_full_outputs(
 ) -> Path:
     result_root = output_root if output_root is not None else project_root / "result" / "q3"
     target = result_root / "02_full_validation"
-    temp = target.with_name(target.name + ".tmp_q3_full_v1")
+    temp = target.with_name(target.name + f".tmp_{FULL_VERSION}")
     if temp.exists() or target.exists():
         raise FileExistsError(f"Refusing to overwrite existing full output path: {temp if temp.exists() else target}")
     temp.mkdir(parents=True)
@@ -257,7 +269,7 @@ def _final_report(summary: pd.DataFrame, settings: pd.DataFrame, eol: pd.DataFra
     lines = [
         "# 第三问完整回答与最终预测说明", "",
         "## 最终方法", "",
-        f"40块完整电池经过外层留一、折内调参和嵌套模型族选择后，冻结部署模型为`{model}`。随后只用全部40块完整电池重新调参/拟合，并读取9块测试电池的1—150循环前缀预测151—200循环。测试电池没有真实未来标签，因此不报告测试RMSE。", "",
+        f"最终任务固定拥有150个已观测循环，因此六个预先定义候选按L=150外层留一误差冻结部署模型`{model}`；50/100/150综合分数和嵌套选族结果只作为鲁棒性敏感性。随后只用全部40块完整电池拟合，并读取9块测试电池的1—150循环前缀预测151—200循环。测试电池没有真实未来标签，因此不报告测试RMSE。", "",
         "## 九块测试电池结果", "",
         "| 电池 | 策略 | 预测SOH200(raw) | 预测SOH200(projected) | SOH200近似95%区间 | 默认情景T80 | 状态 |", "|---:|---|---:|---:|---|---:|---|",
     ]
@@ -266,13 +278,13 @@ def _final_report(summary: pd.DataFrame, settings: pd.DataFrame, eol: pd.DataFra
         lines.append(f"| {row.battery_id} | {row.policy} | {row.predicted_SOH200_raw:.6f} | {row.predicted_SOH200_projected:.6f} | [{row.interval_low_cycle200:.6f}, {row.interval_high_cycle200:.6f}] | {t80} | {row.scenario_T80_status} |")
     lines.extend([
         "", "## 预测区间", "",
-        "区间由40块训练电池的外层交叉拟合绝对残差逐循环校准，是模型选择后的小样本近似区间，不是独立测试集覆盖率，也不能延伸解释为T80置信区间。", "",
+        f"区间由冻结`{model}`在L=150下40块训练电池的外层交叉拟合绝对残差逐循环校准，是固定模型族条件下的小样本近似点区间；它不包含选族不确定性，不是独立测试集覆盖率、整条轨迹联合区间或T80置信区间。", "",
         "## EOL情景外推", "",
         (f"所有模型、raw/projected和多个拟合起点均保存在`eol_sensitivity.csv`。有限情景值范围为{finite.min():.1f}—{finite.max():.1f}循环；"
          if len(finite) else "当前设置没有稳定有限的T80；")
         + "由于49块电池均未观测到80% SOH，T80只表示模型情景，不具有实证寿命精度。跨窗口或模型差异较大时，应报告范围和状态而不是单一寿命。", "",
         "## 可用结论", "",
-        "第三问能够用前50/100/150循环预测统一的151—200短期轨迹，并量化早期长度、策略信息和模型复杂度的作用；真正80%寿命仍受短观测窗口限制。论文中应把短期LOBO误差与远期T80不确定性分开陈述。",
+        f"在与最终信息集一致的L=150口径下，`{model}`是本轮六个预注册候选中的部署模型。多长度综合排名、嵌套选择器和C特征消融回答的是不同问题，不能替代部署选择或被解释为因果证据。真正80%寿命仍受短观测窗口限制；论文中应把短期LOBO误差与远期T80不确定性分开陈述。",
     ])
     return "\n".join(lines) + "\n"
 
@@ -286,7 +298,7 @@ def write_final_outputs(
 ) -> Path:
     result_root = output_root if output_root is not None else project_root / "result" / "q3"
     target = result_root / "03_final_predictions"
-    temp = target.with_name(target.name + ".tmp_q3_full_v1")
+    temp = target.with_name(target.name + f".tmp_{FULL_VERSION}")
     if temp.exists() or target.exists():
         raise FileExistsError(f"Refusing to overwrite existing final output path: {temp if temp.exists() else target}")
     temp.mkdir(parents=True)

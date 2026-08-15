@@ -22,7 +22,7 @@ python scripts/q3/run_q3_smoke.py
 
 ## 正式全量入口
 
-`run_q3_full_validation.py`是新增入口，不覆盖现有smoke程序或结果。它依次执行40块完整电池外层LOBO、39块训练集内部模型族选择、策略分层bootstrap、C模型特征消融、部署模型冻结，以及9块真实测试电池预测。
+`run_q3_full_validation.py`是新增入口，不覆盖现有smoke程序或结果。它依次执行40块完整电池外层LOBO、39块训练集内部模型族选择、策略分层bootstrap、C模型特征消融、按最终可用的150循环信息冻结部署模型，以及9块真实测试电池预测。50/100/150循环综合分数只作为多长度鲁棒性敏感性，不再替代L=150部署决策。
 
 ```powershell
 python scripts/q3/run_q3_full_validation.py --bootstrap 5000

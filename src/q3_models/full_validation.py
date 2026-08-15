@@ -40,7 +40,7 @@ from .models import (
 )
 
 
-FULL_VERSION = "q3_full_v1"
+FULL_VERSION = "q3_full_v2"
 SCORE_WEIGHTS = {50: 0.15, 100: 0.25, 150: 0.60}
 ABLATION_MODES = ("dynamic_only", "dynamic_plus_strategy", "full_with_policy")
 
@@ -309,6 +309,7 @@ def _select_from_summary(
                 "L150_pooled_rmse": l150["pooled_rmse"],
                 "final_rank": ranks[model],
                 "selected": ranks[model] == 1,
+                "decision_role": "multi_length_robustness_sensitivity_not_deployment",
             }
         )
     return pd.DataFrame(rows).sort_values("final_rank")
@@ -506,6 +507,31 @@ def run_c_ablation(
     return battery, pd.DataFrame(summary_rows)
 
 
+def _deployment_candidates(summary: pd.DataFrame, config: Q3Config) -> pd.DataFrame:
+    rows = []
+    fixed = summary.loc[
+        summary["prediction_variant"].eq("raw") & summary["L"].eq(150)
+    ]
+    for row in fixed.itertuples(index=False):
+        rows.append({"model": row.model, "source": "fixed_family_outer_LOBO",
+                     "strategy_equal_rmse": row.strategy_equal_rmse,
+                     "worst_battery_rmse": row.worst_battery_rmse})
+    result = pd.DataFrame(rows)
+    best = float(result["strategy_equal_rmse"].min())
+    result["within_tie_tolerance"] = (
+        (result["strategy_equal_rmse"] - best) / max(best, 1e-15)
+        <= config.tie_relative_tolerance
+    )
+    tied = result.loc[result["within_tie_tolerance"]].sort_values(
+        ["worst_battery_rmse", "strategy_equal_rmse", "model"]
+    )
+    selected = str(tied.iloc[0]["model"])
+    result["selected_for_L150_deployment"] = result["model"].eq(selected)
+    result["version"] = config.version
+    result["selection_scope"] = "L150_only_matches_final_prediction_information"
+    return result.sort_values(["selected_for_L150_deployment", "strategy_equal_rmse"], ascending=[False, True])
+
+
 def run_full_validation(
     project_root: Path,
     config: Q3Config = CONFIG,
@@ -612,14 +638,17 @@ def run_full_validation(
                          "seconds": time.perf_counter() - stage_started})
     stage_started = time.perf_counter()
     ablation_battery, ablation_summary = run_c_ablation(complete, predictions, config)
+    deployment_candidates = _deployment_candidates(summary, config)
     runtime_rows.append({"version": config.version, "scope": "run", "outer_battery_id": np.nan,
                          "model": "C_ridge", "L": np.nan, "stage": "c_ablation",
                          "seconds": time.perf_counter() - stage_started})
     print("Q3 C-feature ablation complete", flush=True)
-    # The family is frozen only from the honest outer-LOBO comparison.  The
-    # all-40 OOF pass below is used solely to choose hyperparameters after the
-    # family has already been fixed.
-    deployment_model = str(selection.loc[selection["selected"].astype(bool), "model"].iloc[0])
+    # Final prediction always observes 150 cycles, so deployment is frozen from
+    # honest L=150 outer-LOBO candidates. Multi-length scoring remains a
+    # robustness sensitivity and must not override the deployment information set.
+    deployment_model = str(deployment_candidates.loc[
+        deployment_candidates["selected_for_L150_deployment"].astype(bool), "model"
+    ].iloc[0])
     deployment_scores_by_l, deployment_worst_by_l = {}, {}
     deployment_tuning_rows = []
     stage_started = time.perf_counter()
@@ -646,7 +675,19 @@ def run_full_validation(
           "lambda_gamma_L150": frozen_l150["lambda_gamma"],
           "K_L150": frozen_l150["K"], "alpha_L150": frozen_l150["alpha"],
           "w_strategy_L150": frozen_l150["w_strategy"],
-          "freeze_source": "outer_LOBO_selection_decision",
+          "freeze_source": "L150_outer_LOBO_deployment_candidates",
+          "deployment_strategy_equal_rmse_L150": float(
+              deployment_candidates.loc[
+                  deployment_candidates["selected_for_L150_deployment"],
+                  "strategy_equal_rmse",
+              ].iloc[0]
+          ),
+          "deployment_worst_battery_rmse_L150": float(
+              deployment_candidates.loc[
+                  deployment_candidates["selected_for_L150_deployment"],
+                  "worst_battery_rmse",
+              ].iloc[0]
+          ),
           **{f"score_{model}": float(selection_index.loc[model, "weighted_score"]) for model in MODELS},
           **{f"worst_{model}": float(selection_index.loc[model, "weighted_worst_battery_rmse"]) for model in MODELS}}]
     )
@@ -665,6 +706,7 @@ def run_full_validation(
         "pairwise_selection.csv": pairwise,
         "c_ablation_by_battery.csv": ablation_battery,
         "c_ablation_summary.csv": ablation_summary,
+        "deployment_candidate_comparison.csv": deployment_candidates,
         "nested_selector_predictions.csv": selector_predictions,
         "nested_selector_battery_metrics.csv": selector_battery,
         "nested_selector_summary.csv": selector_summary,

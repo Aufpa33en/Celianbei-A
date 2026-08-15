@@ -51,6 +51,14 @@ def main() -> None:
     assert len(pred) == 36000
     assert pred.groupby(["model", "L", "battery_id"])["cycle"].nunique().eq(50).all()
     assert pd.read_csv(full_dir / "integrity_checks.csv")["passed"].astype(bool).all()
+    selection = pd.read_csv(full_dir / "selection_decision.csv")
+    assert selection["decision_role"].eq("multi_length_robustness_sensitivity_not_deployment").all()
+    deployment = pd.read_csv(full_dir / "deployment_candidate_comparison.csv")
+    selected = deployment.loc[deployment["selected_for_L150_deployment"].astype(bool)]
+    assert len(selected) == 1
+    assert deployment["selection_scope"].eq("L150_only_matches_final_prediction_information").all()
+    freeze = pd.read_csv(full_dir / "deployment_freeze.csv").iloc[0]
+    assert freeze["selected_model"] == selected.iloc[0]["model"]
     pred = pd.read_csv(final_dir / "test_predictions_long.csv")
     assert len(pred) == 450 and pred["battery_id"].nunique() == 9
     assert "y_true" not in pred and set(pred["cycle"]) == set(range(151, 201))

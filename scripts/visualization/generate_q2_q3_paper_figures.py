@@ -78,6 +78,14 @@ def _read_csv(relative_path: str) -> pd.DataFrame:
     return pd.read_csv(path)
 
 
+def _q3_selected_model() -> str:
+    settings = _read_csv("result/q3/03_final_predictions/final_model_settings.csv")
+    selected = settings.loc[settings["parameter"].eq("selected_model"), "value"]
+    if len(selected) != 1 or selected.iloc[0] not in MODEL_LABELS:
+        raise ValueError("Q3 final_model_settings.csv must contain one supported selected_model")
+    return str(selected.iloc[0])
+
+
 def _save(fig: plt.Figure, path: Path, pad_inches: float = 0.10) -> None:
     fig.savefig(path, dpi=300, bbox_inches="tight", pad_inches=pad_inches)
     plt.close(fig)
@@ -225,12 +233,13 @@ def draw_q3_early_length_rmse() -> Path:
     frame = _read_csv("result/q3/02_full_validation/model_summary.csv")
     frame = frame.loc[frame["prediction_variant"].eq("raw")].copy()
     frame = _numeric(frame, ["L", "strategy_equal_rmse"])
+    selected_model = _q3_selected_model()
 
     fig, ax = plt.subplots(figsize=(9.5, 5.2), constrained_layout=True)
     for model in MODEL_LABELS:
         subset = frame.loc[frame["model"].eq(model)].sort_values("L")
-        linewidth = 2.8 if model == "C_ridge" else 1.6
-        markersize = 7 if model == "C_ridge" else 5
+        linewidth = 2.8 if model == selected_model else 1.6
+        markersize = 7 if model == selected_model else 5
         ax.plot(
             subset["L"],
             subset["strategy_equal_rmse"],
@@ -239,7 +248,7 @@ def draw_q3_early_length_rmse() -> Path:
             markersize=markersize,
             color=MODEL_COLORS[model],
             label=MODEL_LABELS[model],
-            zorder=3 if model == "C_ridge" else 2,
+            zorder=3 if model == selected_model else 2,
         )
     ax.set_xticks([50, 100, 150])
     ax.set_xlabel("可用早期循环长度 L")
@@ -334,8 +343,9 @@ def draw_q3_test_predictions() -> Path:
 
 
 def draw_q3_t80_sensitivity() -> Path:
+    selected_model = _q3_selected_model()
     eol = _read_csv("result/q3/03_final_predictions/eol_sensitivity.csv")
-    eol = eol.loc[eol["model"].eq("C_ridge")].copy()
+    eol = eol.loc[eol["model"].eq(selected_model)].copy()
     eol["battery_id"] = pd.to_numeric(eol["battery_id"], errors="raise")
     eol["t80"] = pd.to_numeric(eol["t80"], errors="coerce")
     summary = _read_csv("result/q3/03_final_predictions/test_battery_summary.csv")
@@ -377,7 +387,7 @@ def draw_q3_t80_sensitivity() -> Path:
     ax.invert_yaxis()
     ax.set_xlabel("T80情景循环数")
     ax.set_ylabel("测试电池")
-    ax.set_title("C_ridge在不同拟合起点与预测口径下的T80敏感性")
+    ax.set_title(f"{selected_model}在不同拟合起点与预测口径下的T80敏感性")
     ax.grid(axis="x", alpha=0.22)
     ax.legend(
         handles=[
