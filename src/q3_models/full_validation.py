@@ -809,6 +809,88 @@ def _eol_sensitivity(
     return rows
 
 
+def _t80_residual_trajectory_bootstrap(
+    records: dict[int, BatteryRecord],
+    full: dict[str, pd.DataFrame],
+    final_predictions: pd.DataFrame,
+    selected_model: str,
+    config: Q3Config,
+    repetitions: int = 2000,
+) -> tuple[pd.DataFrame, pd.DataFrame]:
+    """Propagate held-out 151--200 trajectory errors into diagnostic T80 draws.
+
+    Entire 50-cycle outer-residual trajectories are resampled so the strong
+    within-battery serial dependence is not destroyed.  This remains a
+    post-selection diagnostic rather than a calibrated T80 confidence interval.
+    """
+    residual = full["predictions_long.csv"]
+    residual = residual.loc[
+        residual["L"].eq(150) & residual["model"].eq(selected_model),
+        ["battery_id", "cycle", "y_true", "y_pred_raw"],
+    ].copy()
+    residual["signed_residual"] = residual["y_true"] - residual["y_pred_raw"]
+    trajectories = residual.pivot(
+        index="battery_id", columns="cycle", values="signed_residual"
+    ).sort_index(axis=1)
+    if trajectories.shape != (40, 50) or list(trajectories.columns) != list(range(151, 201)):
+        raise AssertionError("T80 propagation requires 40 complete outer-residual trajectories")
+
+    selected = final_predictions.loc[final_predictions["model"].eq(selected_model)].copy()
+    target_ids = sorted(selected["battery_id"].unique())
+    rng = np.random.default_rng(config.seed + 301)
+    sampled_rows = rng.integers(0, len(trajectories), size=(len(target_ids), repetitions))
+    draw_rows: list[dict[str, object]] = []
+    summary_rows: list[dict[str, object]] = []
+    for target_index, (battery_id, group) in enumerate(selected.groupby("battery_id", sort=True)):
+        record = records[int(battery_id)]
+        predicted = group.sort_values("cycle")["y_pred_raw"].to_numpy(dtype=float)
+        values = []
+        statuses = []
+        source_ids = trajectories.index.to_numpy()
+        for draw, source_row in enumerate(sampled_rows[target_index], start=1):
+            future_absolute = predicted + trajectories.iloc[source_row].to_numpy(dtype=float)
+            future_relative = future_absolute / record.baseline
+            stitched = np.concatenate((record.relative_soh[:150], future_relative))
+            fit = fit_power_law(np.arange(1, 201, dtype=float), stitched, config)
+            t80, status = power_law_eol(fit, record.baseline, config)
+            if status == "before_or_at_observation":
+                t80 = np.nan
+            values.append(t80)
+            statuses.append(status)
+            draw_rows.append(
+                {
+                    "version": config.version,
+                    "battery_id": int(battery_id),
+                    "policy": record.policy,
+                    "draw": draw,
+                    "source_outer_battery_id": int(source_ids[source_row]),
+                    "t80": t80,
+                    "status": status,
+                    "method": "raw_P1_plus_outer_residual_trajectory_stitched_power_start_1",
+                    "seed": config.seed + 301,
+                }
+            )
+        finite = np.asarray([value for value in values if np.isfinite(value)], dtype=float)
+        counts = pd.Series(statuses).value_counts()
+        summary_rows.append(
+            {
+                "version": config.version,
+                "battery_id": int(battery_id),
+                "policy": record.policy,
+                "repetitions": repetitions,
+                "finite_draws": len(finite),
+                "finite_fraction": len(finite) / repetitions,
+                "t80_median": np.median(finite) if len(finite) else np.nan,
+                "t80_q025": np.quantile(finite, 0.025) if len(finite) else np.nan,
+                "t80_q975": np.quantile(finite, 0.975) if len(finite) else np.nan,
+                "beyond_5000_draws": int(counts.get("beyond_5000", 0)),
+                "no_finite_intersection_draws": int(counts.get("no_finite_intersection", 0)),
+                "interval_status": "post_selection_residual_propagation_diagnostic_not_confidence_interval",
+            }
+        )
+    return pd.DataFrame(draw_rows), pd.DataFrame(summary_rows)
+
+
 def run_final_prediction(
     project_root: Path,
     full: dict[str, pd.DataFrame],
@@ -875,6 +957,13 @@ def run_final_prediction(
             )
     runtime_rows.append({"version": config.version, "scope": "final", "stage": "refit_predict_and_eol",
                          "seconds": time.perf_counter() - predict_started})
+    final_predictions = pd.DataFrame(prediction_rows)
+    uncertainty_started = time.perf_counter()
+    t80_draws, t80_summary = _t80_residual_trajectory_bootstrap(
+        records, full, final_predictions, selected_model, config
+    )
+    runtime_rows.append({"version": config.version, "scope": "final", "stage": "t80_residual_trajectory_bootstrap",
+                         "seconds": time.perf_counter() - uncertainty_started})
     hyper = pd.DataFrame(
         [
             {"version": config.version, "parameter": "selected_model", "value": selected_model,
@@ -898,9 +987,11 @@ def run_final_prediction(
     runtime_rows.append({"version": config.version, "scope": "final", "stage": "final_compute_total",
                          "seconds": time.perf_counter() - final_started})
     return {
-        "final_predictions.csv": pd.DataFrame(prediction_rows),
+        "final_predictions.csv": final_predictions,
         "prediction_interval_calibration.csv": calibration,
         "eol_sensitivity.csv": pd.DataFrame(eol_rows),
+        "t80_uncertainty_draws.csv": t80_draws,
+        "t80_uncertainty_summary.csv": t80_summary,
         "final_hyperparameters.csv": hyper,
         "final_runtime.csv": pd.DataFrame(runtime_rows),
     }

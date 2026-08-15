@@ -244,7 +244,10 @@ def final_integrity_checks(
     return pd.DataFrame(checks, columns=["check", "passed", "detail"])
 
 
-def _final_summary(predictions: pd.DataFrame, eol: pd.DataFrame, selected_model: str) -> pd.DataFrame:
+def _final_summary(
+    predictions: pd.DataFrame, eol: pd.DataFrame, selected_model: str,
+    uncertainty: pd.DataFrame,
+) -> pd.DataFrame:
     selected = predictions.loc[predictions["model"].eq(selected_model)]
     stitched_power = eol.loc[
         eol["model"].eq(selected_model) & eol["variant"].eq("raw")
@@ -254,11 +257,13 @@ def _final_summary(predictions: pd.DataFrame, eol: pd.DataFrame, selected_model:
         eol["model"].eq(selected_model) & eol["variant"].eq("raw")
         & eol["method"].eq("native_prefix_linear")
     ].set_index("battery_id")
+    uncertainty = uncertainty.set_index("battery_id")
     rows = []
     for (battery_id, policy), group in selected.groupby(["battery_id", "policy"]):
         group = group.sort_values("cycle")
         stitched_row = stitched_power.loc[battery_id]
         native_row = native.loc[battery_id]
+        uncertainty_row = uncertainty.loc[battery_id]
         rows.append({"version": FULL_VERSION, "battery_id": battery_id, "policy": policy,
                      "selected_model": selected_model, "predicted_SOH200_raw": group["y_pred_raw"].iloc[-1],
                      "predicted_SOH200_projected": group["y_pred_projected"].iloc[-1],
@@ -266,6 +271,10 @@ def _final_summary(predictions: pd.DataFrame, eol: pd.DataFrame, selected_model:
                      "interval_high_cycle200": group["approx_interval_high"].iloc[-1],
                      "stitched_power_scenario_T80_start1": stitched_row["t80"],
                      "stitched_power_scenario_status": stitched_row["status"],
+                     "diagnostic_T80_median": uncertainty_row["t80_median"],
+                     "diagnostic_T80_q025": uncertainty_row["t80_q025"],
+                     "diagnostic_T80_q975": uncertainty_row["t80_q975"],
+                     "diagnostic_T80_finite_fraction": uncertainty_row["finite_fraction"],
                      "deployed_linear_native_T80": native_row["t80"],
                      "deployed_linear_native_status": native_row["status"]})
     return pd.DataFrame(rows)
@@ -279,19 +288,22 @@ def _final_report(summary: pd.DataFrame, settings: pd.DataFrame, eol: pd.DataFra
         "## 最终方法", "",
         f"最终任务固定拥有150个已观测循环，因此六个预先定义候选按L=150外层留一误差冻结部署模型`{model}`；50/100/150综合分数和嵌套选族结果只作为鲁棒性敏感性。随后只用全部40块完整电池拟合，并读取9块测试电池的1—150循环前缀预测151—200循环。测试电池没有真实未来标签，因此不报告测试RMSE。", "",
         "## 九块测试电池结果", "",
-        "| 电池 | 策略 | 预测SOH200(raw) | 预测SOH200(projected) | SOH200近似95%区间 | 拼接幂律T80情景(start=1) | 部署线性模型自身T80 |", "|---:|---|---:|---:|---|---:|---|",
+        "| 电池 | 策略 | 预测SOH200(raw) | SOH200近似95%区间 | 拼接幂律T80点情景 | T80残差传播诊断区间 |", "|---:|---|---:|---|---:|---|",
     ]
     for row in summary.itertuples(index=False):
         stitched_t80 = "—" if pd.isna(row.stitched_power_scenario_T80_start1) else f"{row.stitched_power_scenario_T80_start1:.1f}"
-        native_t80 = "—" if pd.isna(row.deployed_linear_native_T80) else f"{row.deployed_linear_native_T80:.1f}"
-        lines.append(f"| {row.battery_id} | {row.policy} | {row.predicted_SOH200_raw:.6f} | {row.predicted_SOH200_projected:.6f} | [{row.interval_low_cycle200:.6f}, {row.interval_high_cycle200:.6f}] | {stitched_t80} ({row.stitched_power_scenario_status}) | {native_t80} ({row.deployed_linear_native_status}) |")
+        diagnostic = "—" if pd.isna(row.diagnostic_T80_median) else (
+            f"{row.diagnostic_T80_median:.1f} [{row.diagnostic_T80_q025:.1f}, {row.diagnostic_T80_q975:.1f}]"
+            f"; finite={row.diagnostic_T80_finite_fraction:.1%}"
+        )
+        lines.append(f"| {row.battery_id} | {row.policy} | {row.predicted_SOH200_raw:.6f} | [{row.interval_low_cycle200:.6f}, {row.interval_high_cycle200:.6f}] | {stitched_t80} ({row.stitched_power_scenario_status}) | {diagnostic} |")
     lines.extend([
         "", "## 预测区间", "",
         f"区间由冻结`{model}`在L=150下40块训练电池的外层交叉拟合绝对残差逐循环构造，目标边际覆盖率为95%，对应第39/40顺序统计量。由于同一组外层残差也参与模型族选择，该区间是选族后诊断区间，可能受赢家偏差影响；它不包含选族不确定性，不是独立测试集覆盖率、整条轨迹联合区间或T80置信区间。逐循环有符号残差均值和中位数保存在校准表中。", "",
         "## EOL情景外推", "",
         (f"所有模型、raw/projected和多个拟合起点均保存在`eol_sensitivity.csv`。有限情景值范围为{finite.min():.1f}—{finite.max():.1f}循环；"
          if len(finite) else "当前设置没有稳定有限的T80；")
-        + "表中拼接幂律情景是在真实1—150循环与线性预测151—200循环拼接后另行拟合幂律曲线，不能解释为部署线性模型自身的寿命终点；后者单独列出native线性外推状态。由于49块电池均未观测到80% SOH，T80只表示模型情景，不具有实证寿命精度。跨窗口或模型差异较大时，应报告范围和状态而不是单一寿命。", "",
+        + "表中拼接幂律情景是在真实1—150循环与线性预测151—200循环拼接后另行拟合幂律曲线，不能解释为部署线性模型自身的寿命终点。另将40块完整电池的整段151—200外层残差轨迹重采样并叠加到测试预测，再重复外推T80；这样保留了循环内相关性，但因残差参与过选模且未观测真实T80，所得2.5%—97.5%范围仅是误差传播诊断，不是覆盖率有保证的置信区间。由于49块电池均未观测到80% SOH，T80只表示模型情景，不具有实证寿命精度。跨窗口或模型差异较大时，应报告范围和状态而不是单一寿命。", "",
         "## 可用结论", "",
         f"在与最终信息集一致的L=150口径下，`{model}`是本轮六个预注册候选中的部署模型。多长度综合排名、嵌套选择器和C特征消融回答的是不同问题，不能替代部署选择或被解释为因果证据。真正80%寿命仍受短观测窗口限制；论文中应把短期LOBO误差与远期T80不确定性分开陈述。",
     ])
@@ -319,13 +331,18 @@ def write_final_outputs(
     checks = final_integrity_checks(selected, all_predictions, settings, protected)
     if not checks["passed"].all():
         raise RuntimeError(f"Final prediction integrity failed: {checks.loc[~checks['passed'], 'check'].tolist()}")
-    summary = _final_summary(all_predictions, final["eol_sensitivity.csv"], selected_model)
+    summary = _final_summary(
+        all_predictions, final["eol_sensitivity.csv"], selected_model,
+        final["t80_uncertainty_summary.csv"],
+    )
     write_started = time.perf_counter()
     _write_csv(selected, temp / "test_predictions_long.csv")
     _write_csv(summary, temp / "test_battery_summary.csv")
     _write_csv(settings, temp / "final_model_settings.csv")
     _write_csv(final["prediction_interval_calibration.csv"], temp / "prediction_interval_calibration.csv")
     _write_csv(final["eol_sensitivity.csv"], temp / "eol_sensitivity.csv")
+    _write_csv(final["t80_uncertainty_draws.csv"], temp / "t80_uncertainty_draws.csv")
+    _write_csv(final["t80_uncertainty_summary.csv"], temp / "t80_uncertainty_summary.csv")
     final_runtime = final["final_runtime.csv"].copy()
     final_runtime.loc[len(final_runtime)] = {
         "version": FULL_VERSION, "scope": "final", "stage": "write_outputs_except_runtime",

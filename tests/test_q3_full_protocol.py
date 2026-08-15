@@ -69,6 +69,16 @@ def main() -> None:
         "deployed_linear_native_T80", "deployed_linear_native_status",
     }.issubset(summary.columns)
     assert summary["deployed_linear_native_status"].eq("beyond_5000").any()
+    uncertainty = pd.read_csv(final_dir / "t80_uncertainty_summary.csv")
+    assert len(uncertainty) == 9 and uncertainty["repetitions"].eq(2000).all()
+    assert uncertainty["finite_fraction"].between(0.0, 1.0).all()
+    assert uncertainty["interval_status"].eq(
+        "post_selection_residual_propagation_diagnostic_not_confidence_interval"
+    ).all()
+    draws = pd.read_csv(final_dir / "t80_uncertainty_draws.csv")
+    assert len(draws) == 18000
+    assert draws.groupby("battery_id")["draw"].nunique().eq(2000).all()
+    assert draws["source_outer_battery_id"].nunique() <= 40
     calibration = pd.read_csv(final_dir / "prediction_interval_calibration.csv")
     assert calibration["target_marginal_coverage"].eq(0.95).all()
     assert calibration["order_statistic_rank"].eq(39).all()
