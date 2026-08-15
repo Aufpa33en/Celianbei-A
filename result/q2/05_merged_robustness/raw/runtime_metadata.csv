@@ -2,8 +2,8 @@
 command,python scripts/q2/run_q2_merged_robustness.py --permutations 20000 --seed 20260814
 seed,20260814
 permutations,20000
-wall_seconds,2.854463
-python,3.12.8
+wall_seconds,3.536389
+python,3.13.9
 platform,Windows-11-10.0.26200-SP0
-numpy,2.5.2
-pandas,3.0.5
+numpy,2.3.5
+pandas,2.3.3

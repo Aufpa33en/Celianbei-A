@@ -35,6 +35,10 @@ def main() -> None:
     matched = outputs["matched_4p8_comparison"].iloc[0]
     assert matched["relative_change"] < -0.7
     assert matched["causal_status"].startswith("not_identified")
+    global_diagnostic = outputs["global_strategy_permutation"].iloc[0]
+    assert global_diagnostic["artifact_role"] == "diagnostic_not_confirmatory_test"
+    assert not bool(global_diagnostic["confirmatory_p_value_available"])
+    assert "permutation_p" not in outputs["global_strategy_permutation"].columns
     q1_pairwise = pd.read_csv(
         PROJECT_ROOT / "result" / "q1" / "raw" / "pairwise_strategy_scalar_comparison.csv"
     )
@@ -46,7 +50,8 @@ def main() -> None:
     assert "16 组经 Holm" not in paper
     assert "尾部比例为0.06528" in paper
     assert "不是精确`p`值" in paper
-    assert "p=0.000050" in paper
+    assert "尾部比例为`0.000050`" in paper
+    assert "不是确认性`p`值" in paper
     assert "37.4% SOC换向阈值" in paper
     print("Q2 merged robustness tests passed")
 

@@ -102,7 +102,7 @@ def strategy_late_rate(battery: pd.DataFrame) -> pd.DataFrame:
 def global_strategy_permutation(
     battery: pd.DataFrame, repetitions: int = 20000, seed: int = SEED
 ) -> pd.DataFrame:
-    """Monte Carlo label permutation for any strategy difference in log late rate."""
+    """Diagnostic label permutation under a hypothetical exchangeability assumption."""
     values = battery["log_late_degradation_rate"].to_numpy(dtype=float)
     labels = battery["policy"].to_numpy(dtype=str)
 
@@ -127,11 +127,17 @@ def global_strategy_permutation(
             {
                 "test": "global_strategy_log_late_rate",
                 "statistic_F": observed,
-                "permutation_p": (exceed + 1) / (repetitions + 1),
+                "hypothetical_exchangeability_tail_fraction": (exceed + 1)
+                / (repetitions + 1),
                 "n_permutations": repetitions,
                 "seed": seed,
                 "n_strategies": battery["policy"].nunique(),
                 "n_batteries": len(battery),
+                "artifact_role": "diagnostic_not_confirmatory_test",
+                "exchangeability_assumption": (
+                    "all_battery_labels_exchangeable_despite_fixed_protocol_groups_unequal_n_and_variance"
+                ),
+                "confirmatory_p_value_available": False,
             }
         ]
     )
@@ -276,9 +282,9 @@ def write_merged_robustness(project_root: Path, outputs: dict[str, pd.DataFrame]
     root.joinpath("README.md").write_text(
         "# Q2合并稳健性分析\n\n"
         "本目录补充远程正式验证，但不替代`03_formal_validation/`。\n\n"
-        "- `paper/`：末段退化率策略汇总、全局置换、4.8C匹配诊断和J+H坐标留出敏感性。\n"
+        "- `paper/`：末段退化率策略汇总、假设标签可交换的全局诊断、4.8C匹配诊断和J+H坐标留出敏感性。\n"
         "- `raw/`：40块完整电池的末段退化率和运行环境/参数。\n\n"
-        "正式参数结论仍以高SOC暴露族的选择校正检验为准。J+H模型因不能通过同结构队列敏感性验证而被否决；"
+        "全局标签置换因协议组固定、样本数和方差不等而不提供确认性p值。正式参数结论仍以高SOC暴露族的选择校正诊断及其边界为准。J+H模型因不能通过同结构队列敏感性验证而被否决；"
         "4.8C匹配结果只反映结构/批次联合差异。\n",
         encoding="utf-8",
     )
