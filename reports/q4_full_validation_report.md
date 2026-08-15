@@ -50,13 +50,13 @@ M1的7折坐标压力测试平均RMSE为0.015740，平均相对常数基线改�
 
 ## 5. 小问四：推荐与典型策略对比
 
-推荐不是脱离偏好的唯一点。若应用要求优先缩短时间，同时接受约0.18%—0.20%的200循环相对退化，正式快速折中集合保留`5_3C_54PER_4C_NEWSTRUCTURE`与`5C_67PER_4C_NEWSTRUCTURE`，不强行选唯一赢家。两者时间差的整块电池bootstrap 95%区间为[-0.0301,0.0292]分钟，退化差（5.3C减5.0C）区间为[-0.001512,0.001150]，均跨0；5.3C退化更低的概率只有0.6228，未达到预设0.95唯一推荐阈值。两者Pareto进入频率分别为0.8900和0.7302。
+推荐不是脱离偏好的唯一点。点估计上`5_3C_54PER_4C_NEWSTRUCTURE`的时间和退化都低于`5C_67PER_4C_NEWSTRUCTURE`，因此前者是快速区域的Pareto推荐，后者严格被支配。但两者时间差的整块电池bootstrap 95%区间为[-0.0301,0.0292]分钟，退化差（5.3C减5.0C）区间为[-0.001512,0.001150]，均跨0；5.3C退化更低的概率只有0.6228，未达到预设0.95唯一胜出阈值。因此5.0C保留为“非前沿近似并列敏感性项”，而不是共同主推荐。两者Pareto进入频率分别为0.8900和0.7302。
 
 | 角色 | 策略 | 时间/min | 200循环退化 | 相对3.6C时间差/min | 相对3.6C退化差 |
 |---|---|---:|---:|---:|---:|
 | 典型长寿命 | `3_6C-80PER_3_6C` | 13.3880 | 0.000520 | 0 | 0 |
-| 快速折中候选A | `5_3C_54PER_4C_NEWSTRUCTURE` | 10.1575 | 0.001800 | -3.2305 | +0.001280 |
-| 快速折中候选B | `5C_67PER_4C_NEWSTRUCTURE` | 10.1587 | 0.001993 | -3.2293 | +0.001472 |
+| 点Pareto快速推荐 | `5_3C_54PER_4C_NEWSTRUCTURE` | 10.1575 | 0.001800 | -3.2305 | +0.001280 |
+| 非前沿近似并列敏感性 | `5C_67PER_4C_NEWSTRUCTURE` | 10.1587 | 0.001993 | -3.2293 | +0.001472 |
 | 典型短寿命 | `3_7C_31PER_5_9C_NEWSTRUCTURE` | 10.8519 | 0.033684 | -2.5361 | +0.033164 |
 
 两个快速候选相对长寿命3.6C策略均缩短约24.1%的平均时间，退化点估计增加约0.128—0.147个百分点；相对典型短寿命策略也更快且退化低很多。点估计偏向5.3C，但区间证据不足以区分两者，不能把倍率和切换位置差异解释成已识别的因果优势。
@@ -78,7 +78,7 @@ Q3冻结的P1模型只在目标电池已经有1—150循环轨迹时预测151—
 - `policy_summary.csv`：论文主表。
 - `policy_uncertainty.csv`：三项策略均值bootstrap区间。
 - `selection_frequency.csv`、`constraint_selection_frequency.csv`：推荐稳定性。
-- `fast_pair_comparison.csv`：两个快速折中候选的边际区间、成对差异、胜出概率与集合式决策。
+- `fast_pair_comparison.csv`：点Pareto推荐与非前沿近似并列敏感性项的边际区间、成对差异与胜出概率。
 - `time_model_sensitivity.csv`：正式汇总时间、逐循环敏感性时间和`T0`对照。
 - `scaling_sensitivity.csv`：三种标准化方式的权重敏感性。
 - `late_slope_pareto_sensitivity.csv`：SOH200与末段衰减前沿对照。
@@ -88,7 +88,7 @@ Q3冻结的P1模型只在目标电池已经有1—150循环轨迹时预测151—
 ## 8. 论文图示
 
 - [观测策略Pareto点与bootstrap区间](../result/q4/02_full_validation/figures/fig_q4_pareto_uncertainty.png)：同时展示全部9策略和快速低退化区域，点大小反映Pareto进入频率。
-- [5.3C与5.0C成对比较](../result/q4/02_full_validation/figures/fig_q4_fast_pair_comparison.png)：时间差与退化差区间都跨0，直接支撑集合式推荐。
+- [5.3C与5.0C成对比较](../result/q4/02_full_validation/figures/fig_q4_fast_pair_comparison.png)：时间差与退化差区间都跨0，支撑5.0C作为近似并列敏感性项，不改变其点估计非前沿身份。
 - [单J岭留一坐标验证](../result/q4/02_full_validation/figures/fig_q4_m1_validation.png)：7个坐标中仅1个优于常数基线，证据只用于拒绝当前代理。
 
 三图由`scripts/visualization/generate_q4_paper_figures.py`读取冻结CSV生成，不重新拟合、bootstrap或选择策略。

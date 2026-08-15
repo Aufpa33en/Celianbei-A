@@ -66,12 +66,16 @@ def draw_pareto_uncertainty() -> Path:
     ]
     for ax, xlim, ylim, title in panels:
         for row in frame.itertuples(index=False):
-            color = "#B22222" if row.policy in {
-                "5_3C_54PER_4C_NEWSTRUCTURE", "5C_67PER_4C_NEWSTRUCTURE"
-            } else "#2563A6" if bool(row.pareto) else "#8C8C8C"
-            marker = "D" if row.policy in {
-                "5_3C_54PER_4C_NEWSTRUCTURE", "5C_67PER_4C_NEWSTRUCTURE"
-            } else "o"
+            color = (
+                "#B22222" if row.policy == "5_3C_54PER_4C_NEWSTRUCTURE"
+                else "#D89000" if row.policy == "5C_67PER_4C_NEWSTRUCTURE"
+                else "#2563A6" if bool(row.pareto) else "#8C8C8C"
+            )
+            marker = (
+                "D" if row.policy == "5_3C_54PER_4C_NEWSTRUCTURE"
+                else "s" if row.policy == "5C_67PER_4C_NEWSTRUCTURE"
+                else "o"
+            )
             ax.errorbar(
                 row.time_mean, row.loss_mean,
                 xerr=[[row.time_mean - row.time_p025], [row.time_p975 - row.time_mean]],
@@ -99,8 +103,9 @@ def draw_pareto_uncertainty() -> Path:
     fig.legend(handles=[
         Line2D([0], [0], marker="o", color="none", markerfacecolor="#2563A6", markeredgecolor="#2563A6", label="点估计Pareto"),
         Line2D([0], [0], marker="o", color="none", markerfacecolor="#8C8C8C", markeredgecolor="#8C8C8C", label="非前沿"),
-        Line2D([0], [0], marker="D", color="none", markerfacecolor="#B22222", markeredgecolor="#B22222", label="快速折中候选集"),
-    ], loc="lower center", bbox_to_anchor=(0.5, 1.01), ncol=3, frameon=False)
+        Line2D([0], [0], marker="D", color="none", markerfacecolor="#B22222", markeredgecolor="#B22222", label="点Pareto快速推荐"),
+        Line2D([0], [0], marker="s", color="none", markerfacecolor="#D89000", markeredgecolor="#D89000", label="非前沿近似并列敏感性"),
+    ], loc="lower center", bbox_to_anchor=(0.5, 1.01), ncol=4, frameon=False)
     return _save(fig, "fig_q4_pareto_uncertainty.png")
 
 

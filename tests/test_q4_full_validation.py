@@ -45,7 +45,13 @@ def test_q4_full_validation_protocol() -> None:
     assert uncertainty["interval_type"].eq("strategy_mean_whole_battery_bootstrap").all()
     fast_pair = pd.read_csv(target / "fast_pair_comparison.csv")
     assert len(fast_pair) == 2
-    assert fast_pair["decision_status"].eq("co_primary_fast_tradeoff_candidate").all()
+    assert fast_pair["point_pareto"].astype(bool).sum() == 1
+    assert fast_pair.loc[fast_pair["point_pareto"].astype(bool), "decision_status"].eq(
+        "point_pareto_fast_tradeoff_recommendation"
+    ).all()
+    assert fast_pair.loc[~fast_pair["point_pareto"].astype(bool), "decision_status"].eq(
+        "uncertainty_near_tie_nonpareto_sensitivity"
+    ).all()
     assert fast_pair["probability_lower_loss_than_pair"].max() < 0.95
     assert fast_pair["probability_not_slower_by_more_than_0_01_min"].max() < 0.95
     assert (fast_pair["pair_loss_difference_first_minus_second_p025"] < 0).all()

@@ -155,15 +155,20 @@ def fast_pair_comparison(
     rows = []
     for policy in FAST_PAIR:
         other = second if policy == first else first
+        point_pareto = bool(point.loc[policy, "pareto"])
         rows.append({
             "version": FORMAL_VERSION,
             "policy": policy,
             "comparison_policy": other,
             "decision_status": (
                 "unique_fast_tradeoff_recommendation" if policy == unique_winner
-                else "co_primary_fast_tradeoff_candidate" if unique_winner is None
+                else "point_pareto_fast_tradeoff_recommendation"
+                if unique_winner is None and point_pareto
+                else "uncertainty_near_tie_nonpareto_sensitivity"
+                if unique_winner is None
                 else "not_selected"
             ),
+            "point_pareto": point_pareto,
             "time_mean": float(point.loc[policy, "time_mean"]),
             "time_p025": float(intervals.loc[policy, "time_p025"]),
             "time_p975": float(intervals.loc[policy, "time_p975"]),
@@ -275,8 +280,8 @@ def slope_and_typical_comparisons(summary: pd.DataFrame) -> tuple[pd.DataFrame, 
         ["policy", "n_battery", "time_mean", "loss_mean", "late_slope_mean"]].copy()
     selected["comparison_role"] = selected["policy"].map({
         reference_policy: "typical_long_life_reference",
-        "5_3C_54PER_4C_NEWSTRUCTURE": "co_primary_fast_tradeoff_candidate",
-        "5C_67PER_4C_NEWSTRUCTURE": "co_primary_fast_tradeoff_candidate",
+        "5_3C_54PER_4C_NEWSTRUCTURE": "point_pareto_fast_tradeoff_recommendation",
+        "5C_67PER_4C_NEWSTRUCTURE": "uncertainty_near_tie_nonpareto_sensitivity",
         "3_7C_31PER_5_9C_NEWSTRUCTURE": "typical_short_life_reference",
     })
     selected["time_difference_vs_long"] = selected["time_mean"] - float(reference["time_mean"])
@@ -309,7 +314,7 @@ def integrity_checks(summary: pd.DataFrame, battery: pd.DataFrame, boot: pd.Data
         {"check": "late_slope_bootstrapped", "passed": bool(boot["late_slope_loss"].notna().all()), "detail": "strategy mean per replicate"},
         {"check": "point_recommendations_pareto", "passed": recommendation_policies.issubset(pareto_policies), "detail": len(recommendation_policies)},
         {"check": "m1_coordinate_folds", "passed": len(loso) == 7 and len(repeated_coordinate) == 1, "detail": "7 unique coordinates; duplicate coordinate jointly held out"},
-        {"check": "fast_pair_set_valued_decision", "passed": len(fast_pair) == 2 and fast_pair["decision_status"].eq("co_primary_fast_tradeoff_candidate").all(), "detail": "no >=0.95 loss-superiority probability"},
+        {"check": "fast_pair_point_pareto_roles", "passed": len(fast_pair) == 2 and fast_pair["point_pareto"].sum() == 1 and fast_pair.loc[fast_pair["point_pareto"], "decision_status"].eq("point_pareto_fast_tradeoff_recommendation").all() and fast_pair.loc[~fast_pair["point_pareto"], "decision_status"].eq("uncertainty_near_tie_nonpareto_sensitivity").all(), "detail": "point Pareto recommendation separated from non-Pareto uncertainty sensitivity"},
         {"check": "fast_pair_difference_intervals_cross_zero", "passed": bool((fast_pair["pair_time_difference_first_minus_second_p025"] < 0).all() and (fast_pair["pair_time_difference_first_minus_second_p975"] > 0).all() and (fast_pair["pair_loss_difference_first_minus_second_p025"] < 0).all() and (fast_pair["pair_loss_difference_first_minus_second_p975"] > 0).all()), "detail": "time and loss pairwise bootstrap intervals overlap zero"},
         {"check": "q3_not_used_as_counterfactual", "passed": fast_pair["q3_role"].eq("not_used_no_early_trajectory_for_new_policy").all(), "detail": "Q3 is conditional prediction, not a policy response surface"},
         {"check": "primary_time_matches_q1_q2", "passed": bool(time_table["primary_equals_summary"].all()), "detail": "Q4 primary equals battery_summary mean_chargetime"},
@@ -399,11 +404,11 @@ def main() -> None:
 
 M0离散观测策略Pareto为主模型；M1单J岭模型的oracle坐标压力测试失败，所以本数据下不启动连续搜索。该结果只否定当前单J岭代理，不证明所有连续代理或后续新增实验均无效。点估计Pareto策略为：{', '.join(summary.loc[summary['pareto'], 'policy'].astype(str))}。
 
-充电时间主指标统一采用`battery_summary_clean.csv`中的逐电池`mean_chargetime`，与问题1、2一致。前200循环的逐循环均值仅作覆盖窗口敏感性，不能替代主指标。5.3C与5.0C构成最快候选集；二者时间差和退化差的整块电池bootstrap区间均跨0，5.3C退化更低的概率不足0.95，因此正式结论保留两个并列快速折中候选，不给唯一赢家。
+充电时间主指标统一采用`battery_summary_clean.csv`中的逐电池`mean_chargetime`，与问题1、2一致。前200循环的逐循环均值仅作覆盖窗口敏感性，不能替代主指标。点估计上5.3C的时间和退化都低于5.0C，因此前者是快速区域的Pareto推荐，后者是非前沿的不确定性近似并列敏感性项。二者时间差和退化差的整块电池bootstrap区间均跨0，5.3C退化更低的概率不足0.95，因此不把5.0C排除为近似并列方案，但也不将严格被支配点标成共同主推荐。
 
 权重结论依赖标准化集合，`scaling_sensitivity.csv`只作敏感性；正式决策应报告Pareto前沿、退化约束和bootstrap稳定性。四个退化上限是说明规则用法的决策场景，不是工程安全标准。
 
-`fast_pair_comparison.csv`给出两候选的区间、成对差异和胜出概率。Q3模型需要目标电池已有1—150循环轨迹，未被用作新策略反事实响应面。推荐只适用于9个已有策略，不能解释为三参数因果最优。
+`fast_pair_comparison.csv`分开记录点估计Pareto推荐与非前沿近似并列敏感性项，并给出成对区间和胜出概率。Q3模型需要目标电池已有1—150循环轨迹，未被用作新策略反事实响应面。推荐只适用于9个已有策略，不能解释为三参数因果最优。
 """
     (temp / "full_report.md").write_text(report, encoding="utf-8")
     (temp / "run_config.json").write_text(json.dumps(run_config, ensure_ascii=False, indent=2), encoding="utf-8")

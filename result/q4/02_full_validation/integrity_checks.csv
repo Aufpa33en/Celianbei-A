@@ -9,7 +9,7 @@ constraint_rules_bootstrapped,True,4
 late_slope_bootstrapped,True,strategy mean per replicate
 point_recommendations_pareto,True,3
 m1_coordinate_folds,True,7 unique coordinates; duplicate coordinate jointly held out
-fast_pair_set_valued_decision,True,no >=0.95 loss-superiority probability
+fast_pair_point_pareto_roles,True,point Pareto recommendation separated from non-Pareto uncertainty sensitivity
 fast_pair_difference_intervals_cross_zero,True,time and loss pairwise bootstrap intervals overlap zero
 q3_not_used_as_counterfactual,True,"Q3 is conditional prediction, not a policy response surface"
 primary_time_matches_q1_q2,True,Q4 primary equals battery_summary mean_chargetime
