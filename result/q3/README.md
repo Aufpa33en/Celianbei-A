@@ -1,33 +1,32 @@
 # 第三问结果目录
 
-## 当前阶段
+## 完成状态
 
-第三问已完成继承关系判断、文献筛选、模型推导、三路子agent严格审查、程序实现和9块伪测试电池smoke test。按照预设硬门，当前停止在全量验证之前。
+第三问已经完成模型推导、三路代理审查、六模型smoke、40块完整电池嵌套LOBO全量验证、模型冻结、9块测试电池第151—200循环预测、保守逐循环点区间和T80情景敏感性。Q3不再停留于smoke阶段。
 
-尚未执行：
+## 权威目录
 
-- 40块完整电池嵌套LOBO全量验证；
-- 最终模型选择；
-- 9块`prediction_test=1`电池的151—200循环最终预测；
-- 正式预测区间和论文最终精度表。
+- `01_smoke_test/`：六个候选模型的低成本可运行性和边界检查历史。
+- `02_full_validation/`：40块完整电池的外层LOBO、嵌套选模、bootstrap、消融、调参与完整性审计。
+- `03_final_predictions/`：冻结`C_ridge`后对9块测试电池的151—200循环预测、经验97.5%残差分位点区间和T80情景敏感性。
 
-## 目录
+论文完整报告为`reports/q3_full_validation_report.md`，五项任务的最终入口为`03_final_predictions/q3_complete_answer.md`。
 
-- `01_smoke_test/`：唯一权威smoke结果，共7个文件；不同模型通过`model`字段区分，不建立重复模型子目录。
-- `02_full_validation/`：40块完整电池的六模型外层LOBO、嵌套模型族选择、消融和稳定性分析；正式模型比较入口。
-- `03_final_predictions/`：模型冻结后对9块真实测试电池的151—200预测、近似区间与T80情景敏感性；最终论文入口。
+## 最终模型与结论边界
 
-## 关键入口
+- 综合早期长度指标选择`C_ridge`，部署参数为`K=1, alpha=10`。
+- 固定C候选在L=150的策略等权LOBO RMSE为0.000660；包含调参和模型族选择的嵌套流程RMSE为0.000709。
+- 第2—4名P1、D、B处于2%并列容差内，名次不稳定；B在bootstrap下是主要替代模型。
+- 预测区间以模型族已冻结为C为条件，不包含选族不确定性，也不是独立测试覆盖率。
+- 49块电池均没有真实80% SOH终点；T80只作情景外推，不能报告为已验证寿命。
 
-- 数学与验证协议：`docs/q3_literature_and_model_derivation.md`
-- 程序：`scripts/q3/run_q3_smoke.py`
-- 阶段报告：`reports/q3_pre_full_validation_report.md`
-- smoke权威报告：`01_smoke_test/smoke_report.md`
+## 复现入口
 
-## 当前结论
+```powershell
+.venv\Scripts\python.exe scripts\q3\run_q3_full_validation.py --bootstrap 5000
+.venv\Scripts\python.exe tests\test_q3_models.py
+.venv\Scripts\python.exe tests\test_q3_smoke_outputs.py
+.venv\Scripts\python.exe tests\test_q3_full_protocol.py
+```
 
-- 六个候选全部通过代码、泄漏、数值和120秒运行时间门槛；
-- 应用2%并列规则后，D组合模型暂列第一，B同策略迁移暂列第二；
-- smoke排名不是最终选模证据，六个模型都必须进入全量嵌套LOBO；
-- L=150时，B模型策略等权RMSE为0.000660，P1线性基线为0.000693，D模型为0.000748；
-- 情景`T80`跨模型约466—2327循环，远期外推尚不稳定，不能作为已验证寿命。
+全量入口拒绝覆盖现有权威目录；若需要复算，应先使用新的隔离工作区或明确的新版本输出目录。
