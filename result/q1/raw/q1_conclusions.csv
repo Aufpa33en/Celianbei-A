@@ -1,5 +1,5 @@
 ﻿ConclusionId,Topic,Statement,EvidenceCSV,Caveat
-Q1-C01,main_model,主模型为两阶段函数型曲线（内部标识functional_ridge，lambda_curve=0）；选择依据为留一电池RMSE。,model_comparison.csv,与spline_mixed的绝对RMSE差仍小；调参与评估共用数据的偏差另需嵌套验证
+Q1-C01,main_model,主模型为两阶段函数型曲线（内部标识functional_ridge，lambda_curve=0）；选择依据为外层留一电池、内层重新调参的RMSE。,model_comparison.csv;selection_pipeline_summary.csv,40个外层折均由训练数据选择函数型家族；与spline_mixed的绝对RMSE差仍小
 Q1-C02,model_agreement,三种候选模型的SOH200策略排序完全一致。,model_agreement.csv,一致性只覆盖0至200循环
 Q1-C03,typical_long,3_6C-80PER_3_6C；5C_67PER_4C_NEWSTRUCTURE；5_3C_54PER_4C_NEWSTRUCTURE,strategy_rank_stability.csv,基于SOH200点估计前三名；同时查看bootstrap排名概率，不等同真实EOL寿命
 Q1-C04,typical_short,4_8C_80PER_4_8C；80PER_3_6C；3_7C_31PER_5_9C_NEWSTRUCTURE,strategy_rank_stability.csv,基于SOH200点估计后三名；同时查看bootstrap排名概率，不等同真实EOL寿命

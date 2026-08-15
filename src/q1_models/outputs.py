@@ -44,6 +44,7 @@ def write_authoritative_outputs(
         "strategy_scalar_estimates": tables["strategy_scalar_estimates"],
         "strategy_rank_stability": tables["strategy_rank_stability"],
         "authoritative_model_cv_by_policy": tables["authoritative_model_cv_by_policy"],
+        "selection_pipeline_summary": tables["selection_pipeline_summary"],
         "q1_conclusions": tables["q1_conclusions"],
     }
     for name, table in paper_tables.items():
@@ -158,8 +159,8 @@ def _draw_final_model_comparison(tables: dict[str, pd.DataFrame], path: Path) ->
         ax.annotate(f"{row['MeanBatteryRMSE']:.6f}",
                     (row["MeanBatteryRMSE"], display.get(row["Model"], row["Model"])),
                     xytext=(5, 7), textcoords="offset points", fontsize=9)
-    ax.set_xlabel("留一电池 RMSE（误差线为电池间标准误）")
-    ax.set_title("绝对误差：三模型高度重叠")
+    ax.set_xlabel("嵌套留一电池 RMSE（误差线为电池间标准误）")
+    ax.set_title("每个外层折内重新调参：三模型高度重叠")
     ax.grid(axis="x", alpha=0.2)
 
     paired = tables["model_pairwise_cv_difference"].copy()
@@ -171,7 +172,7 @@ def _draw_final_model_comparison(tables: dict[str, pd.DataFrame], path: Path) ->
     ax_delta.errorbar(delta, delta_labels, xerr=np.vstack((delta - low, high - delta)),
                       fmt="o", color="#1F5A99", capsize=4)
     ax_delta.axvline(0.0, color="#555555", linewidth=1, linestyle="--")
-    ax_delta.set_xlabel("配对 RMSE 差（正值表示函数型曲线更低）")
+    ax_delta.set_xlabel("嵌套配对 RMSE 差（正值表示函数型曲线更低）")
     ax_delta.set_title("配对差异：统计可辨，实际量级很小")
     ax_delta.grid(axis="x", alpha=0.2)
     fig.savefig(path, dpi=300, bbox_inches="tight", pad_inches=0.08)
@@ -240,6 +241,7 @@ def _write_final_paper_report(path: Path, tables: dict[str, pd.DataFrame]) -> No
         "Metric == 'SOH200' and BootstrapCIExcludesZero"
     )
     selected = comparison.iloc[0]
+    selection_pipeline = tables["selection_pipeline_summary"].iloc[0]
     top = "、".join(ranks.head(3)["Policy"])
     bottom = "、".join(ranks.tail(3)["Policy"])
     lines = [
@@ -259,11 +261,11 @@ def _write_final_paper_report(path: Path, tables: dict[str, pd.DataFrame]) -> No
         "",
         "$$\\hat\\mu_s(t)=B(t)\\left(\\frac{1}{n_s}\\sum_{i\\in s}\\hat\\beta_i\\right),$$",
         "",
-        "从而保证每块电池而不是每条循环记录等权。该模型与二次曲线模型、带电池随机截距和随机斜率的惩罚样条模型按相同划分比较。超参数由策略分层三折验证选择，主模型由留一电池RMSE确定。",
+        "从而保证每块电池而不是每条循环记录等权。该模型与二次曲线模型、带电池随机截距和随机斜率的惩罚样条模型按相同划分比较。每个外层留一电池折都只在其余电池上用策略分层三折重新选择超参数；若外层训练集内某策略只剩一块电池，该策略保留在内层训练中、不参与内层验证。另在每个外层折内同时选择模型家族和超参数，用于估计完整选择流水线的泛化误差。",
         "",
         "## 模型选择结果",
         "",
-        f"函数型曲线模型的留一电池RMSE为 {selected['MeanBatteryRMSE']:.6f}，样条基线为 {comparison.iloc[1]['MeanBatteryRMSE']:.6f}。三折调参选择的曲线惩罚为 {selected['LambdaCurve']:g}；这表示当前网格支持无惩罚端点，不能继续称为正则化岭解。前者按预设规则胜出，但绝对差仅 {comparison.iloc[1]['MeanBatteryRMSE'] - selected['MeanBatteryRMSE']:.6f}，仍应结合配对误差解释。三种模型给出的SOH200策略排序一致。",
+        f"在外层留一电池、内层重新调参的候选家族比较中，函数型曲线RMSE为 {selected['MeanBatteryRMSE']:.6f}，样条基线为 {comparison.iloc[1]['MeanBatteryRMSE']:.6f}。在更完整的外层验证中，每折连模型家族也只由训练电池选择，选择流水线RMSE为 {selection_pipeline['MeanBatteryRMSE']:.6f}。全体40块电池三折调参选择的最终曲线惩罚为 {selected['LambdaCurve']:g}；这表示当前网格支持无惩罚端点，不能继续称为正则化岭解。候选家族误差用于比较，选择流水线误差用于报告部署流程的外推性能，二者不可混称。三种最终拟合模型给出的SOH200策略排序一致。",
         "",
         "## 策略比较",
         "",

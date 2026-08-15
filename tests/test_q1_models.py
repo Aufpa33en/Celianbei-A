@@ -14,7 +14,7 @@ sys.path.insert(0, str(ROOT / "src"))
 
 from q1_models.core import MODEL_TYPES, ModelConfig, candidate_configs, fit_population_model  # noqa: E402
 from q1_models.experiments import load_clean_data  # noqa: E402
-from q1_models.inference import _exact_permutation_p_value  # noqa: E402
+from q1_models.inference import _exact_permutation_p_value, _run_candidate_on_data  # noqa: E402
 
 
 def synthetic_data() -> pd.DataFrame:
@@ -68,6 +68,19 @@ def main() -> None:
     assert cycles["battery_id"].nunique() == 49
     assert cycles["policy"].nunique() == 9
 
+    small = synthetic_data()
+    small_batteries = pd.DataFrame(
+        {
+            "battery_id": small["battery_id"].drop_duplicates(),
+            "policy": small.drop_duplicates("battery_id")["policy"].to_numpy(),
+            "mean_chargetime": 10.0,
+        }
+    )
+    nested = _run_candidate_on_data(small, small_batteries, "functional_ridge", 20260814)
+    assert len(nested.lobo) == small["battery_id"].nunique()
+    assert nested.lobo["InnerValidationNBattery"].lt(len(nested.lobo)).all()
+    assert nested.lobo["InnerSelectedLambdaCurve"].notna().all()
+
     pairwise_path = ROOT / "result" / "q1" / "raw" / "pairwise_strategy_scalar_comparison.csv"
     if pairwise_path.exists():
         pairwise = pd.read_csv(pairwise_path)
@@ -77,6 +90,10 @@ def main() -> None:
         soh200 = pairwise.loc[pairwise["Metric"] == "SOH200"]
         assert not soh200["SignificantAfterHolm"].astype(bool).any()
         assert soh200["BootstrapCIExcludesZero"].astype(bool).any()
+        selection = pd.read_csv(ROOT / "result" / "q1" / "raw" / "selection_pipeline_lobo_by_battery.csv")
+        assert selection["BatteryId"].nunique() == 40
+        assert selection["SelectedModel"].eq("functional_ridge").all()
+        assert selection["InnerValidationNBattery"].isin([38, 39]).all()
     print("Q1 model tests passed")
 
 

@@ -96,6 +96,8 @@ def run_final_inference(project_root: Path, settings: InferenceSettings) -> dict
             {"Parameter": "bootstrap_unit", "Value": "battery_within_policy"},
             {"Parameter": "pairwise_test", "Value": "exact_battery_permutation"},
             {"Parameter": "multiple_comparison", "Value": "Holm"},
+            {"Parameter": "model_validation", "Value": "outer_LOBO_with_inner_battery_CV_tuning"},
+            {"Parameter": "selection_pipeline_validation", "Value": "outer_LOBO_selects_family_and_hyperparameter_inside_training_fold"},
         ]
     )
     return {
@@ -125,13 +127,61 @@ def _run_candidate_on_data(
     model_type: str,
     seed: int,
 ) -> CandidateResult:
+    tuning, best_config = _tune_candidate(cycles, model_type, seed)
+    lobo_parts = []
+    for battery_id in pd.unique(cycles["battery_id"]):
+        train = cycles.loc[cycles["battery_id"] != battery_id]
+        test = cycles.loc[cycles["battery_id"] == battery_id]
+        inner_tuning, inner_best_config = _tune_candidate(
+            train, model_type, seed + int(battery_id)
+        )
+        model = fit_population_model(train, model_type, inner_best_config)
+        evaluated = _evaluate_batteries(model, test)
+        evaluated["InnerSelectedLambdaRandom"] = inner_best_config.lambda_random
+        evaluated["InnerSelectedLambdaCurve"] = inner_best_config.lambda_curve
+        evaluated["InnerCVMeanBatteryRMSE"] = inner_tuning["MeanBatteryRMSE"].min()
+        evaluated["InnerValidationNBattery"] = int(inner_tuning["ValidationNBattery"].iloc[0])
+        lobo_parts.append(evaluated)
+    lobo = pd.concat(lobo_parts, ignore_index=True)
+    final_model = fit_population_model(cycles, model_type, best_config)
+    curves, strategy_summary = _extract_outputs(final_model, batteries)
+    return CandidateResult(
+        model_type,
+        seed,
+        tuning,
+        best_config,
+        lobo,
+        final_model,
+        curves,
+        strategy_summary,
+    )
+
+
+def _tune_candidate(
+    cycles: pd.DataFrame,
+    model_type: str,
+    seed: int,
+) -> tuple[pd.DataFrame, ModelConfig]:
+    """Select a candidate using battery folds while retaining singleton policies in training."""
     configs = candidate_configs(model_type)
     fold_map = _stratified_three_fold_map(cycles, seed)
+    policy_counts = cycles[["battery_id", "policy"]].drop_duplicates()["policy"].value_counts()
+    singleton_policies = set(policy_counts[policy_counts < 2].index)
+    singleton_ids = set(
+        cycles.loc[cycles["policy"].isin(singleton_policies), "battery_id"].unique()
+    )
+    fold_map = {
+        battery_id: fold
+        for battery_id, fold in fold_map.items()
+        if battery_id not in singleton_ids
+    }
     tuning_rows = []
     for config_id, config in enumerate(configs, start=1):
         parts = []
         for fold in (1, 2, 3):
             held_out = [battery for battery, assigned in fold_map.items() if assigned == fold]
+            if not held_out:
+                continue
             model = fit_population_model(
                 cycles.loc[~cycles["battery_id"].isin(held_out)], model_type, config
             )
@@ -147,31 +197,13 @@ def _run_candidate_on_data(
                 "MeanBatteryRMSE": metrics["RMSE"].mean(),
                 "MeanBatteryMAE": metrics["MAE"].mean(),
                 "WorstPolicyRMSE": metrics.groupby("Policy")["RMSE"].mean().max(),
+                "ValidationNBattery": metrics["BatteryId"].nunique(),
+                "SingletonPoliciesTrainingOnly": len(singleton_policies),
             }
         )
     tuning = pd.DataFrame(tuning_rows)
     best_config = configs[int(tuning.loc[tuning["MeanBatteryRMSE"].idxmin(), "ConfigId"]) - 1]
-    lobo_parts = []
-    for battery_id in pd.unique(cycles["battery_id"]):
-        model = fit_population_model(
-            cycles.loc[cycles["battery_id"] != battery_id], model_type, best_config
-        )
-        lobo_parts.append(
-            _evaluate_batteries(model, cycles.loc[cycles["battery_id"] == battery_id])
-        )
-    lobo = pd.concat(lobo_parts, ignore_index=True)
-    final_model = fit_population_model(cycles, model_type, best_config)
-    curves, strategy_summary = _extract_outputs(final_model, batteries)
-    return CandidateResult(
-        model_type,
-        seed,
-        tuning,
-        best_config,
-        lobo,
-        final_model,
-        curves,
-        strategy_summary,
-    )
+    return tuning, best_config
 
 
 def file_hashes(paths: list[Path]) -> pd.DataFrame:
@@ -645,6 +677,27 @@ def _model_validation_tables(
     comparison = pd.DataFrame(comparison_rows)
     comparison["Selected"] = comparison["MeanBatteryRMSE"] == comparison["MeanBatteryRMSE"].min()
 
+    all_lobo = pd.concat(lobo_parts, ignore_index=True)
+    pipeline_rows = []
+    for _, fold_rows in all_lobo.groupby("BatteryId", sort=False):
+        selected = fold_rows.loc[fold_rows["InnerCVMeanBatteryRMSE"].idxmin()].copy()
+        selected["SelectedModel"] = selected["Model"]
+        pipeline_rows.append(selected)
+    selection_pipeline_lobo = pd.DataFrame(pipeline_rows).reset_index(drop=True)
+    selection_pipeline_summary = pd.DataFrame(
+        [
+            {
+                "ValidationScheme": "outer_LOBO_inner_family_and_hyperparameter_selection",
+                "NBattery": len(selection_pipeline_lobo),
+                "MeanBatteryRMSE": selection_pipeline_lobo["RMSE"].mean(),
+                "SEBatteryRMSE": selection_pipeline_lobo["RMSE"].std(ddof=1)
+                / np.sqrt(len(selection_pipeline_lobo)),
+                "MeanBatteryMAE": selection_pipeline_lobo["MAE"].mean(),
+                "MedianBatteryRMSE": selection_pipeline_lobo["RMSE"].median(),
+            }
+        ]
+    )
+
     policies = results[0].strategy_summary["Policy"].tolist()
     rank_table = pd.DataFrame({"Policy": policies})
     values = {}
@@ -723,6 +776,8 @@ def _model_validation_tables(
         "model_comparison": comparison,
         "model_agreement": pd.DataFrame(agreement_rows),
         "model_pairwise_cv_difference": pd.DataFrame(paired_rows),
+        "selection_pipeline_lobo_by_battery": selection_pipeline_lobo,
+        "selection_pipeline_summary": selection_pipeline_summary,
         "strategy_rank_by_model": rank_table,
         "baseline_sensitivity_strategy_rank": pd.concat(baseline_parts, ignore_index=True),
         "authoritative_model_cv_by_policy": policy_cv,
@@ -730,7 +785,7 @@ def _model_validation_tables(
         "all_model_strategy_curves": pd.concat(curve_parts, ignore_index=True),
         "all_model_strategy_summary": pd.concat(summary_parts, ignore_index=True),
         "all_model_tuning": pd.concat(tuning_parts, ignore_index=True),
-        "all_model_lobo_by_battery": pd.concat(lobo_parts, ignore_index=True),
+        "all_model_lobo_by_battery": all_lobo,
     }
 
 
@@ -756,10 +811,10 @@ def _conclusion_table(result, rank_stability, pairwise_scalar, residual_policy, 
                 "Topic": "main_model",
                 "Statement": (
                     f"主模型为两阶段函数型曲线（内部标识{result.model_type}，"
-                    f"lambda_curve={result.best_config.lambda_curve:g}）；选择依据为留一电池RMSE。"
+                    f"lambda_curve={result.best_config.lambda_curve:g}）；选择依据为外层留一电池、内层重新调参的RMSE。"
                 ),
-                "EvidenceCSV": "model_comparison.csv",
-                "Caveat": "与spline_mixed的绝对RMSE差仍小；调参与评估共用数据的偏差另需嵌套验证",
+                "EvidenceCSV": "model_comparison.csv;selection_pipeline_summary.csv",
+                "Caveat": "40个外层折均由训练数据选择函数型家族；与spline_mixed的绝对RMSE差仍小",
             },
             {
                 "ConclusionId": "Q1-C02",
