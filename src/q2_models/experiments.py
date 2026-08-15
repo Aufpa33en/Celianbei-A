@@ -199,9 +199,13 @@ def selection_table(scalar_metrics: pd.DataFrame, hierarchical_metrics: pd.DataF
         & table["soh200_improvement"].gt(0)
     )
     eligible = table[table["eligible_explanatory"]].sort_values(["mean_scalar_rank", "relative_loss_rmse"])
-    selected = eligible.index[0] if len(eligible) else "constant_mean"
+    selected = eligible.index[0] if len(eligible) else None
     predictive = table[table.index != "constant_mean"].sort_values("relative_loss_rmse").index[0]
-    table["selected_explanatory_smoke_model"] = table.index == selected
+    table["selected_explanatory_smoke_model"] = False if selected is None else table.index == selected
+    table["explanatory_selection_status"] = (
+        "selected_eligible_explanatory_model" if selected is not None
+        else "no_eligible_explanatory_model"
+    )
     table["best_predictive_benchmark"] = table.index == predictive
     table["selection_scope"] = "explicit_NEWSTRUCTURE; two scalar responses; leave-one-coordinate-out"
     table["formal_model_C_status"] = "not_run; linearized surrogate reported separately"
@@ -209,7 +213,10 @@ def selection_table(scalar_metrics: pd.DataFrame, hierarchical_metrics: pd.DataF
 
 
 def fit_selected_strategy_model(strategy: pd.DataFrame, selection: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame]:
-    selected_name = selection.loc[selection["selected_explanatory_smoke_model"], "model"].iloc[0]
+    selected_rows = selection.loc[selection["selected_explanatory_smoke_model"], "model"]
+    if len(selected_rows) != 1:
+        raise ValueError("Exactly one eligible explanatory model is required; benchmarks cannot be substituted")
+    selected_name = selected_rows.iloc[0]
     candidate = next(item for item in STRATEGY_CANDIDATES if item.name == selected_name)
     cohort = strategy[strategy["explicit_new_structure_cohort"].eq(1)].copy()
     fit_rows: list[dict[str, object]] = []

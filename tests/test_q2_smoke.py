@@ -13,6 +13,7 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PROJECT_ROOT / "src"))
 
 from q2_models.core import add_protocol_features, battery_degradation_summary, load_clean_data  # noqa: E402
+from q2_models.experiments import selection_table  # noqa: E402
 
 
 def main() -> None:
@@ -47,7 +48,16 @@ def main() -> None:
 
     selection = pd.read_csv(PROJECT_ROOT / "result" / "q2" / "02_model_selection" / "smoke_model_selection.csv")
     assert selection["selected_explanatory_smoke_model"].sum() == 1
+    assert selection["explanatory_selection_status"].eq("selected_eligible_explanatory_model").all()
     assert selection["best_predictive_benchmark"].sum() == 1
+    scalar_metrics = pd.read_csv(
+        PROJECT_ROOT / "result" / "q2" / "02_model_selection" / "scalar_model_comparison.csv"
+    )
+    scalar_metrics.loc[~scalar_metrics["model"].isin(["constant_mean", "nearest_coordinate"]),
+                       "relative_rmse_improvement"] = -0.01
+    no_eligible = selection_table(scalar_metrics, pd.DataFrame(), pd.DataFrame())
+    assert not no_eligible["selected_explanatory_smoke_model"].any()
+    assert no_eligible["explanatory_selection_status"].eq("no_eligible_explanatory_model").all()
     manifest = pd.read_csv(PROJECT_ROOT / "result" / "q2" / "result_manifest.csv")
     required_paths = {
         f"result/q2/{folder}/{filename}"
