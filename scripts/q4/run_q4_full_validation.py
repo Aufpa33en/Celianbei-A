@@ -24,11 +24,16 @@ from q4_models.core import (  # noqa: E402
     pareto_mask,
 )
 
-FORMAL_VERSION = "q4_full_v3"
+FORMAL_VERSION = "q4_full_v4"
 FORMAL_LAMBDAS = np.arange(0.0, 1.000001, 0.1)
 RIDGE_GRID = (0.01, 0.1, 1.0, 10.0)
 LOSS_LIMITS = (0.0005, 0.0010, 0.0015, 0.0017)
 TIME_EQUIVALENCE_MINUTES = 0.01
+SUPERIORITY_PROBABILITY = 0.95
+FAST_PAIR = (
+    "5_3C_54PER_4C_NEWSTRUCTURE",
+    "5C_67PER_4C_NEWSTRUCTURE",
+)
 
 
 def _sha256(path: Path) -> str:
@@ -116,6 +121,81 @@ def selection_frequencies(boot: pd.DataFrame, repetitions: int) -> tuple[pd.Data
     return weighted, pd.DataFrame(constrained_rows)
 
 
+def fast_pair_comparison(
+    summary: pd.DataFrame, boot: pd.DataFrame, uncertainty: pd.DataFrame,
+    selection_frequency: pd.DataFrame,
+) -> pd.DataFrame:
+    """Compare the two practically fastest observed policies without forcing a winner."""
+    first, second = FAST_PAIR
+    point = summary.set_index("policy")
+    wide = boot.pivot(index="replicate", columns="policy", values=["time", "loss", "pareto"])
+    time_difference = wide["time"][first] - wide["time"][second]
+    loss_difference = wide["loss"][first] - wide["loss"][second]
+    loss_probability_first_better = float((loss_difference < 0).mean())
+    time_probability_first_faster = float((time_difference < 0).mean())
+    time_probability_first_not_slower = float(
+        (time_difference <= TIME_EQUIVALENCE_MINUTES).mean()
+    )
+    time_probability_second_not_slower = float(
+        (-time_difference <= TIME_EQUIVALENCE_MINUTES).mean()
+    )
+    unique_winner = (
+        first if (
+            loss_probability_first_better >= SUPERIORITY_PROBABILITY
+            and time_probability_first_not_slower >= SUPERIORITY_PROBABILITY
+        )
+        else second if (
+            1.0 - loss_probability_first_better >= SUPERIORITY_PROBABILITY
+            and time_probability_second_not_slower >= SUPERIORITY_PROBABILITY
+        )
+        else None
+    )
+    intervals = uncertainty.set_index("policy")
+    frequencies = selection_frequency.set_index("policy")
+    rows = []
+    for policy in FAST_PAIR:
+        other = second if policy == first else first
+        rows.append({
+            "version": FORMAL_VERSION,
+            "policy": policy,
+            "comparison_policy": other,
+            "decision_status": (
+                "unique_fast_tradeoff_recommendation" if policy == unique_winner
+                else "co_primary_fast_tradeoff_candidate" if unique_winner is None
+                else "not_selected"
+            ),
+            "time_mean": float(point.loc[policy, "time_mean"]),
+            "time_p025": float(intervals.loc[policy, "time_p025"]),
+            "time_p975": float(intervals.loc[policy, "time_p975"]),
+            "loss_mean": float(point.loc[policy, "loss_mean"]),
+            "loss_p025": float(intervals.loc[policy, "loss_p025"]),
+            "loss_p975": float(intervals.loc[policy, "loss_p975"]),
+            "pareto_frequency": float(frequencies.loc[policy, "pareto_frequency"]),
+            "probability_lower_loss_than_pair": (
+                loss_probability_first_better if policy == first else 1.0 - loss_probability_first_better
+            ),
+            "probability_faster_than_pair": (
+                time_probability_first_faster if policy == first else 1.0 - time_probability_first_faster
+            ),
+            "probability_not_slower_by_more_than_0_01_min": (
+                time_probability_first_not_slower if policy == first
+                else time_probability_second_not_slower
+            ),
+            "probability_time_difference_within_0_01_min": float(
+                (time_difference.abs() <= TIME_EQUIVALENCE_MINUTES).mean()
+            ),
+            "pair_time_difference_first_minus_second_p025": float(time_difference.quantile(0.025)),
+            "pair_time_difference_first_minus_second_p50": float(time_difference.quantile(0.5)),
+            "pair_time_difference_first_minus_second_p975": float(time_difference.quantile(0.975)),
+            "pair_loss_difference_first_minus_second_p025": float(loss_difference.quantile(0.025)),
+            "pair_loss_difference_first_minus_second_p50": float(loss_difference.quantile(0.5)),
+            "pair_loss_difference_first_minus_second_p975": float(loss_difference.quantile(0.975)),
+            "unique_recommendation_probability_threshold": SUPERIORITY_PROBABILITY,
+            "q3_role": "not_used_no_early_trajectory_for_new_policy",
+        })
+    return pd.DataFrame(rows)
+
+
 def time_model_sensitivity(summary: pd.DataFrame, battery: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame]:
     meta = pd.read_csv(ROOT / "data" / "processed" / "q1_cleaned" / "battery_summary_clean.csv")
     official = (meta.loc[meta["prediction_test"].eq(0)]
@@ -190,12 +270,13 @@ def slope_and_typical_comparisons(summary: pd.DataFrame) -> tuple[pd.DataFrame, 
     reference_policy = "3_6C-80PER_3_6C"
     reference = summary.loc[summary["policy"].eq(reference_policy)].iloc[0]
     selected = summary.loc[summary["policy"].isin([
-        reference_policy, "5_3C_54PER_4C_NEWSTRUCTURE",
+        reference_policy, *FAST_PAIR,
         "3_7C_31PER_5_9C_NEWSTRUCTURE"]),
         ["policy", "n_battery", "time_mean", "loss_mean", "late_slope_mean"]].copy()
     selected["comparison_role"] = selected["policy"].map({
         reference_policy: "typical_long_life_reference",
-        "5_3C_54PER_4C_NEWSTRUCTURE": "recommended_fast_pareto",
+        "5_3C_54PER_4C_NEWSTRUCTURE": "co_primary_fast_tradeoff_candidate",
+        "5C_67PER_4C_NEWSTRUCTURE": "co_primary_fast_tradeoff_candidate",
         "3_7C_31PER_5_9C_NEWSTRUCTURE": "typical_short_life_reference",
     })
     selected["time_difference_vs_long"] = selected["time_mean"] - float(reference["time_mean"])
@@ -205,7 +286,8 @@ def slope_and_typical_comparisons(summary: pd.DataFrame) -> tuple[pd.DataFrame, 
 
 def integrity_checks(summary: pd.DataFrame, battery: pd.DataFrame, boot: pd.DataFrame,
                      loso: pd.DataFrame, recommendations: pd.DataFrame,
-                     time_table: pd.DataFrame, before: dict[str, str], repetitions: int) -> pd.DataFrame:
+                     time_table: pd.DataFrame, fast_pair: pd.DataFrame,
+                     before: dict[str, str], repetitions: int) -> pd.DataFrame:
     meta = pd.read_csv(ROOT / "data" / "processed" / "q1_cleaned" / "battery_summary_clean.csv")
     expected_ids = set(meta.loc[meta["prediction_test"].eq(0), "battery_id"].astype(int))
     actual_ids = set(battery["battery_id"].astype(int))
@@ -227,6 +309,9 @@ def integrity_checks(summary: pd.DataFrame, battery: pd.DataFrame, boot: pd.Data
         {"check": "late_slope_bootstrapped", "passed": bool(boot["late_slope_loss"].notna().all()), "detail": "strategy mean per replicate"},
         {"check": "point_recommendations_pareto", "passed": recommendation_policies.issubset(pareto_policies), "detail": len(recommendation_policies)},
         {"check": "m1_coordinate_folds", "passed": len(loso) == 7 and len(repeated_coordinate) == 1, "detail": "7 unique coordinates; duplicate coordinate jointly held out"},
+        {"check": "fast_pair_set_valued_decision", "passed": len(fast_pair) == 2 and fast_pair["decision_status"].eq("co_primary_fast_tradeoff_candidate").all(), "detail": "no >=0.95 loss-superiority probability"},
+        {"check": "fast_pair_difference_intervals_cross_zero", "passed": bool((fast_pair["pair_time_difference_first_minus_second_p025"] < 0).all() and (fast_pair["pair_time_difference_first_minus_second_p975"] > 0).all() and (fast_pair["pair_loss_difference_first_minus_second_p025"] < 0).all() and (fast_pair["pair_loss_difference_first_minus_second_p975"] > 0).all()), "detail": "time and loss pairwise bootstrap intervals overlap zero"},
+        {"check": "q3_not_used_as_counterfactual", "passed": fast_pair["q3_role"].eq("not_used_no_early_trajectory_for_new_policy").all(), "detail": "Q3 is conditional prediction, not a policy response surface"},
         {"check": "primary_time_matches_q1_q2", "passed": bool(time_table["primary_equals_summary"].all()), "detail": "Q4 primary equals battery_summary mean_chargetime"},
         {"check": "time_metric_pareto_stable", "passed": set(time_table.loc[time_table["pareto_cycle_time"], "policy"]) == set(time_table.loc[time_table["pareto_primary_time"], "policy"]), "detail": "cycle sensitivity versus primary battery_summary time"},
         {"check": "protected_inputs_unchanged", "passed": before == protected_hashes(), "detail": "data, q4 source, smoke outputs"},
@@ -260,22 +345,23 @@ def main() -> None:
     uncertainty = policy_uncertainty(battery, boot)
     recommendations = point_recommendations(summary)
     selection_frequency, constraint_frequency = selection_frequencies(boot, args.bootstrap)
+    fast_pair = fast_pair_comparison(summary, boot, uncertainty, selection_frequency)
     time_table, time_decisions = time_model_sensitivity(summary, battery)
     scale_sensitivity = scaling_sensitivity(summary)
     slope_sensitivity, typical_comparison = slope_and_typical_comparisons(summary)
-    checks = integrity_checks(summary, battery, boot, loso, recommendations, time_table, before, args.bootstrap)
+    checks = integrity_checks(summary, battery, boot, loso, recommendations, time_table, fast_pair, before, args.bootstrap)
     if not checks["passed"].all():
         raise RuntimeError(checks.loc[~checks["passed"], "check"].tolist())
     elapsed = time.perf_counter() - started
     metrics = pd.DataFrame([
         {"model": "M0_discrete_pareto", "status": "pass_primary", "metric": "pareto_count", "value": float(summary["pareto"].sum()), "detail": "9 observed policies; no continuous causal extrapolation"},
-        {"model": "M1_single_J_ridge", "status": "rejected_as_optimizer", "metric": "oracle_coordinate_pressure_rmse", "value": float(loso["rmse"].mean()), "detail": f"oracle pressure test only; mean improvement={loso['improvement'].mean():.9g}"},
+        {"model": "M1_single_J_ridge", "status": "failed_validation_continuous_search_not_activated", "metric": "oracle_coordinate_pressure_rmse", "value": float(loso["rmse"].mean()), "detail": f"rejects this single-J ridge only; mean improvement={loso['improvement'].mean():.9g}"},
         {"model": "B_shortest_time", "status": "near_tie_baseline", "metric": "minimum_observed_time", "value": float(summary["time_mean"].min()), "detail": f"policies within {TIME_EQUIVALENCE_MINUTES} min treated as practical near-tie set"},
         {"model": "C_lowest_loss", "status": "baseline", "metric": "minimum_observed_loss", "value": float(summary["loss_mean"].min()), "detail": "single-objective boundary"},
     ])
     registry = pd.DataFrame([
         {"version": FORMAL_VERSION, "model": "M0_discrete_pareto", "status": "primary", "detail": "observed policy Pareto, constraints and bootstrap"},
-        {"version": FORMAL_VERSION, "model": "M1_single_J_ridge", "status": "rejected_as_optimizer", "detail": "oracle coordinate pressure test; no continuous recommendation"},
+        {"version": FORMAL_VERSION, "model": "M1_single_J_ridge", "status": "failed_validation", "detail": "this single-J ridge is unusable; broader continuous model classes remain untested"},
     ])
     runtime = pd.DataFrame([{"version": FORMAL_VERSION, "stage": "full_q4_protocol",
                              "seconds": elapsed, "bootstrap_repetitions": args.bootstrap,
@@ -286,10 +372,14 @@ def main() -> None:
                   "loss_limit_type": "illustrative_decision_scenario_not_safety_standard",
                   "primary_charge_time_metric": "battery_summary_clean.mean_chargetime",
                   "cycle_charge_time_metric_role": "sensitivity_only",
-                  "time_equivalence_minutes": TIME_EQUIVALENCE_MINUTES}
+                  "time_equivalence_minutes": TIME_EQUIVALENCE_MINUTES,
+                  "unique_recommendation_probability_threshold": SUPERIORITY_PROBABILITY,
+                  "q3_counterfactual_role": "not_used_no_early_trajectory_for_new_policy",
+                  "continuous_model_conclusion": "single_J_ridge_failed_broader_classes_untested"}
     frames = {"policy_summary.csv": summary, "battery_observations.csv": battery,
               "bootstrap_pareto.csv": boot, "policy_uncertainty.csv": uncertainty,
               "selection_frequency.csv": selection_frequency,
+              "fast_pair_comparison.csv": fast_pair,
               "constraint_selection_frequency.csv": constraint_frequency,
               "recommendations.csv": recommendations, "scaling_sensitivity.csv": scale_sensitivity,
               "time_model_sensitivity.csv": time_table,
@@ -307,13 +397,13 @@ def main() -> None:
 
 版本`{FORMAL_VERSION}`，整块电池bootstrap {args.bootstrap}次，随机种子{SEED}，运行{elapsed:.3f}秒。
 
-M0离散观测策略Pareto为主模型；M1单J模型的oracle坐标压力测试失败，正式淘汰为优化器。点估计Pareto策略为：{', '.join(summary.loc[summary['pareto'], 'policy'].astype(str))}。
+M0离散观测策略Pareto为主模型；M1单J岭模型的oracle坐标压力测试失败，所以本数据下不启动连续搜索。该结果只否定当前单J岭代理，不证明所有连续代理或后续新增实验均无效。点估计Pareto策略为：{', '.join(summary.loc[summary['pareto'], 'policy'].astype(str))}。
 
-充电时间主指标统一采用`battery_summary_clean.csv`中的逐电池`mean_chargetime`，与问题1、2一致。前200循环的逐循环均值仅作覆盖窗口敏感性，不能替代主指标。按主指标和0.01分钟容差，只有5.3C-54%-4C与5C-67%-4C属于最快近似并列组。
+充电时间主指标统一采用`battery_summary_clean.csv`中的逐电池`mean_chargetime`，与问题1、2一致。前200循环的逐循环均值仅作覆盖窗口敏感性，不能替代主指标。5.3C与5.0C构成最快候选集；二者时间差和退化差的整块电池bootstrap区间均跨0，5.3C退化更低的概率不足0.95，因此正式结论保留两个并列快速折中候选，不给唯一赢家。
 
 权重结论依赖标准化集合，`scaling_sensitivity.csv`只作敏感性；正式决策应报告Pareto前沿、退化约束和bootstrap稳定性。四个退化上限是说明规则用法的决策场景，不是工程安全标准。
 
-`time_model_sensitivity.csv`同时保存主指标、逐循环敏感性均值和T0；`typical_strategy_comparison.csv`对比推荐策略与典型长/短寿命策略。推荐只适用于9个已有策略，不能解释为三参数因果最优。
+`fast_pair_comparison.csv`给出两候选的区间、成对差异和胜出概率。Q3模型需要目标电池已有1—150循环轨迹，未被用作新策略反事实响应面。推荐只适用于9个已有策略，不能解释为三参数因果最优。
 """
     (temp / "full_report.md").write_text(report, encoding="utf-8")
     (temp / "run_config.json").write_text(json.dumps(run_config, ensure_ascii=False, indent=2), encoding="utf-8")

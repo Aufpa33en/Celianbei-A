@@ -43,6 +43,14 @@ def test_q4_full_validation_protocol() -> None:
     assert cycle_front == primary_front
     uncertainty = pd.read_csv(target / "policy_uncertainty.csv")
     assert uncertainty["interval_type"].eq("strategy_mean_whole_battery_bootstrap").all()
+    fast_pair = pd.read_csv(target / "fast_pair_comparison.csv")
+    assert len(fast_pair) == 2
+    assert fast_pair["decision_status"].eq("co_primary_fast_tradeoff_candidate").all()
+    assert fast_pair["probability_lower_loss_than_pair"].max() < 0.95
+    assert fast_pair["probability_not_slower_by_more_than_0_01_min"].max() < 0.95
+    assert (fast_pair["pair_loss_difference_first_minus_second_p025"] < 0).all()
+    assert (fast_pair["pair_loss_difference_first_minus_second_p975"] > 0).all()
+    assert fast_pair["q3_role"].eq("not_used_no_early_trajectory_for_new_policy").all()
     manifest = pd.read_csv(target / "manifest.csv")
     assert "run_config.json" in set(manifest["path"])
 

@@ -1,3 +1,3 @@
 ﻿version,model,status,detail
-q4_full_v3,M0_discrete_pareto,primary,"observed policy Pareto, constraints and bootstrap"
-q4_full_v3,M1_single_J_ridge,rejected_as_optimizer,oracle coordinate pressure test; no continuous recommendation
+q4_full_v4,M0_discrete_pareto,primary,"observed policy Pareto, constraints and bootstrap"
+q4_full_v4,M1_single_J_ridge,failed_validation,this single-J ridge is unusable; broader continuous model classes remain untested

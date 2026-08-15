@@ -1,5 +1,5 @@
 {
-  "version": "q4_full_v3",
+  "version": "q4_full_v4",
   "seed": 20260815,
   "bootstrap": 5000,
   "formal_lambda_grid": [
@@ -30,5 +30,8 @@
   "loss_limit_type": "illustrative_decision_scenario_not_safety_standard",
   "primary_charge_time_metric": "battery_summary_clean.mean_chargetime",
   "cycle_charge_time_metric_role": "sensitivity_only",
-  "time_equivalence_minutes": 0.01
+  "time_equivalence_minutes": 0.01,
+  "unique_recommendation_probability_threshold": 0.95,
+  "q3_counterfactual_role": "not_used_no_early_trajectory_for_new_policy",
+  "continuous_model_conclusion": "single_J_ridge_failed_broader_classes_untested"
 }
