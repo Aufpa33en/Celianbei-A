@@ -314,6 +314,7 @@ def integrity_checks(summary: pd.DataFrame, battery: pd.DataFrame, boot: pd.Data
         {"check": "late_slope_bootstrapped", "passed": bool(boot["late_slope_loss"].notna().all()), "detail": "strategy mean per replicate"},
         {"check": "point_recommendations_pareto", "passed": recommendation_policies.issubset(pareto_policies), "detail": len(recommendation_policies)},
         {"check": "m1_coordinate_folds", "passed": len(loso) == 7 and len(repeated_coordinate) == 1, "detail": "7 unique coordinates; duplicate coordinate jointly held out"},
+        {"check": "m1_failure_concentration_exposed", "passed": loso["worst_fold"].sum() == 1 and loso["squared_error_share"].sum() > 0.999999, "detail": "fold-level prediction, extrapolation and squared-error share recorded"},
         {"check": "fast_pair_point_pareto_roles", "passed": len(fast_pair) == 2 and fast_pair["point_pareto"].sum() == 1 and fast_pair.loc[fast_pair["point_pareto"], "decision_status"].eq("point_pareto_fast_tradeoff_recommendation").all() and fast_pair.loc[~fast_pair["point_pareto"], "decision_status"].eq("uncertainty_near_tie_nonpareto_sensitivity").all(), "detail": "point Pareto recommendation separated from non-Pareto uncertainty sensitivity"},
         {"check": "fast_pair_difference_intervals_cross_zero", "passed": bool((fast_pair["pair_time_difference_first_minus_second_p025"] < 0).all() and (fast_pair["pair_time_difference_first_minus_second_p975"] > 0).all() and (fast_pair["pair_loss_difference_first_minus_second_p025"] < 0).all() and (fast_pair["pair_loss_difference_first_minus_second_p975"] > 0).all()), "detail": "time and loss pairwise bootstrap intervals overlap zero"},
         {"check": "q3_not_used_as_counterfactual", "passed": fast_pair["q3_role"].eq("not_used_no_early_trajectory_for_new_policy").all(), "detail": "Q3 is conditional prediction, not a policy response surface"},
@@ -360,7 +361,7 @@ def main() -> None:
     elapsed = time.perf_counter() - started
     metrics = pd.DataFrame([
         {"model": "M0_discrete_pareto", "status": "pass_primary", "metric": "pareto_count", "value": float(summary["pareto"].sum()), "detail": "9 observed policies; no continuous causal extrapolation"},
-        {"model": "M1_single_J_ridge", "status": "failed_validation_continuous_search_not_activated", "metric": "oracle_coordinate_pressure_rmse", "value": float(loso["rmse"].mean()), "detail": f"rejects this single-J ridge only; mean improvement={loso['improvement'].mean():.9g}"},
+        {"model": "M1_single_J_ridge", "status": "failed_validation_continuous_search_not_activated", "metric": "oracle_coordinate_pressure_rmse", "value": float(loso["rmse"].mean()), "detail": f"rejects this single-J ridge only; mean improvement={loso['improvement'].mean():.9g}; worst-fold SSE share={loso['squared_error_share'].max():.6f}"},
         {"model": "B_shortest_time", "status": "near_tie_baseline", "metric": "minimum_observed_time", "value": float(summary["time_mean"].min()), "detail": f"policies within {TIME_EQUIVALENCE_MINUTES} min treated as practical near-tie set"},
         {"model": "C_lowest_loss", "status": "baseline", "metric": "minimum_observed_loss", "value": float(summary["loss_mean"].min()), "detail": "single-objective boundary"},
     ])
@@ -402,7 +403,7 @@ def main() -> None:
 
 版本`{FORMAL_VERSION}`，整块电池bootstrap {args.bootstrap}次，随机种子{SEED}，运行{elapsed:.3f}秒。
 
-M0离散观测策略Pareto为主模型；M1单J岭模型的oracle坐标压力测试失败，所以本数据下不启动连续搜索。该结果只否定当前单J岭代理，不证明所有连续代理或后续新增实验均无效。点估计Pareto策略为：{', '.join(summary.loc[summary['pareto'], 'policy'].astype(str))}。
+M0离散观测策略Pareto为主模型；M1单J岭模型的oracle坐标压力测试失败，所以本数据下不启动连续搜索。最差的3.6C留一折位于训练J范围外，产生负退化预测并贡献{loso['squared_error_share'].max():.1%}总平方误差；剔除该折后，M1平均RMSE仍为{loso.loc[~loso['worst_fold'], 'rmse'].mean():.6f}，略差于常数基线{loso.loc[~loso['worst_fold'], 'constant_rmse'].mean():.6f}。因此失败方向不依赖该折，但总体RMSE幅度明显受它驱动。该结果只否定当前单J岭代理，不证明所有连续代理或后续新增实验均无效。点估计Pareto策略为：{', '.join(summary.loc[summary['pareto'], 'policy'].astype(str))}。
 
 充电时间主指标统一采用`battery_summary_clean.csv`中的逐电池`mean_chargetime`，与问题1、2一致。前200循环的逐循环均值仅作覆盖窗口敏感性，不能替代主指标。点估计上5.3C的时间和退化都低于5.0C，因此前者是快速区域的Pareto推荐，后者是非前沿的不确定性近似并列敏感性项。二者时间差和退化差的整块电池bootstrap区间均跨0，5.3C退化更低的概率不足0.95，因此不把5.0C排除为近似并列方案，但也不将严格被支配点标成共同主推荐。
 

@@ -15,3 +15,4 @@ q3_not_used_as_counterfactual,True,"Q3 is conditional prediction, not a policy r
 primary_time_matches_q1_q2,True,Q4 primary equals battery_summary mean_chargetime
 time_metric_pareto_stable,True,cycle sensitivity versus primary battery_summary time
 protected_inputs_unchanged,True,"data, q4 source, smoke outputs"
+m1_failure_concentration_exposed,True,"fold-level prediction, extrapolation and squared-error share recorded"

@@ -180,13 +180,32 @@ def loso_single_exposure(
             else:
                 pred = intercept + slope * (test[exposure].to_numpy(float) - mean) / scale
             rmse = float(np.sqrt(np.mean((pred - test["loss_mean"].to_numpy(float)) ** 2))) if len(test) else np.nan
-            candidate = (rmse, -lam, intercept, slope, mean, scale)
+            candidate = (rmse, -lam, intercept, slope, mean, scale, pred)
             if best is None or candidate[:2] < best[:2]: best = candidate
         assert best is not None
         baseline_rmse = float(np.sqrt(np.mean((test["loss_mean"].to_numpy(float) - train["loss_mean"].mean()) ** 2))) if len(test) else np.nan
+        test_exposure = test[exposure].to_numpy(float)
+        train_exposure = train[exposure].to_numpy(float)
+        prediction = np.asarray(best[6], dtype=float)
         rows.append({"version": Q4_VERSION, "exposure": exposure, "held_out_coordinate": held_out,
                      "n_test_policy": len(test), "rmse": best[0], "lambda": -best[1],
                      "constant_rmse": baseline_rmse, "improvement": baseline_rmse - best[0],
                      "intercept": best[2], "slope": best[3], "train_mean": best[4],
-                     "train_scale": best[5], "validation_type": "coordinate_LOSO_extrapolation_pressure"})
-    return pd.DataFrame(rows)
+                     "train_scale": best[5],
+                     "train_exposure_min": float(train_exposure.min()),
+                     "train_exposure_max": float(train_exposure.max()),
+                     "test_exposure_min": float(test_exposure.min()),
+                     "test_exposure_max": float(test_exposure.max()),
+                     "outside_train_exposure_range": bool(
+                         test_exposure.min() < train_exposure.min()
+                         or test_exposure.max() > train_exposure.max()
+                     ),
+                     "prediction_mean": float(prediction.mean()),
+                     "prediction_below_zero": bool((prediction < 0).any()),
+                     "observed_loss_mean": float(test["loss_mean"].mean()),
+                     "sum_squared_error": float(np.sum((prediction - test["loss_mean"].to_numpy(float)) ** 2)),
+                     "validation_type": "coordinate_LOSO_extrapolation_pressure"})
+    result = pd.DataFrame(rows)
+    result["squared_error_share"] = result["sum_squared_error"] / result["sum_squared_error"].sum()
+    result["worst_fold"] = result["sum_squared_error"].eq(result["sum_squared_error"].max())
+    return result

@@ -153,6 +153,14 @@ def draw_m1_validation() -> Path:
     ax.set_title("单J岭代理仅1/7个留一坐标优于常数基线")
     ax.grid(axis="x", alpha=0.22)
     ax.legend(loc="lower center", bbox_to_anchor=(0.5, 1.08), ncol=2, frameon=False)
+    worst = frame.loc[frame["worst_fold"].astype(bool)].iloc[0]
+    remaining = frame.loc[~frame["worst_fold"].astype(bool)]
+    fig.text(
+        0.5, -0.02,
+        f"最差折位于训练J范围外且预测退化<0，贡献{float(worst['squared_error_share']):.1%}总平方误差；"
+        f"剔除后单J岭RMSE={remaining['rmse'].mean():.6f}，常数基线={remaining['constant_rmse'].mean():.6f}",
+        ha="center", fontsize=9,
+    )
     return _save(fig, "fig_q4_m1_validation.png")
 
 

@@ -1,5 +1,6 @@
 from pathlib import Path
 
+import numpy as np
 import pandas as pd
 
 
@@ -56,6 +57,14 @@ def test_q4_full_validation_protocol() -> None:
     assert fast_pair["probability_not_slower_by_more_than_0_01_min"].max() < 0.95
     assert (fast_pair["pair_loss_difference_first_minus_second_p025"] < 0).all()
     assert (fast_pair["pair_loss_difference_first_minus_second_p975"] > 0).all()
+    m1 = pd.read_csv(target / "m1_coordinate_loso.csv")
+    assert m1["worst_fold"].astype(bool).sum() == 1
+    assert np.isclose(m1["squared_error_share"].sum(), 1.0)
+    worst = m1.loc[m1["worst_fold"].astype(bool)].iloc[0]
+    assert bool(worst["outside_train_exposure_range"])
+    assert bool(worst["prediction_below_zero"])
+    remaining = m1.loc[~m1["worst_fold"].astype(bool)]
+    assert remaining["rmse"].mean() > remaining["constant_rmse"].mean()
     assert fast_pair["q3_role"].eq("not_used_no_early_trajectory_for_new_policy").all()
     manifest = pd.read_csv(target / "manifest.csv")
     assert "run_config.json" in set(manifest["path"])
