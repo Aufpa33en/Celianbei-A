@@ -1,0 +1,2 @@
+﻿n_strategy,n_exact_permutations,observed_max_direction_score,tail_fraction,minimum_resolution,interpretation
+6,720,0.950580836809113,0.15555555555555556,0.001388888888888889,diagnostic_only_nonrandom_heteroscedastic_strategy_means_not_exchangeable
