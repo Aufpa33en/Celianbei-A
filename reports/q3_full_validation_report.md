@@ -79,3 +79,11 @@ S=0.15\,\mathrm{RMSE}_{50}+0.25\,\mathrm{RMSE}_{100}+0.60\,\mathrm{RMSE}_{150}.
 全量目录15/15项检查通过，最终目录9/9项通过。全量预测36,000行、嵌套选择器6,000行、最终冻结模型450行、六模型测试审计2,700行；68个受保护的题目、数据、程序、测试与smoke文件哈希全部未变化。运行版本为`q3_full_v1`，随机种子`20260814`，代码提交`bb8e9f8`。
 
 权威数值位于`result/q3/02_full_validation`和`result/q3/03_final_predictions`。前者保存完整验证、选模、bootstrap、消融与计时；后者保存冻结模型预测、逐循环区间、EOL敏感性和九电池汇总。
+
+## 7. 论文图示
+
+- [不同早期长度下的六模型误差](../result/q3/03_final_predictions/figures/fig_q3_early_length_rmse.png)：用于说明观测长度、模型复杂度与短期预测误差的关系。
+- [九块测试电池预测轨迹](../result/q3/03_final_predictions/figures/fig_q3_test_predictions.png)：用于展示前150循环观测、151—200循环预测和逐循环近似区间。
+- [T80情景敏感性](../result/q3/03_final_predictions/figures/fig_q3_t80_sensitivity.png)：用于强调远期寿命外推对拟合口径的敏感性，不能解释为真实寿命置信区间。
+
+三图均由`scripts/visualization/generate_q2_q3_paper_figures.py`从冻结CSV结果生成，不重新拟合、调参或选模。

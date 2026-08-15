@@ -13,6 +13,8 @@
 - 第二问合并稳健性：`python scripts/q2/run_q2_merged_robustness.py --permutations 20000 --seed 20260814`
 - 第三问smoke依赖：`environment/requirements-q3.txt`
 - 第三问smoke入口：`python scripts/q3/run_q3_smoke.py`
+- Q2/Q3论文图依赖：`environment/requirements-q1.txt`（pandas、Matplotlib与Pillow）
+- Q2/Q3论文图入口：`python scripts/visualization/generate_q2_q3_paper_figures.py`
 
 Linux/WSL建议在项目根目录执行：
 
