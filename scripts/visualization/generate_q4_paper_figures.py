@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 from pathlib import Path
 
 import matplotlib.pyplot as plt
@@ -13,6 +14,13 @@ import pandas as pd
 ROOT = Path(__file__).resolve().parents[2]
 RESULT = ROOT / "result" / "q4" / "02_full_validation"
 FIGURE_DIR = RESULT / "figures"
+FIGURE_SOURCES = {
+    "fig_q4_pareto_uncertainty.png": (
+        "policy_summary.csv", "policy_uncertainty.csv", "selection_frequency.csv",
+    ),
+    "fig_q4_fast_pair_comparison.png": ("fast_pair_comparison.csv",),
+    "fig_q4_m1_validation.png": ("m1_coordinate_loso.csv",),
+}
 
 POLICY_LABELS = {
     "3_6C-80PER_3_6C": "3.6C→3.6C（80%）",
@@ -42,6 +50,29 @@ def _read(name: str) -> pd.DataFrame:
     if not path.exists():
         raise FileNotFoundError(path)
     return pd.read_csv(path)
+
+
+def _sha256(path: Path) -> str:
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def _write_figure_manifest(paths: tuple[Path, ...]) -> None:
+    script_path = Path(__file__).resolve()
+    rows = []
+    for figure in paths:
+        sources = FIGURE_SOURCES[figure.name]
+        rows.append({
+            "version": "q4_full_v4",
+            "figure": figure.name,
+            "figure_sha256": _sha256(figure),
+            "source_files": ";".join(sources),
+            "source_sha256": ";".join(_sha256(RESULT / name) for name in sources),
+            "generator": script_path.relative_to(ROOT).as_posix(),
+            "generator_sha256": _sha256(script_path),
+        })
+    pd.DataFrame(rows).to_csv(
+        FIGURE_DIR / "figure_manifest.csv", index=False, encoding="utf-8-sig", lineterminator="\n"
+    )
 
 
 def _save(fig: plt.Figure, name: str) -> Path:
@@ -167,7 +198,9 @@ def draw_m1_validation() -> Path:
 def main() -> None:
     _configure()
     FIGURE_DIR.mkdir(parents=True, exist_ok=True)
-    for path in (draw_pareto_uncertainty(), draw_fast_pair_comparison(), draw_m1_validation()):
+    paths = (draw_pareto_uncertainty(), draw_fast_pair_comparison(), draw_m1_validation())
+    _write_figure_manifest(paths)
+    for path in paths:
         print(path.relative_to(ROOT))
 
 

@@ -92,3 +92,4 @@ Q3冻结的P1模型只在目标电池已经有1—150循环轨迹时预测151—
 - [单J岭留一坐标验证](../result/q4/02_full_validation/figures/fig_q4_m1_validation.png)：7个坐标中仅1个优于常数基线，证据只用于拒绝当前代理。
 
 三图由`scripts/visualization/generate_q4_paper_figures.py`读取冻结CSV生成，不重新拟合、bootstrap或选择策略。
+`figures/figure_manifest.csv`记录每张PNG、对应源CSV和生成脚本的SHA-256；图形完整性测试会现场复算，防止权威CSV与图片版本脱节。
