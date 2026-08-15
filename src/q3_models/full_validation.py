@@ -724,12 +724,19 @@ def _calibration_table(full: dict[str, pd.DataFrame], selected_model: str) -> pd
     rows = []
     for cycle, group in use.groupby("cycle"):
         n = group["battery_id"].nunique()
-        order = min(n, int(np.ceil((n + 1) * 0.95)))
-        level = order / n
+        target_coverage = 0.95
+        order = min(n, int(np.ceil((n + 1) * target_coverage)))
+        empirical_order_level = order / n
+        signed_residual = group["y_true"] - group["y_pred_raw"]
         radius = float(np.sort(group["absolute_residual"].to_numpy())[order - 1])
         rows.append({"version": FULL_VERSION, "model": selected_model, "cycle": cycle,
-                     "n_outer_residuals": n, "quantile_level": level,
-                     "interval_radius": radius, "interval_status": "approximate_fixed_family_outer_cv_residual"})
+                     "n_outer_residuals": n, "target_marginal_coverage": target_coverage,
+                     "order_statistic_rank": order, "empirical_order_level": empirical_order_level,
+                     "signed_residual_mean": float(signed_residual.mean()),
+                     "signed_residual_median": float(signed_residual.median()),
+                     "interval_radius": radius,
+                     "calibration_reuses_model_selection_residuals": True,
+                     "interval_status": "post_selection_diagnostic_not_independent_coverage"})
     return pd.DataFrame(rows)
 
 

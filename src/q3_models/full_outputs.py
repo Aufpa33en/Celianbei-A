@@ -287,7 +287,7 @@ def _final_report(summary: pd.DataFrame, settings: pd.DataFrame, eol: pd.DataFra
         lines.append(f"| {row.battery_id} | {row.policy} | {row.predicted_SOH200_raw:.6f} | {row.predicted_SOH200_projected:.6f} | [{row.interval_low_cycle200:.6f}, {row.interval_high_cycle200:.6f}] | {stitched_t80} ({row.stitched_power_scenario_status}) | {native_t80} ({row.deployed_linear_native_status}) |")
     lines.extend([
         "", "## 预测区间", "",
-        f"区间由冻结`{model}`在L=150下40块训练电池的外层交叉拟合绝对残差逐循环校准，是固定模型族条件下的小样本近似点区间；它不包含选族不确定性，不是独立测试集覆盖率、整条轨迹联合区间或T80置信区间。", "",
+        f"区间由冻结`{model}`在L=150下40块训练电池的外层交叉拟合绝对残差逐循环构造，目标边际覆盖率为95%，对应第39/40顺序统计量。由于同一组外层残差也参与模型族选择，该区间是选族后诊断区间，可能受赢家偏差影响；它不包含选族不确定性，不是独立测试集覆盖率、整条轨迹联合区间或T80置信区间。逐循环有符号残差均值和中位数保存在校准表中。", "",
         "## EOL情景外推", "",
         (f"所有模型、raw/projected和多个拟合起点均保存在`eol_sensitivity.csv`。有限情景值范围为{finite.min():.1f}—{finite.max():.1f}循环；"
          if len(finite) else "当前设置没有稳定有限的T80；")

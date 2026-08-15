@@ -69,6 +69,14 @@ def main() -> None:
         "deployed_linear_native_T80", "deployed_linear_native_status",
     }.issubset(summary.columns)
     assert summary["deployed_linear_native_status"].eq("beyond_5000").any()
+    calibration = pd.read_csv(final_dir / "prediction_interval_calibration.csv")
+    assert calibration["target_marginal_coverage"].eq(0.95).all()
+    assert calibration["order_statistic_rank"].eq(39).all()
+    assert calibration["empirical_order_level"].eq(0.975).all()
+    assert calibration["calibration_reuses_model_selection_residuals"].astype(bool).all()
+    assert calibration["interval_status"].eq(
+        "post_selection_diagnostic_not_independent_coverage"
+    ).all()
     assert pd.read_csv(final_dir / "integrity_checks.csv")["passed"].astype(bool).all()
     print("Q3 full protocol tests passed")
 
