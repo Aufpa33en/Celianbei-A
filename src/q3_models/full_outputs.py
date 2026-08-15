@@ -166,8 +166,10 @@ def write_full_outputs(
     results: dict[str, pd.DataFrame],
     protected: pd.DataFrame,
     seed: int,
+    output_root: Path | None = None,
 ) -> Path:
-    target = project_root / "result" / "q3" / "02_full_validation"
+    result_root = output_root if output_root is not None else project_root / "result" / "q3"
+    target = result_root / "02_full_validation"
     temp = target.with_name(target.name + ".tmp_q3_full_v1")
     if temp.exists() or target.exists():
         raise FileExistsError(f"Refusing to overwrite existing full output path: {temp if temp.exists() else target}")
@@ -280,8 +282,10 @@ def write_final_outputs(
     final: dict[str, pd.DataFrame],
     protected: pd.DataFrame,
     seed: int,
+    output_root: Path | None = None,
 ) -> Path:
-    target = project_root / "result" / "q3" / "03_final_predictions"
+    result_root = output_root if output_root is not None else project_root / "result" / "q3"
+    target = result_root / "03_final_predictions"
     temp = target.with_name(target.name + ".tmp_q3_full_v1")
     if temp.exists() or target.exists():
         raise FileExistsError(f"Refusing to overwrite existing final output path: {temp if temp.exists() else target}")

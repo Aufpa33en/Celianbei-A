@@ -8,8 +8,7 @@ ROOT = Path(__file__).resolve().parents[1]
 
 def test_q4_smoke_protocol() -> None:
     target = ROOT / "result" / "q4" / "01_smoke_test_v2"
-    if not target.exists():
-        return
+    assert target.is_dir(), f"Missing authoritative Q4 smoke directory: {target}"
     checks = pd.read_csv(target / "integrity_checks.csv")
     assert checks["passed"].astype(bool).all()
     summary = pd.read_csv(target / "policy_summary.csv")

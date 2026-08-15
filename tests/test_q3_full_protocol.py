@@ -41,16 +41,16 @@ def main() -> None:
 
     full_dir = PROJECT_ROOT / "result" / "q3" / "02_full_validation"
     final_dir = PROJECT_ROOT / "result" / "q3" / "03_final_predictions"
-    if full_dir.exists():
-        pred = pd.read_csv(full_dir / "predictions_long.csv")
-        assert len(pred) == 36000
-        assert pred.groupby(["model", "L", "battery_id"])["cycle"].nunique().eq(50).all()
-        assert pd.read_csv(full_dir / "integrity_checks.csv")["passed"].astype(bool).all()
-    if final_dir.exists():
-        pred = pd.read_csv(final_dir / "test_predictions_long.csv")
-        assert len(pred) == 450 and pred["battery_id"].nunique() == 9
-        assert "y_true" not in pred and set(pred["cycle"]) == set(range(151, 201))
-        assert pd.read_csv(final_dir / "integrity_checks.csv")["passed"].astype(bool).all()
+    assert full_dir.is_dir(), f"Missing authoritative Q3 result directory: {full_dir}"
+    assert final_dir.is_dir(), f"Missing authoritative Q3 result directory: {final_dir}"
+    pred = pd.read_csv(full_dir / "predictions_long.csv")
+    assert len(pred) == 36000
+    assert pred.groupby(["model", "L", "battery_id"])["cycle"].nunique().eq(50).all()
+    assert pd.read_csv(full_dir / "integrity_checks.csv")["passed"].astype(bool).all()
+    pred = pd.read_csv(final_dir / "test_predictions_long.csv")
+    assert len(pred) == 450 and pred["battery_id"].nunique() == 9
+    assert "y_true" not in pred and set(pred["cycle"]) == set(range(151, 201))
+    assert pd.read_csv(final_dir / "integrity_checks.csv")["passed"].astype(bool).all()
     print("Q3 full protocol tests passed")
 
 

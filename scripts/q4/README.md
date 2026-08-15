@@ -10,3 +10,9 @@
 ```powershell
 .venv\Scripts\python.exe scripts\q4\run_q4_full_validation.py --bootstrap 5000
 ```
+
+权威目录存在时默认拒绝覆盖。复算应显式写入隔离目录：
+
+```powershell
+.venv\Scripts\python.exe scripts\q4\run_q4_full_validation.py --bootstrap 5000 --output-root <隔离目录>
+```

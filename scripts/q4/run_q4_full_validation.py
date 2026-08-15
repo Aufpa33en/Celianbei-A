@@ -229,8 +229,14 @@ def integrity_checks(summary: pd.DataFrame, battery: pd.DataFrame, boot: pd.Data
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--bootstrap", type=int, default=5000)
+    parser.add_argument(
+        "--output-root",
+        type=Path,
+        default=ROOT / "result" / "q4",
+        help="Directory containing the generated 02_full_validation directory.",
+    )
     args = parser.parse_args()
-    target = ROOT / "result" / "q4" / "02_full_validation"
+    target = args.output_root.resolve() / "02_full_validation"
     if target.exists():
         raise FileExistsError(f"Refusing to overwrite {target}")
     started = time.perf_counter()

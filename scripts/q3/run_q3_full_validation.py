@@ -33,9 +33,16 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--bootstrap", type=int, default=5000)
     parser.add_argument("--resume-final", action="store_true")
+    parser.add_argument(
+        "--output-root",
+        type=Path,
+        default=PROJECT_ROOT / "result" / "q3",
+        help="Directory containing 02_full_validation and 03_final_predictions.",
+    )
     args = parser.parse_args()
-    full_dir = PROJECT_ROOT / "result" / "q3" / "02_full_validation"
-    final_dir = PROJECT_ROOT / "result" / "q3" / "03_final_predictions"
+    output_root = args.output_root.resolve()
+    full_dir = output_root / "02_full_validation"
+    final_dir = output_root / "03_final_predictions"
     if args.resume_final:
         if not full_dir.exists() or final_dir.exists():
             raise FileExistsError("--resume-final requires existing 02 and absent 03")
@@ -56,7 +63,9 @@ def main() -> None:
         checks = final_integrity_checks(selected, final["final_predictions.csv"], settings, protected_final)
         if not checks["passed"].all():
             raise RuntimeError("Final pre-publication integrity checks failed")
-        published_final = write_final_outputs(PROJECT_ROOT, final, protected_final, CONFIG.seed)
+        published_final = write_final_outputs(
+            PROJECT_ROOT, final, protected_final, CONFIG.seed, output_root=output_root
+        )
         if directory_hashes(full_dir) != full_hashes:
             raise RuntimeError("Published 02_full_validation changed during resumed final prediction")
         print(f"Q3 final predictions published: {published_final}", flush=True)
@@ -86,10 +95,14 @@ def main() -> None:
     ]
     if not final_integrity_checks(selected, final["final_predictions.csv"], settings, protected_final)["passed"].all():
         raise RuntimeError("Final pre-publication integrity checks failed")
-    published_full = write_full_outputs(PROJECT_ROOT, full, protected_full, CONFIG.seed)
+    published_full = write_full_outputs(
+        PROJECT_ROOT, full, protected_full, CONFIG.seed, output_root=output_root
+    )
     print(f"Q3 full validation published: {published_full}", flush=True)
     full_hashes = directory_hashes(published_full)
-    published_final = write_final_outputs(PROJECT_ROOT, final, protected_final, CONFIG.seed)
+    published_final = write_final_outputs(
+        PROJECT_ROOT, final, protected_final, CONFIG.seed, output_root=output_root
+    )
     if directory_hashes(published_full) != full_hashes:
         raise RuntimeError("Published 02_full_validation changed during final publication")
     print(f"Q3 final predictions published: {published_final}", flush=True)

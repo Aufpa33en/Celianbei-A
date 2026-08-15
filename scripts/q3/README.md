@@ -29,3 +29,9 @@ python scripts/q3/run_q3_full_validation.py --bootstrap 5000
 ```
 
 结果分别写入`result/q3/02_full_validation/`和`result/q3/03_final_predictions/`；若权威目录已经存在，程序拒绝覆盖。
+
+复算时必须写入隔离目录，不能删除或覆盖权威结果：
+
+```powershell
+python scripts/q3/run_q3_full_validation.py --bootstrap 5000 --output-root <隔离目录>
+```
