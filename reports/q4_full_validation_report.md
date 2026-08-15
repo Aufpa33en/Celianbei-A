@@ -84,3 +84,11 @@ Q3冻结的P1模型只在目标电池已经有1—150循环轨迹时预测151—
 - `late_slope_pareto_sensitivity.csv`：SOH200与末段衰减前沿对照。
 - `typical_strategy_comparison.csv`：典型长寿命、推荐、典型短寿命对比。
 - `m1_coordinate_loso.csv`：当前单J岭代理验证失败的证据，不代表未测试连续模型的普遍失败。
+
+## 8. 论文图示
+
+- [观测策略Pareto点与bootstrap区间](../result/q4/02_full_validation/figures/fig_q4_pareto_uncertainty.png)：同时展示全部9策略和快速低退化区域，点大小反映Pareto进入频率。
+- [5.3C与5.0C成对比较](../result/q4/02_full_validation/figures/fig_q4_fast_pair_comparison.png)：时间差与退化差区间都跨0，直接支撑集合式推荐。
+- [单J岭留一坐标验证](../result/q4/02_full_validation/figures/fig_q4_m1_validation.png)：7个坐标中仅1个优于常数基线，证据只用于拒绝当前代理。
+
+三图由`scripts/visualization/generate_q4_paper_figures.py`读取冻结CSV生成，不重新拟合、bootstrap或选择策略。
