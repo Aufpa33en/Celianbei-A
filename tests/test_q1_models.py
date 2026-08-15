@@ -15,6 +15,12 @@ sys.path.insert(0, str(ROOT / "src"))
 from q1_models.core import MODEL_TYPES, ModelConfig, candidate_configs, fit_population_model  # noqa: E402
 from q1_models.experiments import load_clean_data  # noqa: E402
 from q1_models.inference import _exact_permutation_p_value, _run_candidate_on_data  # noqa: E402
+from q1_models.lifetime import (  # noqa: E402
+    LifetimeSettings,
+    bootstrap_strategy_lifetimes,
+    estimate_battery_lifetimes,
+    validate_lifetime_windows,
+)
 
 
 def synthetic_data() -> pd.DataFrame:
@@ -80,6 +86,31 @@ def main() -> None:
     assert len(nested.lobo) == small["battery_id"].nunique()
     assert nested.lobo["InnerValidationNBattery"].lt(len(nested.lobo)).all()
     assert nested.lobo["InnerSelectedLambdaCurve"].notna().all()
+
+    lifetime_rows = []
+    for battery_id, frame in small.groupby("battery_id", sort=False):
+        policy = frame["policy"].iloc[0]
+        for cycle in range(101, 201):
+            x = cycle / 200
+            loss = {"long": 0.020, "middle": 0.035, "short": 0.055}[policy]
+            lifetime_rows.append((battery_id, cycle, policy, 1 - loss * x - 0.006 * x**2))
+    lifetime_data = pd.concat(
+        [small, pd.DataFrame(lifetime_rows, columns=small.columns)], ignore_index=True
+    ).sort_values(["battery_id", "cycle"])
+    lifetime_settings = LifetimeSettings(candidate_windows=(30, 40, 50))
+    _, validation_summary, selected_window = validate_lifetime_windows(
+        lifetime_data, lifetime_settings
+    )
+    assert selected_window in lifetime_settings.candidate_windows
+    assert validation_summary["Selected"].sum() == 1
+    lifetimes = estimate_battery_lifetimes(lifetime_data, selected_window, lifetime_settings)
+    assert lifetimes["EstimatedT80"].notna().all()
+    policy_lifetime, lifetime_rank = bootstrap_strategy_lifetimes(
+        lifetimes, repetitions=200, seed=20260814
+    )
+    ordered = policy_lifetime.set_index("Policy")["MedianEstimatedT80"]
+    assert ordered["long"] > ordered["middle"] > ordered["short"]
+    assert lifetime_rank.set_index("Policy").loc["long", "PointT80Rank"] == 1
 
     pairwise_path = ROOT / "result" / "q1" / "raw" / "pairwise_strategy_scalar_comparison.csv"
     if pairwise_path.exists():
