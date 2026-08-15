@@ -46,6 +46,11 @@ def write_authoritative_outputs(
         "authoritative_model_cv_by_policy": tables["authoritative_model_cv_by_policy"],
         "selection_pipeline_summary": tables["selection_pipeline_summary"],
         "q1_conclusions": tables["q1_conclusions"],
+        "lifetime_window_validation_summary": tables["lifetime_window_validation_summary"],
+        "battery_lifetime_estimates": tables["battery_lifetime_estimates"],
+        "strategy_lifetime_summary": tables["strategy_lifetime_summary"],
+        "strategy_lifetime_rank_stability": tables["strategy_lifetime_rank_stability"],
+        "pairwise_strategy_lifetime_comparison": tables["pairwise_strategy_lifetime_comparison"],
     }
     for name, table in paper_tables.items():
         table.to_csv(paper_dir / f"{name}.csv", index=False, encoding="utf-8-sig")

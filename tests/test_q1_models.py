@@ -125,6 +125,16 @@ def main() -> None:
         assert selection["BatteryId"].nunique() == 40
         assert selection["SelectedModel"].eq("functional_ridge").all()
         assert selection["InnerValidationNBattery"].isin([38, 39]).all()
+        lifetime_summary = pd.read_csv(
+            ROOT / "result" / "q1" / "raw" / "lifetime_window_validation_summary.csv"
+        )
+        assert lifetime_summary.loc[lifetime_summary["Selected"].astype(bool), "Window"].tolist() == [40]
+        battery_lifetime = pd.read_csv(
+            ROOT / "result" / "q1" / "raw" / "battery_lifetime_estimates.csv"
+        )
+        assert len(battery_lifetime) == 49
+        assert battery_lifetime["LifetimePrefixCycle"].eq(150).all()
+        assert battery_lifetime["EstimatedT80"].notna().all()
     print("Q1 model tests passed")
 
 

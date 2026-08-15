@@ -25,6 +25,14 @@ from .experiments import (
     _stratified_three_fold_map,
     load_clean_data,
 )
+from .lifetime import (
+    LifetimeSettings,
+    bootstrap_strategy_lifetimes,
+    estimate_battery_lifetimes,
+    lifetime_window_sensitivity,
+    pairwise_lifetime_comparison,
+    validate_lifetime_windows,
+)
 
 
 @dataclass(frozen=True)
@@ -69,6 +77,21 @@ def run_final_inference(project_root: Path, settings: InferenceSettings) -> dict
     model_validation = _model_validation_tables(
         candidate_results, analysis_cycles, analysis_batteries, settings.seed
     )
+    lifetime_settings = LifetimeSettings()
+    lifetime_validation_battery, lifetime_validation_summary, lifetime_window = (
+        validate_lifetime_windows(cycles, lifetime_settings)
+    )
+    battery_lifetimes = estimate_battery_lifetimes(
+        cycles, lifetime_window, lifetime_settings
+    )
+    lifetime_sensitivity = lifetime_window_sensitivity(cycles, lifetime_settings)
+    strategy_lifetimes, lifetime_rank_stability = bootstrap_strategy_lifetimes(
+        battery_lifetimes,
+        repetitions=settings.bootstrap_repetitions,
+        seed=settings.seed,
+        alpha=settings.alpha,
+    )
+    pairwise_lifetimes = pairwise_lifetime_comparison(battery_lifetimes)
     cohort = batteries[["battery_id", "policy", "prediction_test"]].copy()
     cohort["IncludedInQ1Cycle200Inference"] = cohort["prediction_test"] == 0
     cohort["ExclusionReason"] = np.where(
@@ -98,6 +121,11 @@ def run_final_inference(project_root: Path, settings: InferenceSettings) -> dict
             {"Parameter": "multiple_comparison", "Value": "Holm"},
             {"Parameter": "model_validation", "Value": "outer_LOBO_with_inner_battery_CV_tuning"},
             {"Parameter": "selection_pipeline_validation", "Value": "outer_LOBO_selects_family_and_hyperparameter_inside_training_fold"},
+            {"Parameter": "cycle_life_definition", "Value": "predicted_cycle_at_SOH_0.8"},
+            {"Parameter": "lifetime_prefix_cycle", "Value": lifetime_settings.prefix_cycle},
+            {"Parameter": "lifetime_selected_tail_window", "Value": lifetime_window},
+            {"Parameter": "lifetime_window_selection", "Value": "predict_cycles_151_to_200_on_40_complete_batteries"},
+            {"Parameter": "lifetime_primary_policy_statistic", "Value": "median_battery_EstimatedT80"},
         ]
     )
     return {
@@ -117,6 +145,13 @@ def run_final_inference(project_root: Path, settings: InferenceSettings) -> dict
         "strategy_feature_summary": strategy_features,
         "strategy_association_summary": associations,
         "q1_conclusions": conclusions,
+        "lifetime_window_validation_by_battery": lifetime_validation_battery,
+        "lifetime_window_validation_summary": lifetime_validation_summary,
+        "battery_lifetime_estimates": battery_lifetimes,
+        "lifetime_window_sensitivity": lifetime_sensitivity,
+        "strategy_lifetime_summary": strategy_lifetimes,
+        "strategy_lifetime_rank_stability": lifetime_rank_stability,
+        "pairwise_strategy_lifetime_comparison": pairwise_lifetimes,
         **model_validation,
     }
 
