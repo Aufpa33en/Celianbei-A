@@ -246,20 +246,28 @@ def final_integrity_checks(
 
 def _final_summary(predictions: pd.DataFrame, eol: pd.DataFrame, selected_model: str) -> pd.DataFrame:
     selected = predictions.loc[predictions["model"].eq(selected_model)]
-    default = eol.loc[
+    stitched_power = eol.loc[
         eol["model"].eq(selected_model) & eol["variant"].eq("raw")
         & eol["method"].eq("stitched_power_start_1")
+    ].set_index("battery_id")
+    native = eol.loc[
+        eol["model"].eq(selected_model) & eol["variant"].eq("raw")
+        & eol["method"].eq("native_prefix_linear")
     ].set_index("battery_id")
     rows = []
     for (battery_id, policy), group in selected.groupby(["battery_id", "policy"]):
         group = group.sort_values("cycle")
-        eol_row = default.loc[battery_id]
+        stitched_row = stitched_power.loc[battery_id]
+        native_row = native.loc[battery_id]
         rows.append({"version": FULL_VERSION, "battery_id": battery_id, "policy": policy,
                      "selected_model": selected_model, "predicted_SOH200_raw": group["y_pred_raw"].iloc[-1],
                      "predicted_SOH200_projected": group["y_pred_projected"].iloc[-1],
                      "interval_low_cycle200": group["approx_interval_low"].iloc[-1],
                      "interval_high_cycle200": group["approx_interval_high"].iloc[-1],
-                     "scenario_T80_default": eol_row["t80"], "scenario_T80_status": eol_row["status"]})
+                     "stitched_power_scenario_T80_start1": stitched_row["t80"],
+                     "stitched_power_scenario_status": stitched_row["status"],
+                     "deployed_linear_native_T80": native_row["t80"],
+                     "deployed_linear_native_status": native_row["status"]})
     return pd.DataFrame(rows)
 
 
@@ -271,18 +279,19 @@ def _final_report(summary: pd.DataFrame, settings: pd.DataFrame, eol: pd.DataFra
         "## 最终方法", "",
         f"最终任务固定拥有150个已观测循环，因此六个预先定义候选按L=150外层留一误差冻结部署模型`{model}`；50/100/150综合分数和嵌套选族结果只作为鲁棒性敏感性。随后只用全部40块完整电池拟合，并读取9块测试电池的1—150循环前缀预测151—200循环。测试电池没有真实未来标签，因此不报告测试RMSE。", "",
         "## 九块测试电池结果", "",
-        "| 电池 | 策略 | 预测SOH200(raw) | 预测SOH200(projected) | SOH200近似95%区间 | 默认情景T80 | 状态 |", "|---:|---|---:|---:|---|---:|---|",
+        "| 电池 | 策略 | 预测SOH200(raw) | 预测SOH200(projected) | SOH200近似95%区间 | 拼接幂律T80情景(start=1) | 部署线性模型自身T80 |", "|---:|---|---:|---:|---|---:|---|",
     ]
     for row in summary.itertuples(index=False):
-        t80 = "—" if pd.isna(row.scenario_T80_default) else f"{row.scenario_T80_default:.1f}"
-        lines.append(f"| {row.battery_id} | {row.policy} | {row.predicted_SOH200_raw:.6f} | {row.predicted_SOH200_projected:.6f} | [{row.interval_low_cycle200:.6f}, {row.interval_high_cycle200:.6f}] | {t80} | {row.scenario_T80_status} |")
+        stitched_t80 = "—" if pd.isna(row.stitched_power_scenario_T80_start1) else f"{row.stitched_power_scenario_T80_start1:.1f}"
+        native_t80 = "—" if pd.isna(row.deployed_linear_native_T80) else f"{row.deployed_linear_native_T80:.1f}"
+        lines.append(f"| {row.battery_id} | {row.policy} | {row.predicted_SOH200_raw:.6f} | {row.predicted_SOH200_projected:.6f} | [{row.interval_low_cycle200:.6f}, {row.interval_high_cycle200:.6f}] | {stitched_t80} ({row.stitched_power_scenario_status}) | {native_t80} ({row.deployed_linear_native_status}) |")
     lines.extend([
         "", "## 预测区间", "",
         f"区间由冻结`{model}`在L=150下40块训练电池的外层交叉拟合绝对残差逐循环校准，是固定模型族条件下的小样本近似点区间；它不包含选族不确定性，不是独立测试集覆盖率、整条轨迹联合区间或T80置信区间。", "",
         "## EOL情景外推", "",
         (f"所有模型、raw/projected和多个拟合起点均保存在`eol_sensitivity.csv`。有限情景值范围为{finite.min():.1f}—{finite.max():.1f}循环；"
          if len(finite) else "当前设置没有稳定有限的T80；")
-        + "由于49块电池均未观测到80% SOH，T80只表示模型情景，不具有实证寿命精度。跨窗口或模型差异较大时，应报告范围和状态而不是单一寿命。", "",
+        + "表中拼接幂律情景是在真实1—150循环与线性预测151—200循环拼接后另行拟合幂律曲线，不能解释为部署线性模型自身的寿命终点；后者单独列出native线性外推状态。由于49块电池均未观测到80% SOH，T80只表示模型情景，不具有实证寿命精度。跨窗口或模型差异较大时，应报告范围和状态而不是单一寿命。", "",
         "## 可用结论", "",
         f"在与最终信息集一致的L=150口径下，`{model}`是本轮六个预注册候选中的部署模型。多长度综合排名、嵌套选择器和C特征消融回答的是不同问题，不能替代部署选择或被解释为因果证据。真正80%寿命仍受短观测窗口限制；论文中应把短期LOBO误差与远期T80不确定性分开陈述。",
     ])

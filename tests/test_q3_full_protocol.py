@@ -62,6 +62,13 @@ def main() -> None:
     pred = pd.read_csv(final_dir / "test_predictions_long.csv")
     assert len(pred) == 450 and pred["battery_id"].nunique() == 9
     assert "y_true" not in pred and set(pred["cycle"]) == set(range(151, 201))
+    summary = pd.read_csv(final_dir / "test_battery_summary.csv")
+    assert "scenario_T80_default" not in summary.columns
+    assert {
+        "stitched_power_scenario_T80_start1", "stitched_power_scenario_status",
+        "deployed_linear_native_T80", "deployed_linear_native_status",
+    }.issubset(summary.columns)
+    assert summary["deployed_linear_native_status"].eq("beyond_5000").any()
     assert pd.read_csv(final_dir / "integrity_checks.csv")["passed"].astype(bool).all()
     print("Q3 full protocol tests passed")
 
