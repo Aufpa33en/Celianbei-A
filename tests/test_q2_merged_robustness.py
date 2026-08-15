@@ -11,10 +11,24 @@ import pandas as pd
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PROJECT_ROOT / "src"))
 
-from q2_models.merged_robustness import run_merged_robustness  # noqa: E402
+from q2_models.merged_robustness import extract_late_rate, run_merged_robustness  # noqa: E402
 
 
 def main() -> None:
+    increasing_cycles = pd.DataFrame({
+        "battery_id": 999,
+        "cycle": range(1, 201),
+        "SOH_relative_clean": [1.0 + 0.0001 * cycle for cycle in range(1, 201)],
+    })
+    increasing_meta = pd.DataFrame({
+        "battery_id": [999], "policy": ["synthetic"], "dataset_id": [0],
+        "C1": [4.0], "Q1": [50.0], "C2": [4.0],
+    })
+    nonpositive = extract_late_rate(increasing_cycles, increasing_meta).iloc[0]
+    assert not bool(nonpositive["late_rate_valid_for_log_model"])
+    assert nonpositive["late_rate_exclusion_reason"] == "nonpositive_rate"
+    assert pd.isna(nonpositive["log_late_degradation_rate"])
+
     outputs = run_merged_robustness(PROJECT_ROOT, repetitions=200, seed=20260814)
     battery = outputs["battery_late_rate"]
     strategy = outputs["strategy_late_rate"]
@@ -23,6 +37,7 @@ def main() -> None:
     assert len(battery) == 40
     assert battery["policy"].nunique() == 9
     assert battery["late_degradation_rate"].gt(0).all()
+    assert battery["late_rate_valid_for_log_model"].astype(bool).all()
     assert len(strategy) == 9
     all_complete = sensitivity[
         sensitivity["cohort"].eq("all_complete") & sensitivity["model"].eq("log_rate_J_H")

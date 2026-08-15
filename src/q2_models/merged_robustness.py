@@ -24,7 +24,7 @@ SEED = 20260814
 
 
 def extract_late_rate(cycles: pd.DataFrame, batteries: pd.DataFrame) -> pd.DataFrame:
-    """Return positive cycles-151--200 relative-SOH decline rates for complete cells."""
+    """Return cycles-151--200 decline rates and an auditable log-model eligibility flag."""
     meta = batteries.set_index("battery_id")
     rows = []
     expected = np.arange(1, 201)
@@ -44,8 +44,7 @@ def extract_late_rate(cycles: pd.DataFrame, batteries: pd.DataFrame) -> pd.DataF
         )
         fitted = basis @ coefficient
         rate = -float(np.linalg.lstsq(late_design, fitted[-50:], rcond=None)[0][1])
-        if rate <= 0:
-            raise ValueError(f"battery {battery_id} has non-positive late degradation rate")
+        valid_for_log = bool(rate > 0)
         item = meta.loc[battery_id]
         rows.append(
             {
@@ -57,7 +56,9 @@ def extract_late_rate(cycles: pd.DataFrame, batteries: pd.DataFrame) -> pd.DataF
                 "C2": float(item["C2"]),
                 "new_structure": int("NEWSTRUCTURE" in str(item["policy"])),
                 "late_degradation_rate": rate,
-                "log_late_degradation_rate": np.log(rate),
+                "late_rate_valid_for_log_model": valid_for_log,
+                "late_rate_exclusion_reason": "" if valid_for_log else "nonpositive_rate",
+                "log_late_degradation_rate": np.log(rate) if valid_for_log else np.nan,
             }
         )
     return pd.DataFrame(rows)
@@ -266,13 +267,16 @@ def run_merged_robustness(
     cycles = pd.read_csv(source / "cycle_train_clean.csv")
     batteries = pd.read_csv(source / "battery_summary_clean.csv")
     battery = extract_late_rate(cycles, batteries)
-    strategy = strategy_late_rate(battery)
+    valid_battery = battery.loc[battery["late_rate_valid_for_log_model"]].copy()
+    if valid_battery.empty:
+        raise ValueError("No positive late degradation rates are available for the log-rate diagnostics")
+    strategy = strategy_late_rate(valid_battery)
     jh_summary, jh_folds = jh_coordinate_sensitivity(strategy, return_folds=True)
     outputs = {
         "battery_late_rate": battery,
         "strategy_late_rate": strategy,
-        "global_strategy_permutation": global_strategy_permutation(battery, repetitions, seed),
-        "matched_4p8_comparison": matched_4p8_comparison(battery),
+        "global_strategy_permutation": global_strategy_permutation(valid_battery, repetitions, seed),
+        "matched_4p8_comparison": matched_4p8_comparison(valid_battery),
         "jh_coordinate_sensitivity": jh_summary,
         "jh_coordinate_fold_diagnostics": jh_folds,
     }
@@ -286,6 +290,9 @@ def run_merged_robustness(
             {"parameter": "platform", "value": platform.platform()},
             {"parameter": "numpy", "value": np.__version__},
             {"parameter": "pandas", "value": pd.__version__},
+            {"parameter": "n_late_rate_total", "value": len(battery)},
+            {"parameter": "n_late_rate_valid_for_log", "value": len(valid_battery)},
+            {"parameter": "n_late_rate_excluded_nonpositive", "value": len(battery) - len(valid_battery)},
         ]
     )
     return outputs
@@ -308,7 +315,7 @@ def write_merged_robustness(project_root: Path, outputs: dict[str, pd.DataFrame]
         "# Q2合并稳健性分析\n\n"
         "本目录补充远程正式验证，但不替代`03_formal_validation/`。\n\n"
         "- `paper/`：末段退化率策略汇总、假设标签可交换的全局诊断、4.8C匹配诊断，以及J+H坐标留出汇总和逐折样本量。\n"
-        "- `raw/`：40块完整电池的末段退化率和运行环境/参数。\n\n"
+        "- `raw/`：40块完整电池的末段退化率、对数模型资格/排除原因和运行环境/参数。非正速率保留原值但不进入对数诊断。\n\n"
         "全局标签置换因协议组固定、样本数和方差不等而不提供确认性p值。正式参数结论仍以高SOC暴露族的选择校正诊断及其边界为准。J+H模型在当前6策略同结构队列中每折仅5个训练点拟合3个系数，无法获得可信验证；"
         "4.8C匹配结果只反映结构/批次联合差异。\n",
         encoding="utf-8",
