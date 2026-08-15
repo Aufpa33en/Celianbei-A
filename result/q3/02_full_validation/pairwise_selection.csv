@@ -1,2 +1,2 @@
 ﻿version,model_a,model_b,difference_a_minus_b,bootstrap_ci95_low,bootstrap_ci95_high,probability_a_lower,repetitions
-q3_full_v1,C_ridge,P1_linear,-0.00024519465782024295,-0.00038206947363725313,-4.3056276113366264e-05,0.9994,5000
+q3_full_v1,C_ridge,D_ensemble,-0.00022882351665826496,-0.0003778876800908915,2.6269600989809834e-05,0.8196,5000

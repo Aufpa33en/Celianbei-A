@@ -39,7 +39,7 @@ T_{ip}=\text{mean\_chargetime}_{i},
 
 另记$T^{(200)}_{ip}=\operatorname{mean}_{t\le200}\{\text{chargetime}_{it}\}$，仅用于检查前200循环覆盖窗口是否改变策略前沿或决策。
 
-以每块电池前5循环SOH均值`b_i`为基线，定义200循环退化代理
+与问题1清洗及问题2敏感性口径一致，以每块电池前5循环SOH中位数`b_i`为基线，定义200循环退化代理
 
 \[
 D_i=1-\frac{SOH_{i,200}}{b_i},

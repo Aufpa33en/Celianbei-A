@@ -12,5 +12,5 @@ single_deployment_freeze,True,['C_ridge']
 deployment_family_from_outer_lobo,True,freeze=C_ridge outer_lobo=C_ridge
 deployment_hyperparameters_frozen,True,freeze row equals L=150 tuning row
 record_shapes,True,49/49
-protected_files_unchanged,True,passed=68/68
-ensemble_identity,True,max_abs_error=4.441e-16
+protected_files_unchanged,True,passed=76/76
+ensemble_identity,True,max_abs_error=3.331e-16

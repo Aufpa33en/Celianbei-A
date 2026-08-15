@@ -12,7 +12,7 @@ import pandas as pd
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PROJECT_ROOT / "src"))
 
-from q2_models.core import add_protocol_features, load_clean_data  # noqa: E402
+from q2_models.core import add_protocol_features, battery_degradation_summary, load_clean_data  # noqa: E402
 
 
 def main() -> None:
@@ -33,6 +33,9 @@ def main() -> None:
     assert cycles["battery_id"].nunique() == 40
     assert len(summary) == 40
     assert cycles.groupby("battery_id")["cycle"].nunique().eq(200).all()
+    battery = battery_degradation_summary(cycles, summary).set_index("battery_id")
+    expected_baseline = summary.set_index("battery_id")["baseline_soh_cycles_1_5"]
+    assert np.allclose(battery["baseline_soh"], expected_baseline, rtol=0.0, atol=1e-12)
 
     audit = pd.read_csv(PROJECT_ROOT / "result" / "q2" / "00_design" / "design_audit.csv")
     assert len(audit) == 8

@@ -23,6 +23,10 @@ from q3_models.full_validation import (  # noqa: E402
 
 def main() -> None:
     records, meta, _ = load_records(PROJECT_ROOT)
+    for battery_id, record in records.items():
+        expected = float(meta.loc[meta["battery_id"].eq(battery_id), "baseline_soh_cycles_1_5"].iloc[0])
+        assert abs(record.baseline - expected) < 1e-12
+        assert np.allclose(record.relative_soh, record.cycles["SOH_relative_clean"], rtol=0.0, atol=1e-12)
     shapes = validate_record_shapes(records, meta)
     assert len(shapes) == 49 and shapes["continuous_unique_cycles"].all()
     complete = [records[battery_id] for battery_id in complete_battery_ids(meta)]

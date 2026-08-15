@@ -1,6 +1,6 @@
 ﻿test,model,observed_score,exact_p_one_sided,n_permutations
-max_over_four_exposures,selected_family,0.34789550400839686,0.06527777777777778,720
-single_exposure_unadjusted,ridge_Jhigh50,0.34789550400839686,0.0375,720
-single_exposure_unadjusted,ridge_Jhigh60,0.3423025733515936,0.016666666666666666,720
-single_exposure_unadjusted,ridge_Jhigh70,0.3363556548945704,0.019444444444444445,720
-single_exposure_unadjusted,ridge_H,0.05468591817101899,0.06388888888888888,720
+max_over_four_exposures,selected_family,0.34793367251563717,0.06527777777777778,720
+single_exposure_unadjusted,ridge_Jhigh50,0.34793367251563717,0.0375,720
+single_exposure_unadjusted,ridge_Jhigh60,0.3422560847371391,0.016666666666666666,720
+single_exposure_unadjusted,ridge_Jhigh70,0.3362374090194588,0.019444444444444445,720
+single_exposure_unadjusted,ridge_H,0.05470427828252721,0.06388888888888888,720

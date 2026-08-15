@@ -36,14 +36,23 @@ def load_records(project_root: Path) -> tuple[dict[int, BatteryRecord], pd.DataF
     for battery_id, frame in cycles.groupby("battery_id", sort=True):
         row = meta.loc[meta["battery_id"].eq(battery_id)].iloc[0]
         frame = frame.sort_values("cycle").reset_index(drop=True)
-        baseline = float(frame.loc[frame["cycle"].between(1, 5), "SOH_clean"].mean())
+        baseline = float(row["baseline_soh_cycles_1_5"])
+        expected_baseline = float(
+            frame.loc[frame["cycle"].between(1, 5), "SOH_clean"].median()
+        )
+        if not np.isclose(baseline, expected_baseline, rtol=0.0, atol=1e-12):
+            raise ValueError(f"Battery {battery_id} has an inconsistent first-five-cycle SOH baseline")
+        relative_soh = frame["SOH_relative_clean"].to_numpy(float)
+        if not np.allclose(relative_soh, frame["SOH_clean"].to_numpy(float) / baseline,
+                           rtol=0.0, atol=1e-12):
+            raise ValueError(f"Battery {battery_id} has an inconsistent relative SOH series")
         records[int(battery_id)] = BatteryRecord(
             battery_id=int(battery_id),
             policy=str(row["policy"]),
             meta=row,
             cycles=frame,
             baseline=baseline,
-            relative_soh=frame["SOH_clean"].to_numpy(float) / baseline,
+            relative_soh=relative_soh,
         )
     return records, meta, cycles
 

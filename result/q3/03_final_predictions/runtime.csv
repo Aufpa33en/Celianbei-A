@@ -1,6 +1,6 @@
 ﻿version,scope,stage,seconds
-q3_full_v1,final,load_and_validate,0.06009140000969637
-q3_full_v1,final,interval_calibration,0.009269999995012768
-q3_full_v1,final,refit_predict_and_eol,1.0998863999993773
-q3_full_v1,final,final_compute_total,1.1701655999931972
-q3_full_v1,final,write_outputs_except_runtime,0.026621800003340468
+q3_full_v1,final,load_and_validate,0.06932280000000901
+q3_full_v1,final,interval_calibration,0.007468499999959022
+q3_full_v1,final,refit_predict_and_eol,1.255991399999857
+q3_full_v1,final,final_compute_total,1.333553800000118
+q3_full_v1,final,write_outputs_except_runtime,0.09391270000014629

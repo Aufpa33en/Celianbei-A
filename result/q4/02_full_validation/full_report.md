@@ -1,6 +1,6 @@
 # Q4 全量验证结果
 
-版本`q4_full_v3`，整块电池bootstrap 5000次，随机种子20260815，运行6.178秒。
+版本`q4_full_v3`，整块电池bootstrap 5000次，随机种子20260815，运行7.343秒。
 
 M0离散观测策略Pareto为主模型；M1单J模型的oracle坐标压力测试失败，正式淘汰为优化器。点估计Pareto策略为：3_6C-80PER_3_6C, 4_8C_80PER_4_8C_NEWSTRUCTURE, 5_3C_54PER_4C_NEWSTRUCTURE。
 

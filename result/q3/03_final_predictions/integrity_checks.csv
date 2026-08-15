@@ -7,4 +7,4 @@ no_truth_or_error_columns,True,test labels unavailable
 all_six_models_audited,True,rows=2700 groups=54 unique_keys=True
 finite_final_predictions,True,raw/projected finite
 intervals_present,True,selected model only
-protected_files_unchanged,True,passed=68/68
+protected_files_unchanged,True,passed=76/76

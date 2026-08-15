@@ -1,5 +1,5 @@
 ﻿model,status,metric,value,detail
 M0_discrete_pareto,pass_primary,pareto_count,3.0,9 observed policies; no continuous causal extrapolation
-M1_single_J_ridge,rejected_as_optimizer,oracle_coordinate_pressure_rmse,0.015826649124149304,oracle pressure test only; mean improvement=-0.00680608941
+M1_single_J_ridge,rejected_as_optimizer,oracle_coordinate_pressure_rmse,0.015740006326225485,oracle pressure test only; mean improvement=-0.00666056728
 B_shortest_time,near_tie_baseline,minimum_observed_time,10.157513242825358,policies within 0.01 min treated as practical near-tie set
-C_lowest_loss,baseline,minimum_observed_loss,0.00042827118143756726,single-objective boundary
+C_lowest_loss,baseline,minimum_observed_loss,0.0005203845468344515,single-objective boundary
