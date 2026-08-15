@@ -62,7 +62,7 @@ def make_basis(model_type: str, cycle: Iterable[float]) -> np.ndarray:
 
 def candidate_configs(model_type: str) -> list[ModelConfig]:
     if model_type == MODEL_POLYNOMIAL:
-        return [ModelConfig(value, 0.0) for value in (0.01, 0.1, 1.0, 10.0)]
+        return [ModelConfig(value, 0.0) for value in (0.001, 0.01, 0.1, 1.0, 10.0, 100.0, 1000.0)]
     if model_type == MODEL_SPLINE:
         return [
             ModelConfig(random_penalty, curve_penalty)
@@ -70,7 +70,10 @@ def candidate_configs(model_type: str) -> list[ModelConfig]:
             for curve_penalty in (0.001, 0.01, 0.1, 1.0)
         ]
     if model_type == MODEL_FUNCTIONAL:
-        return [ModelConfig(0.0, value) for value in (0.0001, 0.001, 0.01, 0.1, 1.0)]
+        return [
+            ModelConfig(0.0, value)
+            for value in (0.0, 0.000001, 0.00001, 0.0001, 0.001, 0.01, 0.1, 1.0)
+        ]
     raise ValueError(f"unknown model type: {model_type}")
 
 

@@ -11,7 +11,7 @@
 
 - 输入：`data/processed/q1_cleaned/cycle_train_clean.csv`和`battery_summary_clean.csv`；响应变量为`SOH_clean`。
 - 队列：40块完整电池用于正式推断；9块`prediction_test=1`电池留给第三问。
-- 主模型：两阶段函数型岭平滑；2000次策略内整块电池bootstrap用于区间和排名稳定性。
+- 主模型：两阶段函数型曲线（超参数网格包含无惩罚端点）；2000次策略内整块电池bootstrap用于区间和排名稳定性。
 - 显著性：以整块电池为单位执行双侧精确置换，并按指标作Holm校正。
 
 正式运行：`python scripts/q1/run_q1_final_analysis.py --bootstrap 2000 --seed 20260814`；也可用当前系统虚拟环境中的Python替换`python`。

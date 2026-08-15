@@ -32,7 +32,7 @@ class InferenceSettings:
     seed: int = 20260814
     bootstrap_repetitions: int = 2000
     alpha: float = 0.05
-    lambda_curve: float = 0.0001
+    lambda_curve: float = 0.0
 
 
 def run_final_inference(project_root: Path, settings: InferenceSettings) -> dict[str, pd.DataFrame]:
@@ -754,9 +754,12 @@ def _conclusion_table(result, rank_stability, pairwise_scalar, residual_policy, 
             {
                 "ConclusionId": "Q1-C01",
                 "Topic": "main_model",
-                "Statement": f"主模型为{result.model_type}；选择依据为留一电池RMSE。",
+                "Statement": (
+                    f"主模型为两阶段函数型曲线（内部标识{result.model_type}，"
+                    f"lambda_curve={result.best_config.lambda_curve:g}）；选择依据为留一电池RMSE。"
+                ),
                 "EvidenceCSV": "model_comparison.csv",
-                "Caveat": "与spline_mixed数值差异极小，实际性能近似并列",
+                "Caveat": "与spline_mixed的绝对RMSE差仍小；调参与评估共用数据的偏差另需嵌套验证",
             },
             {
                 "ConclusionId": "Q1-C02",

@@ -138,7 +138,7 @@ def _draw_final_model_comparison(tables: dict[str, pd.DataFrame], path: Path) ->
     _configure_matplotlib()
     frame = tables["model_comparison"].sort_values("MeanBatteryRMSE").copy()
     display = {
-        "functional_ridge": "函数型岭",
+        "functional_ridge": "函数型曲线",
         "spline_mixed": "惩罚样条",
         "polynomial_mixed": "二次曲线",
     }
@@ -164,14 +164,14 @@ def _draw_final_model_comparison(tables: dict[str, pd.DataFrame], path: Path) ->
 
     paired = tables["model_pairwise_cv_difference"].copy()
     paired = paired.loc[paired["ModelB"].eq("functional_ridge")].reset_index(drop=True)
-    delta_labels = [f"{display.get(a, a)} − 函数型岭" for a in paired["ModelA"]]
+    delta_labels = [f"{display.get(a, a)} − 函数型曲线" for a in paired["ModelA"]]
     delta = paired["MeanRMSEDifference_AminusB"].to_numpy(dtype=float)
     low = paired["CI95Low"].to_numpy(dtype=float)
     high = paired["CI95High"].to_numpy(dtype=float)
     ax_delta.errorbar(delta, delta_labels, xerr=np.vstack((delta - low, high - delta)),
                       fmt="o", color="#1F5A99", capsize=4)
     ax_delta.axvline(0.0, color="#555555", linewidth=1, linestyle="--")
-    ax_delta.set_xlabel("配对 RMSE 差（正值表示函数型岭更低）")
+    ax_delta.set_xlabel("配对 RMSE 差（正值表示函数型曲线更低）")
     ax_delta.set_title("配对差异：统计可辨，实际量级很小")
     ax_delta.grid(axis="x", alpha=0.2)
     fig.savefig(path, dpi=300, bbox_inches="tight", pad_inches=0.08)
@@ -251,7 +251,7 @@ def _write_final_paper_report(path: Path, tables: dict[str, pd.DataFrame]) -> No
         "",
         "## 模型",
         "",
-        "主模型采用两阶段函数型岭平滑。令 $x=t/200$，以 $B(x)=[1,x,x^2,x^3,(x-0.25)_+^3,(x-0.50)_+^3,(x-0.75)_+^3]$ 为基函数。对电池 $i$ 估计",
+        "主模型采用两阶段函数型曲线。令 $x=t/200$，以 $B(x)=[1,x,x^2,x^3,(x-0.25)_+^3,(x-0.50)_+^3,(x-0.75)_+^3]$ 为基函数。对电池 $i$ 估计",
         "",
         "$$\\hat\\beta_i=\\arg\\min_{\\beta}\u2009\\lVert y_i-B_i\\beta\\rVert_2^2+\\lambda\\beta^{\\mathsf T}P\\beta,$$",
         "",
@@ -263,7 +263,7 @@ def _write_final_paper_report(path: Path, tables: dict[str, pd.DataFrame]) -> No
         "",
         "## 模型选择结果",
         "",
-        f"函数型岭模型的留一电池RMSE为 {selected['MeanBatteryRMSE']:.6f}，样条基线为 {comparison.iloc[1]['MeanBatteryRMSE']:.6f}。前者按预设规则胜出，但绝对差仅 {comparison.iloc[1]['MeanBatteryRMSE'] - selected['MeanBatteryRMSE']:.6f}，应解释为实际性能近似并列。三种模型给出的SOH200策略排序一致。",
+        f"函数型曲线模型的留一电池RMSE为 {selected['MeanBatteryRMSE']:.6f}，样条基线为 {comparison.iloc[1]['MeanBatteryRMSE']:.6f}。三折调参选择的曲线惩罚为 {selected['LambdaCurve']:g}；这表示当前网格支持无惩罚端点，不能继续称为正则化岭解。前者按预设规则胜出，但绝对差仅 {comparison.iloc[1]['MeanBatteryRMSE'] - selected['MeanBatteryRMSE']:.6f}，仍应结合配对误差解释。三种模型给出的SOH200策略排序一致。",
         "",
         "## 策略比较",
         "",
@@ -294,7 +294,7 @@ def _write_result_readme(path: Path) -> None:
         "- 输入：`data/processed/q1_cleaned/cycle_train_clean.csv`和"
         "`battery_summary_clean.csv`；响应变量为`SOH_clean`。\n"
         "- 队列：40块完整电池用于正式推断；9块`prediction_test=1`电池留给第三问。\n"
-        "- 主模型：两阶段函数型岭平滑；2000次策略内整块电池bootstrap用于区间和排名稳定性。\n"
+        "- 主模型：两阶段函数型曲线（超参数网格包含无惩罚端点）；2000次策略内整块电池bootstrap用于区间和排名稳定性。\n"
         "- 显著性：以整块电池为单位执行双侧精确置换，并按指标作Holm校正。\n\n"
         "正式运行：`python scripts/q1/run_q1_final_analysis.py --bootstrap 2000 --seed 20260814`；"
         "也可用当前系统虚拟环境中的Python替换`python`。\n"

@@ -7,7 +7,7 @@
 - `run_q1_final_analysis.py`：仅使用40块完整电池完成正式推断、2000次电池级聚类自助法、精确置换检验和论文图表生成。
 - `models/run_q1_polynomial_mixed.py`：单独运行二次多项式混合效应近似。
 - `models/run_q1_spline_mixed.py`：单独运行三次样条混合效应近似。
-- `models/run_q1_functional_ridge.py`：单独运行两阶段函数型岭平滑。
+- `models/run_q1_functional_ridge.py`：单独运行两阶段函数型曲线候选（文件名保留历史内部标识，惩罚可由验证选为0）。
 
 运行：
 

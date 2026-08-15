@@ -12,7 +12,7 @@ import pandas as pd
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
-from q1_models.core import MODEL_TYPES, ModelConfig, fit_population_model  # noqa: E402
+from q1_models.core import MODEL_TYPES, ModelConfig, candidate_configs, fit_population_model  # noqa: E402
 from q1_models.experiments import load_clean_data  # noqa: E402
 from q1_models.inference import _exact_permutation_p_value  # noqa: E402
 
@@ -36,6 +36,13 @@ def synthetic_data() -> pd.DataFrame:
 
 
 def main() -> None:
+    polynomial_grid = candidate_configs("polynomial_mixed")
+    functional_grid = candidate_configs("functional_ridge")
+    assert min(config.lambda_random for config in polynomial_grid) == 0.001
+    assert max(config.lambda_random for config in polynomial_grid) == 1000.0
+    assert min(config.lambda_curve for config in functional_grid) == 0.0
+    assert any(config.lambda_curve == 0.000001 for config in functional_grid)
+
     data = synthetic_data()
     configs = {
         "polynomial_mixed": ModelConfig(0.1, 0),

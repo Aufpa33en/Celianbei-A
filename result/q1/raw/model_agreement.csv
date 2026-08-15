@@ -1,10 +1,10 @@
 ﻿ModelA,ModelB,CurveRMSE,RankSpearman
 polynomial_mixed,polynomial_mixed,0.0,1.0
-polynomial_mixed,spline_mixed,0.0002866031963890003,1.0
-polynomial_mixed,functional_ridge,0.00030880252644429734,1.0
-spline_mixed,polynomial_mixed,0.0002866031963890003,1.0
+polynomial_mixed,spline_mixed,0.0002866031963889994,1.0
+polynomial_mixed,functional_ridge,0.0003816405501964624,1.0
+spline_mixed,polynomial_mixed,0.0002866031963889994,1.0
 spline_mixed,spline_mixed,0.0,1.0
-spline_mixed,functional_ridge,5.1008677114409264e-05,1.0
-functional_ridge,polynomial_mixed,0.00030880252644429734,1.0
-functional_ridge,spline_mixed,5.1008677114409264e-05,1.0
+spline_mixed,functional_ridge,0.00019748461207090185,1.0
+functional_ridge,polynomial_mixed,0.0003816405501964624,1.0
+functional_ridge,spline_mixed,0.00019748461207090185,1.0
 functional_ridge,functional_ridge,0.0,1.0
