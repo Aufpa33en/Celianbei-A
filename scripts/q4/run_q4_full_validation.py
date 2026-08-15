@@ -73,6 +73,16 @@ def policy_uncertainty(battery: pd.DataFrame, boot: pd.DataFrame) -> pd.DataFram
 
 def point_recommendations(summary: pd.DataFrame) -> pd.DataFrame:
     rows = []
+    normalization = {
+        "decision_role": "diagnostic_weight_sensitivity_not_primary_recommendation",
+        "normalization_method": "minmax",
+        "normalization_scope": "all_9_observed_policies_including_dominated",
+        "normalization_n_policies": len(summary),
+        "normalization_time_min": float(summary["time_mean"].min()),
+        "normalization_time_max": float(summary["time_mean"].max()),
+        "normalization_loss_min": float(summary["loss_mean"].min()),
+        "normalization_loss_max": float(summary["loss_mean"].max()),
+    }
     for weight in FORMAL_LAMBDAS:
         idx = choose_scalar(summary["time_mean"].to_numpy(), summary["loss_mean"].to_numpy(),
                             summary["policy"].astype(str).tolist(), float(weight))
@@ -80,18 +90,20 @@ def point_recommendations(summary: pd.DataFrame) -> pd.DataFrame:
         rows.append({"rule": "weighted_minmax_all_policies_diagnostic", "lambda": float(weight),
                      "threshold_type": "not_applicable", "policy": str(selected["policy"]),
                      "time_mean": float(selected["time_mean"]),
-                     "loss_mean": float(selected["loss_mean"]),
+                     "loss_mean": float(selected["loss_mean"]), **normalization,
                      "pareto": bool(selected["pareto"])})
     for limit in LOSS_LIMITS:
         feasible = summary.loc[summary["loss_mean"] <= limit]
         if feasible.empty:
             rows.append({"rule": "shortest_time_under_loss_limit_sensitivity", "loss_limit": limit,
                          "threshold_type": "illustrative_decision_scenario_not_safety_standard",
+                         "decision_role": "illustrative_constraint_sensitivity_not_primary_recommendation",
                          "policy": "NO_FEASIBLE_POLICY"})
         else:
             selected = feasible.sort_values(["time_mean", "loss_mean", "policy"]).iloc[0]
             rows.append({"rule": "shortest_time_under_loss_limit_sensitivity", "loss_limit": limit,
                          "threshold_type": "illustrative_decision_scenario_not_safety_standard",
+                         "decision_role": "illustrative_constraint_sensitivity_not_primary_recommendation",
                          "policy": str(selected["policy"]), "time_mean": float(selected["time_mean"]),
                          "loss_mean": float(selected["loss_mean"]), "pareto": bool(selected["pareto"])})
     return pd.DataFrame(rows)
@@ -313,6 +325,7 @@ def integrity_checks(summary: pd.DataFrame, battery: pd.DataFrame, boot: pd.Data
         {"check": "constraint_rules_bootstrapped", "passed": len(constraint_columns) == len(LOSS_LIMITS), "detail": len(constraint_columns)},
         {"check": "late_slope_bootstrapped", "passed": bool(boot["late_slope_loss"].notna().all()), "detail": "strategy mean per replicate"},
         {"check": "point_recommendations_pareto", "passed": recommendation_policies.issubset(pareto_policies), "detail": len(recommendation_policies)},
+        {"check": "weighted_normalization_machine_readable", "passed": recommendations.loc[recommendations["rule"].eq("weighted_minmax_all_policies_diagnostic"), "normalization_scope"].eq("all_9_observed_policies_including_dominated").all(), "detail": "weighted score is diagnostic; all-policy minmax scope exposed"},
         {"check": "m1_coordinate_folds", "passed": len(loso) == 7 and len(repeated_coordinate) == 1, "detail": "7 unique coordinates; duplicate coordinate jointly held out"},
         {"check": "m1_failure_concentration_exposed", "passed": loso["worst_fold"].sum() == 1 and loso["squared_error_share"].sum() > 0.999999, "detail": "fold-level prediction, extrapolation and squared-error share recorded"},
         {"check": "fast_pair_point_pareto_roles", "passed": len(fast_pair) == 2 and fast_pair["point_pareto"].sum() == 1 and fast_pair.loc[fast_pair["point_pareto"], "decision_status"].eq("point_pareto_fast_tradeoff_recommendation").all() and fast_pair.loc[~fast_pair["point_pareto"], "decision_status"].eq("uncertainty_near_tie_nonpareto_sensitivity").all(), "detail": "point Pareto recommendation separated from non-Pareto uncertainty sensitivity"},
@@ -380,6 +393,8 @@ def main() -> None:
                   "cycle_charge_time_metric_role": "sensitivity_only",
                   "time_equivalence_minutes": TIME_EQUIVALENCE_MINUTES,
                   "unique_recommendation_probability_threshold": SUPERIORITY_PROBABILITY,
+                  "weighted_score_role": "diagnostic_weight_sensitivity_not_primary_recommendation",
+                  "weighted_score_normalization": "minmax_all_9_observed_policies_including_dominated",
                   "q3_counterfactual_role": "not_used_no_early_trajectory_for_new_policy",
                   "continuous_model_conclusion": "single_J_ridge_failed_broader_classes_untested"}
     frames = {"policy_summary.csv": summary, "battery_observations.csv": battery,
@@ -407,7 +422,7 @@ M0离散观测策略Pareto为主模型；M1单J岭模型的oracle坐标压力测
 
 充电时间主指标统一采用`battery_summary_clean.csv`中的逐电池`mean_chargetime`，与问题1、2一致。前200循环的逐循环均值仅作覆盖窗口敏感性，不能替代主指标。点估计上5.3C的时间和退化都低于5.0C，因此前者是快速区域的Pareto推荐，后者是非前沿的不确定性近似并列敏感性项。二者时间差和退化差的整块电池bootstrap区间均跨0，5.3C退化更低的概率不足0.95，因此不把5.0C排除为近似并列方案，但也不将严格被支配点标成共同主推荐。
 
-权重结论依赖标准化集合，`scaling_sensitivity.csv`只作敏感性；正式决策应报告Pareto前沿、退化约束和bootstrap稳定性。四个退化上限是说明规则用法的决策场景，不是工程安全标准。
+权重结论依赖标准化集合。`recommendations.csv`中的加权结果明确标为诊断敏感性，使用全部9个观测策略（含被支配点）的min-max范围；该口径在λ=0.1时已选择5.3C，而只用Pareto点归一化要到λ=0.6才从3.6C切换到5.3C。`scaling_sensitivity.csv`保留这种差异，正式决策应报告Pareto前沿、退化约束和bootstrap稳定性，不能把任一加权表当成无条件主推荐。四个退化上限是说明规则用法的决策场景，不是工程安全标准。
 
 `fast_pair_comparison.csv`分开记录点估计Pareto推荐与非前沿近似并列敏感性项，并给出成对区间和胜出概率。Q3模型需要目标电池已有1—150循环轨迹，未被用作新策略反事实响应面。推荐只适用于9个已有策略，不能解释为三参数因果最优。
 """

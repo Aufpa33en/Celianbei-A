@@ -31,6 +31,14 @@ def test_q4_full_validation_protocol() -> None:
     ]
     assert len(weighted) == 11
     assert weighted["pareto"].astype(bool).all()
+    assert weighted["decision_role"].eq(
+        "diagnostic_weight_sensitivity_not_primary_recommendation"
+    ).all()
+    assert weighted["normalization_method"].eq("minmax").all()
+    assert weighted["normalization_scope"].eq(
+        "all_9_observed_policies_including_dominated"
+    ).all()
+    assert weighted["normalization_n_policies"].eq(9).all()
     constraints = pd.read_csv(target / "constraint_selection_frequency.csv")
     assert len(constraints) == 40
     assert constraints.groupby("loss_limit")["selection_frequency"].sum().round(12).eq(1.0).all()
@@ -44,6 +52,9 @@ def test_q4_full_validation_protocol() -> None:
     assert cycle_front == primary_front
     uncertainty = pd.read_csv(target / "policy_uncertainty.csv")
     assert uncertainty["interval_type"].eq("strategy_mean_whole_battery_bootstrap").all()
+    scaling = pd.read_csv(target / "scaling_sensitivity.csv")
+    at_point_one = scaling.loc[np.isclose(scaling["lambda"], 0.1)].set_index("scaling")["policy"]
+    assert at_point_one["all_policy_minmax"] != at_point_one["pareto_minmax"]
     fast_pair = pd.read_csv(target / "fast_pair_comparison.csv")
     assert len(fast_pair) == 2
     assert fast_pair["point_pareto"].astype(bool).sum() == 1
