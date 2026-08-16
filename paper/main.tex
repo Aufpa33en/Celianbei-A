@@ -90,39 +90,8 @@
 \section{问题分析}
 % ===== 四问方法链总览图 =====
 \begin{figure}[H]\centering
-\resizebox{\textwidth}{!}{%
-\begin{tikzpicture}[
-  box/.style={draw, rounded corners=2pt, align=center, font=\small, line width=0.6pt},
-  data/.style={box, minimum width=2.6cm, minimum height=1.0cm},
-  q/.style={box, minimum width=4.2cm, minimum height=1.3cm},
-  arrow/.style={-{Stealth[length=2.2mm]}, line width=0.7pt},
-]
-% 数据层
-\node[data] (raw) at (0,0) {原始数据\\ 49电池/9350记录/9策略};
-\node[data] (clean) at (2.8,0) {数据清洗\\ 3处修复·审计留痕};
-\node[data] (cleaned) at (5.6,0) {清洗后数据\\ raw+clean+flag};
-
-% 四问
-\node[q] (q1) at (2.8,-2.6) {Q1 两阶段函数型曲线\\ 策略SOH曲线·寿命排序(T80)·典型策略组};
-\node[q] (q3) at (8,-3.8) {Q3 六模型对比·部署 P1\_linear\\ 151--200 预测·T80 情景外推};
-\node[q] (q2) at (2.8,-5.0) {Q2 应力坐标+约束退化混合模型\\ 诊断性显著性·高SOC应力方向稳健};
-\node[q] (q4) at (2.8,-7.6) {Q4 观测策略离散Pareto\\ 推荐 5\_3C·条件约束·连续搜索淘汰};
-
-% 贯穿（横跨底部）
-\node[box, minimum width=10.5cm, minimum height=1.0cm] (cross) at (4.8,-9.6) {贯穿方法：整块电池留一验证(LOBO) · 整块电池bootstrap \\ 置换/选择校正 · 多口径敏感性 · 可复现};
-
-% 箭头（正交折线，避免交叉）
-\draw[arrow] (raw) -- (clean) -- (cleaned);
-\draw[arrow] (cleaned.south) -| (q1.north);
-\draw[arrow] (cleaned.east) -- (8,0) -- (q3.north) node[midway, above, font=\scriptsize] {数据输入};
-\draw[arrow] (q1.south) -- node[left, font=\scriptsize, pos=0.5] {继承策略比较} (q2.north);
-\draw[arrow] (q2.east) -- (8,-5.0) -- (q3.south) node[midway, below, font=\scriptsize] {应力作特征};
-\draw[arrow] (q1.west) -- (0,-2.6) -- (0,-7.6) -- (q4.west) node[midway, left, font=\scriptsize, pos=0.15] {充电时间与SOH};
-\draw[arrow] (q2.south) -- node[right, font=\scriptsize, pos=0.5] {退化响应} (q4.north);
-\draw[arrow] (q3.east) -- (11,-3.8) -- (11,-7.6) -- (q4.east) node[midway, right, font=\scriptsize, pos=0.25] {T80 作敏感性};
-\draw[arrow] (q4.south) -- (q4.south |- cross.north);
-\end{tikzpicture}}
-\caption{四问方法链：数据清洗 → 寿命描述(Q1) → 参数效应(Q2)；Q3 直接使用清洗数据提取特征，Q2 应力同时作为 Q3 早期特征；Q1 的策略级充电时间与 SOH、Q2 的退化响应、Q3 的 T80 共同支撑 Q4 策略优化，贯穿留一验证与 bootstrap 不确定性量化}\label{fig:overview}
+\includegraphics[width=0.92\textwidth]{flowchart2.png}
+\caption{四问方法链总览：数据清洗 → 寿命描述(Q1) → 参数效应(Q2)，Q2 应力同时作为 Q3 早期特征；Q1 的策略级充电时间与 SOH、Q2 的退化响应、Q3 的 T80 共同支撑 Q4 策略优化，贯穿留一验证与 bootstrap 不确定性量化}\label{fig:overview}
 \end{figure}
 
 \subsection{问题一的分析}
