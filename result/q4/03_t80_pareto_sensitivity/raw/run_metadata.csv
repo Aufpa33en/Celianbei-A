@@ -1,0 +1,7 @@
+﻿parameter,value
+status,supporting_sensitivity_not_primary_q4_replacement
+primary_lifetime_family,linear_w40_s1
+bootstrap_repetitions,5000
+seed,20260816
+bootstrap_unit,whole_battery_within_policy_joint_time_and_T80
+paper_main_modified,False

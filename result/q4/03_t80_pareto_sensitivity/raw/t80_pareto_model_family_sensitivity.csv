@@ -1,0 +1,10 @@
+﻿Policy,exponential,linear,power,ParetoInAllFamilies,ParetoFamilyCount
+3_6C-80PER_3_6C,False,True,False,False,1
+3_7C_31PER_5_9C_NEWSTRUCTURE,False,False,False,False,0
+4_8C_80PER_4_8C,False,False,False,False,0
+4_8C_80PER_4_8C_NEWSTRUCTURE,True,True,True,True,3
+5C_67PER_4C_NEWSTRUCTURE,True,True,True,True,3
+5_3C_54PER_4C_NEWSTRUCTURE,True,True,True,True,3
+5_6C_19PER_4_6C_NEWSTRUCTURE,False,False,False,False,0
+5_6C_36PER_4_3C_NEWSTRUCTURE,False,False,False,False,0
+80PER_3_6C,False,False,False,False,0
