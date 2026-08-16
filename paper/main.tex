@@ -508,13 +508,11 @@ Q3 部署模型对选择标准敏感：$L=150$ 单点最优为 $P1\_linear$，�
 % ===== 14. 附录 =====
 \begin{appendices}
 \section{支撑材料文件列表}
-\begin{table}[!htbp]
-	\centering
-	\resizebox{\textwidth}{!}{%
-	\begin{tabular}{|c|>{\raggedright\arraybackslash}p{0.50\textwidth}|>{\raggedright\arraybackslash}p{0.30\textwidth}|}
-		\hline
-		序号 & 文件名 & 材料说明 \\ \hline
-		1 & \path{data/processed/q1_cleaned/battery_summary_clean.csv} & 电池级清洗后摘要表 \\ \hline
+\begin{longtable}{|c|>{\raggedright\arraybackslash}p{0.53\textwidth}|>{\raggedright\arraybackslash}p{0.25\textwidth}|}
+	\caption{支撑材料及其真实相对路径}\label{tab:files}\\
+	\hline
+	序号 & 文件名 & 材料说明 \\ \hline
+	1 & \path{data/processed/q1_cleaned/battery_summary_clean.csv} & 电池级清洗后摘要表 \\ \hline
 		2 & \path{data/processed/q1_cleaned/cycle_train_clean.csv} & 循环级清洗后数据表（raw+clean+flag） \\ \hline
 		3 & \path{src/clean_a_battery_data.m} & 数据清洗 MATLAB 入口（3 处修复·审计留痕） \\ \hline
 		4 & \path{src/q1_models/core.py} & Q1 两阶段函数型曲线模型核心 \\ \hline
@@ -534,8 +532,7 @@ Q3 部署模型对选择标准敏感：$L=150$ 单点最优为 $P1\_linear$，�
 		18 & \path{result/q4/02_full_validation/typical_strategy_comparison.csv} & Q4 典型策略对比与推荐 \\ \hline
 		19 & \path{result/q4/02_full_validation/selection_frequency.csv} & Q4 推荐 bootstrap 稳定性 \\ \hline
 		20 & \path{result/q4/03_t80_pareto_sensitivity/paper/policy_t80_pareto_summary.csv} & Q4 寿命 T80 Pareto 敏感性 \\ \hline
-	\end{tabular}}
-\end{table}
+\end{longtable}
 
 \section{核心算法代码}
 以下为数据清洗、核心模型与各问实验入口源码，构成完整可运行管线（清洗→建模→预测→优化；完整 43 个源码文件见支撑材料）。
