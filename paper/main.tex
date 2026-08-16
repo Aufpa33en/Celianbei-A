@@ -523,11 +523,16 @@ Q3 部署模型对选择标准敏感：$L=150$ 单点最优为 $P1\_linear$，�
 \end{longtable}
 
 \section{核心算法代码}
-以下为核心模型源码（完整可运行代码见支撑材料，运行顺序见各 scripts 入口）。
+以下为数据清洗、核心模型与各问实验入口源码，构成完整可运行管线（清洗→建模→预测→优化；完整 43 个源码文件见支撑材料）。
+\lstinputlisting{code/clean_a_battery_data.m}
 \lstinputlisting{code/q1_core.py}
 \lstinputlisting{code/q2_core.py}
 \lstinputlisting{code/q3_core.py}
 \lstinputlisting{code/q4_core.py}
+\lstinputlisting{code/run_q1.py}
+\lstinputlisting{code/run_q2.py}
+\lstinputlisting{code/run_q3.py}
+\lstinputlisting{code/run_q4.py}
 
 \section{AI 工具使用详情}
 本参赛队在竞赛中使用 AI 工具辅助完成以下环节：
