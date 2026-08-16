@@ -3,7 +3,7 @@
 本目录以预测T80为循环寿命主响应；SOH200、相对损失和末段衰减率材料保留为辅助稳健性证据。
 
 - `第二问完整回答.md`：按题目五个小问组织的正式回答。
-- `figures/fig_q2_t80_parameter_evidence.png`：J与T80点关系、候选模型LOCO改善及bootstrap区间。
+- `figures/fig_q2_t80_parameter_evidence.png`：J与T80点关系、候选模型LOCO改善及2000次全流水线bootstrap区间。
 - 数值依据：`../03_formal_validation/lifetime_*.csv`。
 - Q1电池级寿命依据：`../../q1/paper/battery_lifetime_estimates.csv`。
 

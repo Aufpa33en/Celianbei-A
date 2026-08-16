@@ -80,7 +80,9 @@ def main() -> None:
         PROJECT_ROOT / "result" / "q2" / "04_paper_materials" / "第二问完整回答.md"
     ).read_text(encoding="utf-8")
     assert "预测循环数T80" in paper
-    assert "[-10.96%, 48.28%]" in paper
+    assert "[-10.29%, 47.86%]" in paper
+    assert "全流水线bootstrap" in paper
+    assert "1991次（99.55%）" in paper
     assert "尾部比例为0.1556" in paper
     assert "不能称为确认性p值" in paper
     assert "删除3.7C-31%-5.9C极端策略后，没有解释模型优于常数基线" in paper

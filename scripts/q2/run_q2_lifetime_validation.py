@@ -14,8 +14,8 @@ sys.path.insert(0, str(PROJECT_ROOT / "src"))
 
 from q2_models.lifetime_validation import (  # noqa: E402
     LifetimeValidationSettings,
-    run_lifetime_validation,
 )
+from q2_models.full_pipeline_bootstrap import run_full_pipeline_lifetime_validation  # noqa: E402
 from q2_models.lifetime_outputs import draw_lifetime_evidence, write_lifetime_conclusion  # noqa: E402
 
 
@@ -24,7 +24,7 @@ def main() -> None:
     parser.add_argument("--bootstrap", type=int, default=2000)
     parser.add_argument("--seed", type=int, default=20260815)
     args = parser.parse_args()
-    tables = run_lifetime_validation(
+    tables = run_full_pipeline_lifetime_validation(
         PROJECT_ROOT,
         LifetimeValidationSettings(args.bootstrap, args.seed),
     )
