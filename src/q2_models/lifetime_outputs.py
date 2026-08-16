@@ -110,6 +110,11 @@ def write_lifetime_conclusion(path: Path, tables: dict[str, pd.DataFrame]) -> No
     deletion = tables["lifetime_deletion_diagnostics"]
     extreme = deletion.loc[deletion["excluded_policy"].eq("3_7C_31PER_5_9C_NEWSTRUCTURE")].iloc[0]
     permutation = tables["lifetime_permutation_diagnostic"].iloc[0]
+    family = tables["lifetime_family_selection_summary"]
+    family_summary = "、".join(
+        f"{row.Family}:{row.SelectedModel}({100*row.LinearJImprovementVsConstant:.2f}%)"
+        for row in family.itertuples(index=False)
+    )
     lines = [
         "# 第二问T80寿命主分析正式结论",
         "",
@@ -122,6 +127,8 @@ def write_lifetime_conclusion(path: Path, tables: dict[str, pd.DataFrame]) -> No
         "## 不支持确认性参数效应的证据",
         "",
         f"- {int(boot['bootstrap_repetitions'])}次全流水线bootstrap中，每次重新抽取整块电池、重选寿命窗口、重算T80并重选参数模型；该模型入选频率为{100*boot['selected_frequency']:.2f}%，RMSE改善95%区间为[{100*boot['improvement_ci95_low']:.2f}%, {100*boot['improvement_ci95_high']:.2f}%]。",
+        "- 上述bootstrap区间条件于Q1已选局部线性T80族；它没有传播寿命模型族形式不确定性。",
+        f"- 另以三种冻结T80模型族做点敏感性，结果为{family_summary}。三族均选择`linear_J`且斜率为负，但该比较没有跨族联合置信区间，不能升级为显著或因果证据。",
         f"- 删除3.7C-31%-5.9C策略后，模型选择状态为`{extreme['selection_status']}`，说明主要关联由单个极端设计点支撑。",
         f"- 五个预定义暴露量的最大方向统计量在720种标签排列下尾部比例为{permutation['tail_fraction']:.4f}。策略并非随机分配且策略均值异方差，因此该比例只是交换性诊断，不是确认性p值。",
         "- C1、Q1、C2在现有策略中联合变化；同一(4.8,80%,4.8)参数坐标的新旧结构寿命差异又与批次完全混杂，无法识别三个参数的独立因果效应。",

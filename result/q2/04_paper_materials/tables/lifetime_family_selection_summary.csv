@@ -1,0 +1,4 @@
+﻿Family,SelectedModel,SelectedLOCORMSE,SelectedImprovementVsConstant,SelectedSlope,LinearJImprovementVsConstant,LinearJSlope,SensitivityType,HasCrossFamilyCI
+linear,linear_J,0.6416451863401639,0.2029008279033424,-10.003161730098254,0.2029008279033424,-10.003161730098254,point_estimate_across_frozen_T80_families,False
+power,linear_J,0.49321566427755315,0.31539362560075224,-9.023104652155439,0.31539362560075224,-9.023104652155439,point_estimate_across_frozen_T80_families,False
+exponential,linear_J,0.36419255966222536,0.22925960726827443,-5.897997114274095,0.22925960726827443,-5.897997114274095,point_estimate_across_frozen_T80_families,False

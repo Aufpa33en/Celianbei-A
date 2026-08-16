@@ -22,6 +22,7 @@ T80主分析另运行2000次全流水线bootstrap：每次在全部9种策略内
 - `lifetime_fixed_t80_bootstrap_selection.csv`：不重选窗口、不重算T80的旧bootstrap对照。
 - `lifetime_bootstrap_window_frequency.csv`：30—80循环寿命尾窗的重选频率。
 - `lifetime_full_pipeline_runtime.csv`：缓存等价实现的运行时间、种子与样本行数。
+- `lifetime_family_policy_t80_summary.csv`、`lifetime_family_strategy_design.csv`、`lifetime_family_model_comparison.csv`、`lifetime_family_selection_summary.csv`：局部线性、幂律和加速指数三种冻结T80族的点敏感性；没有跨族联合置信区间。
 
 ## 复现命令
 
