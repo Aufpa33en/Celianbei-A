@@ -98,4 +98,3 @@ def candidate_t80(
     if crossing <= prefix_cycle:
         return np.nan, "crossing_not_after_prefix"
     return float(crossing), "finite_extrapolation"
-
