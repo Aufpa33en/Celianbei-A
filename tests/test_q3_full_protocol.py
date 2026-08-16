@@ -16,6 +16,7 @@ from q3_models.config import CONFIG  # noqa: E402
 from q3_models.core import complete_battery_ids, load_records  # noqa: E402
 from q3_models.full_validation import (  # noqa: E402
     _choose_ensemble_weight,
+    _l150_paired_bootstrap,
     protected_file_hashes,
     validate_record_shapes,
 )
@@ -40,6 +41,33 @@ def main() -> None:
     weight, _ = _choose_ensemble_weight(subset, identical, identical, CONFIG)
     assert weight == 1.0
 
+    models = ["P0_persistence", "P1_linear", "A_power", "B_strategy", "C_ridge", "D_ensemble"]
+    synthetic_rows = []
+    for model in models:
+        for index in range(40):
+            synthetic_rows.append(
+                {
+                    "model": model, "L": 150, "prediction_variant": "raw",
+                    "battery_id": index + 1, "policy": f"policy_{index % 9}", "rmse": 0.01,
+                }
+            )
+    synthetic_fixed = pd.DataFrame(synthetic_rows)
+    synthetic_nested = pd.DataFrame(
+        [
+            {
+                "model": "L150_NESTED_selector", "L": 150, "prediction_variant": "raw",
+                "battery_id": index + 1, "policy": f"policy_{index % 9}", "rmse": 0.01,
+            }
+            for index in range(40)
+        ]
+    )
+    trials, pairs, _ = _l150_paired_bootstrap(
+        synthetic_fixed, synthetic_nested, repetitions=10, seed=7, config=CONFIG
+    )
+    assert np.allclose(trials["nested_minus_fixed_P1"], 0.0)
+    main_pair = pairs.loc[pairs["method_a"].eq("L150_NESTED_selector")].iloc[0]
+    assert main_pair["bootstrap_ci95_low"] == 0.0 == main_pair["bootstrap_ci95_high"]
+
     hashes = protected_file_hashes(PROJECT_ROOT)
     assert not hashes.empty and hashes["path"].is_unique
 
@@ -59,6 +87,31 @@ def main() -> None:
     assert deployment["selection_scope"].eq("L150_only_matches_final_prediction_information").all()
     freeze = pd.read_csv(full_dir / "deployment_freeze.csv").iloc[0]
     assert freeze["selected_model"] == selected.iloc[0]["model"]
+    l150_folds = pd.read_csv(full_dir / "l150_nested_selector_folds.csv")
+    assert len(l150_folds) == 40 and l150_folds["held_out_battery_id"].nunique() == 40
+    assert l150_folds["n_outer_train"].eq(39).all()
+    assert ~l150_folds["outer_id_in_train"].astype(bool).any()
+    assert l150_folds["selection_scope"].eq(
+        "L150_only_matches_final_prediction_information"
+    ).all()
+    l150_predictions = pd.read_csv(full_dir / "l150_nested_selector_predictions.csv")
+    assert len(l150_predictions) == 2000
+    assert l150_predictions["L"].eq(150).all()
+    assert l150_predictions.groupby("battery_id")["cycle"].nunique().eq(50).all()
+    l150_summary = pd.read_csv(full_dir / "l150_nested_selector_summary.csv")
+    assert len(l150_summary) == 2 and l150_summary["n_battery"].eq(40).all()
+    l150_trials = pd.read_csv(full_dir / "l150_paired_bootstrap_trials.csv")
+    assert len(l150_trials) == 5000 and l150_trials["replicate"].is_unique
+    l150_pairs = pd.read_csv(full_dir / "l150_paired_bootstrap_summary.csv")
+    assert len(l150_pairs) == 6 and l150_pairs["repetitions"].eq(5000).all()
+    assert l150_pairs["bootstrap_unit"].eq(
+        "whole_battery_within_policy_paired_across_methods"
+    ).all()
+    l150_candidates = pd.read_csv(full_dir / "l150_candidate_bootstrap_summary.csv")
+    assert set(l150_candidates["model"]) == {
+        "P0_persistence", "P1_linear", "A_power", "B_strategy", "C_ridge", "D_ensemble"
+    }
+    assert np.isclose(l150_candidates["winner_frequency"].sum(), 1.0)
     pred = pd.read_csv(final_dir / "test_predictions_long.csv")
     assert len(pred) == 450 and pred["battery_id"].nunique() == 9
     assert "y_true" not in pred and set(pred["cycle"]) == set(range(151, 201))

@@ -69,6 +69,9 @@ def full_integrity_checks(
 ) -> pd.DataFrame:
     pred = results["predictions_long.csv"]
     selector = results["nested_selector_predictions.csv"]
+    l150_selector = results["l150_nested_selector_predictions.csv"]
+    l150_folds = results["l150_nested_selector_folds.csv"]
+    l150_trials = results["l150_paired_bootstrap_trials.csv"]
     tuning = results["outer_tuning.csv"]
     selection = results["selection_decision.csv"]
     deployment_candidates = results["deployment_candidate_comparison.csv"]
@@ -96,6 +99,54 @@ def full_integrity_checks(
                    and selector_unique and set(selector["L"]) == {50, 100, 150}
                    and set(selector["cycle"]) == set(range(151, 201)),
                    f"rows={len(selector)} groups={len(selector_groups)} unique_keys={selector_unique}"))
+    l150_groups = l150_selector.groupby(["model", "L", "battery_id"])["cycle"].agg(
+        ["size", "nunique"]
+    )
+    l150_unique = not l150_selector.duplicated(["model", "L", "battery_id", "cycle"]).any()
+    checks.append(("l150_nested_selector_groups_complete",
+                   len(l150_selector) == 2000 and len(l150_groups) == 40
+                   and l150_groups["size"].eq(50).all()
+                   and l150_groups["nunique"].eq(50).all() and l150_unique
+                   and l150_selector["L"].eq(150).all()
+                   and set(l150_selector["cycle"]) == set(range(151, 201)),
+                   f"rows={len(l150_selector)} groups={len(l150_groups)} unique_keys={l150_unique}"))
+    checks.append(("l150_nested_selector_outer_isolation",
+                   len(l150_folds) == 40 and l150_folds["held_out_battery_id"].nunique() == 40
+                   and l150_folds["n_outer_train"].eq(39).all()
+                   and ~l150_folds["outer_id_in_train"].astype(bool).any()
+                   and l150_folds["selection_scope"].eq(
+                       "L150_only_matches_final_prediction_information"
+                   ).all(),
+                   f"folds={len(l150_folds)}"))
+    selected_lookup = l150_folds.set_index("held_out_battery_id")["selected_family"]
+    expected = pred.loc[pred["L"].eq(150)].copy()
+    expected["selected_base_model"] = expected["battery_id"].map(selected_lookup)
+    expected = expected.loc[
+        expected["model"].eq(expected["selected_base_model"]),
+        ["battery_id", "cycle", "y_pred_raw", "y_pred_projected"],
+    ]
+    observed = l150_selector[["battery_id", "cycle", "y_pred_raw", "y_pred_projected"]]
+    matched = observed.merge(
+        expected, on=["battery_id", "cycle"], suffixes=("_observed", "_expected"),
+        validate="one_to_one",
+    )
+    l150_max_difference = max(
+        float(np.max(np.abs(matched["y_pred_raw_observed"] - matched["y_pred_raw_expected"]))),
+        float(np.max(np.abs(
+            matched["y_pred_projected_observed"] - matched["y_pred_projected_expected"]
+        ))),
+    )
+    checks.append(("l150_selector_matches_selected_outer_prediction",
+                   len(matched) == 2000 and l150_max_difference < 1e-12,
+                   f"rows={len(matched)} max_abs_difference={l150_max_difference:.3e}"))
+    candidate_bootstrap = results["l150_candidate_bootstrap_summary.csv"]
+    paired_summary = results["l150_paired_bootstrap_summary.csv"]
+    checks.append(("l150_paired_bootstrap_complete",
+                   l150_trials["replicate"].is_unique and len(l150_trials) > 0
+                   and set(candidate_bootstrap["model"]) == set(MODELS)
+                   and np.isclose(candidate_bootstrap["winner_frequency"].sum(), 1.0)
+                   and len(paired_summary) == len(MODELS),
+                   f"trials={len(l150_trials)} comparisons={len(paired_summary)}"))
     checks.append(("outer_train_isolation", len(tuning) == 120 and tuning["n_outer_train"].eq(39).all()
                    and ~tuning["outer_id_in_train"].astype(bool).any(), f"fold_rows={len(tuning)}"))
     checks.append(("single_candidate_comparison_winner", selection["selected"].astype(bool).sum() == 1,
@@ -142,6 +193,15 @@ def _full_report(results: dict[str, pd.DataFrame], checks: pd.DataFrame) -> str:
     deployment = results["deployment_candidate_comparison.csv"].sort_values("strategy_equal_rmse")
     freeze = results["deployment_freeze.csv"].iloc[0]
     pair = results["pairwise_selection.csv"].iloc[0]
+    l150_nested = results["l150_nested_selector_summary.csv"].query(
+        "prediction_variant == 'raw'"
+    ).iloc[0]
+    l150_main_pair = results["l150_paired_bootstrap_summary.csv"].loc[
+        lambda frame: frame["method_a"].eq("L150_NESTED_selector")
+    ].iloc[0]
+    l150_fold_counts = results["l150_nested_selector_folds.csv"][
+        "selected_family"
+    ].value_counts()
     lines = [
         "# 第三问40电池全量嵌套LOBO报告", "",
         "## 验证边界", "",
@@ -156,6 +216,16 @@ def _full_report(results: dict[str, pd.DataFrame], checks: pd.DataFrame) -> str:
                   "| 模型 | 策略等权RMSE | 最差电池RMSE | 2%并列范围 | 最终冻结 |", "|---|---:|---:|---|---|"])
     for row in deployment.itertuples(index=False):
         lines.append(f"| {row.model} | {row.strategy_equal_rmse:.6f} | {row.worst_battery_rmse:.6f} | {bool(row.within_tie_tolerance)} | {bool(row.selected_for_L150_deployment)} |")
+    lines.extend([
+        "", "## L=150专用嵌套选模流程", "",
+        f"每个外折只在其余39块电池内部按L=150选择模型族，再评价留出电池。"
+        f"该完整选模流程的策略等权RMSE为{l150_nested.strategy_equal_rmse:.6f}，"
+        f"最差电池RMSE为{l150_nested.worst_battery_rmse:.6f}。各折选择次数为："
+        + "、".join(f"{model}={int(count)}" for model, count in l150_fold_counts.items()) + "。",
+        f"策略内整块电池配对bootstrap中，嵌套流程减固定P1的RMSE差95%区间为"
+        f"[{l150_main_pair.bootstrap_ci95_low:.6f}, {l150_main_pair.bootstrap_ci95_high:.6f}]。"
+        "固定P1的0.000617仍是预注册候选的点估计误差；嵌套流程误差才评价“先选族再部署”的完整规则。",
+    ])
     lines.extend(["", "## 嵌套模型族选择器", ""])
     for row in nested.sort_values("L").itertuples(index=False):
         lines.append(f"- L={row.L}：策略等权RMSE={row.strategy_equal_rmse:.6f}，池化RMSE={row.pooled_rmse:.6f}，最差电池RMSE={row.worst_battery_rmse:.6f}。")

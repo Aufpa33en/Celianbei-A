@@ -1,0 +1,7 @@
+﻿method_a,method_b,point_difference_a_minus_b,bootstrap_ci95_low,bootstrap_ci95_high,probability_a_lower,repetitions,seed,bootstrap_unit
+L150_NESTED_selector,P1_linear,8.796871621812843e-05,1.6682182236882442e-05,0.0002464294140424326,0.0042,5000,20260814,whole_battery_within_policy_paired_across_methods
+P1_linear,P0_persistence,-0.0017836563905896117,-0.0020680439588498093,-0.0013643614502355655,1.0,5000,20260814,whole_battery_within_policy_paired_across_methods
+P1_linear,A_power,-0.0002767404417309201,-0.000400121977066809,-0.00010919122403388628,1.0,5000,20260814,whole_battery_within_policy_paired_across_methods
+P1_linear,B_strategy,-0.00016834529573804904,-0.00041015381611116564,2.4861004181744857e-05,0.9462,5000,20260814,whole_battery_within_policy_paired_across_methods
+P1_linear,C_ridge,-5.247690047363075e-05,-0.00019178782575269302,6.79172257149581e-05,0.8136,5000,20260814,whole_battery_within_policy_paired_across_methods
+P1_linear,D_ensemble,-8.419080822760175e-05,-0.0002369319981662594,4.719037687806672e-05,0.8804,5000,20260814,whole_battery_within_policy_paired_across_methods

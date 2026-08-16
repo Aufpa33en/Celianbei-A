@@ -6,6 +6,10 @@ no_test_battery_in_validation,True,full validation must contain prediction_test=
 finite_candidate_predictions,True,truth/raw/projected finite
 projected_monotone,True,passed=720/720
 nested_selector_groups_complete,True,rows=6000 groups=120 unique_keys=True
+l150_nested_selector_groups_complete,True,rows=2000 groups=40 unique_keys=True
+l150_nested_selector_outer_isolation,True,folds=40
+l150_selector_matches_selected_outer_prediction,True,rows=2000 max_abs_difference=0.000e+00
+l150_paired_bootstrap_complete,True,trials=5000 comparisons=6
 outer_train_isolation,True,fold_rows=120
 single_candidate_comparison_winner,True,selected=['C_ridge']
 single_deployment_freeze,True,['P1_linear']
@@ -13,5 +17,5 @@ single_L150_deployment_candidate,True,selected_rows=1
 deployment_family_from_L150_outer_lobo,True,freeze=P1_linear L150_outer_lobo=P1_linear
 deployment_hyperparameters_frozen,True,freeze row equals L=150 tuning row
 record_shapes,True,49/49
-protected_files_unchanged,True,passed=76/76
+protected_files_unchanged,True,passed=94/94
 ensemble_identity,True,max_abs_error=3.331e-16
