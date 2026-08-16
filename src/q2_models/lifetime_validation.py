@@ -19,7 +19,7 @@ from q1_models.lifetime import (
 from .core import add_protocol_features
 
 
-SEED = 20260815
+SEED = 20260816
 EXPOSURES = ("J", "H", "J_high_50", "J_high_60", "J_high_70")
 
 

@@ -23,7 +23,7 @@ from q2_models.lifetime_outputs import draw_lifetime_evidence, write_lifetime_co
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--bootstrap", type=int, default=2000)
-    parser.add_argument("--seed", type=int, default=20260815)
+    parser.add_argument("--seed", type=int, default=20260816)
     args = parser.parse_args()
     tables = run_full_pipeline_lifetime_validation(
         PROJECT_ROOT,
