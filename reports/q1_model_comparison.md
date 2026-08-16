@@ -22,6 +22,8 @@
 
 回测只能验证近端趋势预测，不是T80真实终点误差。高阶多项式和无约束样条不用于远期交点，以避免观测区间外回升或爆炸。
 
+另对局部线性、幂律和加速指数三种单调寿命外推族执行嵌套留一电池比较。L=150口径下三者151—200策略等权RMSE分别为0.000706、0.000831和0.000849，因此局部线性继续作为主模型；其49块逐电池T80与原主流水线误差小于1e-10。三族电池级T80最大/最小跨度比中位数为2.76、最大4.34，策略级跨度比为1.31—3.59。该包络是模型形式敏感性，不是置信区间；以下bootstrap区间条件于已选局部线性族。
+
 ## 策略寿命结果
 
 | 策略 | 电池数 | T80中位数 | bootstrap 95%区间 | 点排名 |
@@ -42,5 +44,6 @@
 
 - `battery_lifetime_estimates.csv`给出每块电池的T80、末段斜率及外推倍数。
 - `lifetime_window_sensitivity.csv`给出30—80循环窗口下的模型形式敏感性。
+- `lifetime_family_validation_summary.csv`、`lifetime_family_strategy_envelope.csv`和`fig_q1_lifetime_family_comparison.png`给出权威三族比较与T80包络。
 - `strategy_lifetime_summary.csv`和`strategy_lifetime_rank_stability.csv`是第一问寿命比较的权威表。
 - `SOH200`、`Loss1to200`和旧`ProjectedL80LocalLinear`继续保留作历史辅助结果，不再决定长短寿命分组。

@@ -89,6 +89,13 @@ def _draw_comparison(tables: dict[str, pd.DataFrame], path: Path) -> None:
                    encoding="utf-8-sig")
 
 
+def draw_lifetime_family_comparison(
+    tables: dict[str, pd.DataFrame], path: Path
+) -> None:
+    """Public paper-figure entrypoint shared by exploratory and authoritative writers."""
+    _draw_comparison(tables, path)
+
+
 def write_lifetime_model_comparison(
     tables: dict[str, pd.DataFrame],
     output_dir: Path,
@@ -117,7 +124,7 @@ def write_lifetime_model_comparison(
     envelope = tables["battery_t80_model_family_envelope"]
     report = (
         "# Q1 单调寿命外推模型族比较\n\n"
-        "状态：实验性候选比较；在正式 Q1 结果切换前不替代 `result/q1/raw` 与 `result/q1/paper`。\n\n"
+        "状态：支持性生成记录；权威副本已接入 `result/q1/raw` 与 `result/q1/paper`。\n\n"
         f"嵌套留一电池比较选择 `{selected['Family']}`，策略等权 151—200 RMSE "
         f"为 {selected['StrategyEqualRMSE']:.6f}，最坏电池 RMSE 为 "
         f"{selected['WorstBatteryRMSE']:.6f}。\n\n"
@@ -127,7 +134,7 @@ def write_lifetime_model_comparison(
     )
     (paper / "report.md").write_text(report, encoding="utf-8")
     metadata = {
-        "status": "experimental_candidate_comparison_not_authoritative",
+        "status": "supporting_generation_record_canonical_copies_in_q1_authoritative",
         "seed": seed,
         "selection_metric": "nested_outer_LOBO_strategy_equal_RMSE_cycles_151_200",
         "families": ["linear", "power", "exponential"],
@@ -162,8 +169,8 @@ def write_lifetime_model_comparison(
     )
     (output_dir / "README.md").write_text(
         "# Q1 寿命模型族比较\n\n"
-        "本目录是实验性候选比较，不是当前正式结果。`paper/`存放可快速审阅的摘要，"
-        "`raw/`存放逐电池验证、嵌套调参与全部 T80 结果。只有通过审查并接入正式流水线后，"
-        "选定模型才会替代现有 Q1 寿命估计。\n",
+        "本目录保留模型族比较的支持性生成记录。经审查后，局部线性族继续作为主模型，"
+        "核心表和图的权威副本已接入`result/q1/paper/`与`result/q1/raw/`；"
+        "本目录不再作为论文取数入口。\n",
         encoding="utf-8",
     )

@@ -20,6 +20,7 @@ from .experiments import (
     observed_battery_metrics,
     strategy_distribution,
 )
+from .lifetime_model_outputs import draw_lifetime_family_comparison
 
 
 def write_authoritative_outputs(
@@ -51,6 +52,10 @@ def write_authoritative_outputs(
         "strategy_lifetime_summary": tables["strategy_lifetime_summary"],
         "strategy_lifetime_rank_stability": tables["strategy_lifetime_rank_stability"],
         "pairwise_strategy_lifetime_comparison": tables["pairwise_strategy_lifetime_comparison"],
+        "lifetime_family_validation_summary": tables["lifetime_family_validation_summary"],
+        "lifetime_family_strategy_t80": tables["lifetime_family_strategy_t80"],
+        "lifetime_family_strategy_envelope": tables["lifetime_family_strategy_envelope"],
+        "lifetime_family_battery_envelope": tables["lifetime_family_battery_envelope"],
     }
     for name, table in paper_tables.items():
         table.to_csv(paper_dir / f"{name}.csv", index=False, encoding="utf-8-sig")
@@ -58,6 +63,14 @@ def write_authoritative_outputs(
     _draw_final_strategy_curves(tables, paper_dir / "fig_q1_strategy_soh_curves.png")
     _draw_final_model_comparison(tables, paper_dir / "fig_q1_model_comparison.png")
     _draw_final_tradeoff(tables, paper_dir / "fig_q1_strategy_tradeoff.png")
+    draw_lifetime_family_comparison(
+        {
+            "frozen_candidate_origin_sensitivity": tables["lifetime_family_origin_sensitivity"],
+            "strategy_t80_by_family": tables["lifetime_family_strategy_t80"],
+            "nested_family_summary": tables["lifetime_family_validation_summary"],
+        },
+        paper_dir / "fig_q1_lifetime_family_comparison.png",
+    )
     _write_final_paper_report(paper_dir / "report.md", tables)
 
     runtime = pd.DataFrame(
@@ -258,6 +271,14 @@ def _write_final_paper_report(path: Path, tables: dict[str, pd.DataFrame]) -> No
     ]
     selected = comparison.iloc[0]
     selection_pipeline = tables["selection_pipeline_summary"].iloc[0]
+    lifetime_families = tables["lifetime_family_validation_summary"].sort_values(
+        "StrategyEqualRMSE"
+    )
+    selected_lifetime_family = lifetime_families.loc[
+        lifetime_families["SelectedFamily"].astype(bool)
+    ].iloc[0]
+    lifetime_battery_envelope = tables["lifetime_family_battery_envelope"]
+    lifetime_strategy_envelope = tables["lifetime_family_strategy_envelope"]
     top = "、".join(ranks.head(3)["Policy"])
     bottom = "、".join(ranks.tail(3)["Policy"])
     lifetime_rows = []
@@ -292,6 +313,12 @@ def _write_final_paper_report(path: Path, tables: dict[str, pd.DataFrame]) -> No
         "",
         f"在外层留一电池、内层重新调参的SOH曲线候选家族比较中，函数型曲线RMSE为 {selected['MeanBatteryRMSE']:.6f}，样条基线为 {comparison.iloc[1]['MeanBatteryRMSE']:.6f}；完整选择流水线RMSE为 {selection_pipeline['MeanBatteryRMSE']:.6f}。寿命窗口回测中，40循环窗口的策略等权RMSE为 {window['StrategyEqualRMSE']:.6f}，平均电池RMSE为 {window['MeanBatteryRMSE']:.6f}，最坏电池RMSE为 {window['WorstBatteryRMSE']:.6f}。这两套验证分别回答SOH曲线重建和末段趋势预测，不能当作T80真值误差。",
         "",
+        "## 寿命外推模型族敏感性",
+        "",
+        f"在局部线性、幂律和加速指数三种预注册单调外推族中，按L=150嵌套留一电池的151—200策略等权RMSE选择局部线性族，其RMSE为 {selected_lifetime_family['StrategyEqualRMSE']:.6f}；幂律和加速指数分别为 {lifetime_families.iloc[1]['StrategyEqualRMSE']:.6f}、{lifetime_families.iloc[2]['StrategyEqualRMSE']:.6f}。所选`linear_w40_s1`逐电池T80与主流水线完全一致。",
+        "",
+        f"三模型族给出的电池级T80最大/最小跨度比中位数为 {lifetime_battery_envelope['ModelFamilyT80Ratio'].median():.2f}、最大为 {lifetime_battery_envelope['ModelFamilyT80Ratio'].max():.2f}；策略级中位T80跨度比为 {lifetime_strategy_envelope['ModelFamilyMedianT80Ratio'].min():.2f}—{lifetime_strategy_envelope['ModelFamilyMedianT80Ratio'].max():.2f}。这些包络表达模型形式敏感性，不是置信区间。主bootstrap区间条件于已选局部线性族。",
+        "",
         "## 策略比较",
         "",
         f"按每种策略的电池级预测T80中位数，前三位为：{top}；后三位为：{bottom}。排名稳定性应结合 `strategy_lifetime_rank_stability.csv` 中的Top/Bottom概率判断，不能只报告点排名。",
@@ -304,7 +331,7 @@ def _write_final_paper_report(path: Path, tables: dict[str, pd.DataFrame]) -> No
         "",
         "## 解释与限制",
         "",
-        f"SOH曲线模型训练残差平均一阶相关为 {residual['BatteryMeanLag1Correlation']:.3f}，说明平滑后仍存在循环内序列相关。T80把约0.8的终点外推到前150循环之外，个别电池的外推距离超过已观测前缀的70倍；bootstrap只传播同策略电池差异，窗口敏感性只反映部分模型形式不确定性。因而T80适合比较与情景分析，不应写成已观测寿命或经过真实终点验证的绝对寿命。充电时间、温度和内阻关联仅有9个策略级样本，只作描述性机制线索，不作因果解释。",
+        f"SOH曲线模型训练残差平均一阶相关为 {residual['BatteryMeanLag1Correlation']:.3f}，说明平滑后仍存在循环内序列相关。T80把约0.8的终点外推到前150循环之外，个别电池的外推距离超过已观测前缀的70倍；bootstrap只传播已选局部线性族条件下的同策略电池差异，三族包络另行表达模型形式敏感性。因而T80适合比较与情景分析，不应写成已观测寿命或经过真实终点验证的绝对寿命。充电时间、温度和内阻关联仅有9个策略级样本，只作描述性机制线索，不作因果解释。",
         "",
         "## 论文取舍",
         "",
@@ -326,7 +353,7 @@ def _write_result_readme(path: Path) -> None:
         "`battery_summary_clean.csv`；响应变量为`SOH_clean`。\n"
         "- 队列：49块电池统一使用前150循环估计T80；其中40块完整电池的151—200循环只用于选择末段窗口和验证近端预测。\n"
         "- 寿命主模型：40循环局部线性趋势与SOH=0.8的交点；SOH曲线模型和SOH150/200为辅助分析。\n"
-        "- 不确定性：2000次策略内整块电池bootstrap用于策略T80中位数区间和排名稳定性；双侧精确置换按36组策略对作Holm校正。\n\n"
+        "- 不确定性：2000次策略内整块电池bootstrap用于局部线性族条件下的策略T80中位数区间和排名稳定性；三种单调外推族的点包络单列模型形式敏感性，不称置信区间；双侧精确置换按36组策略对作Holm校正。\n\n"
         "正式运行：`python scripts/q1/run_q1_final_analysis.py --bootstrap 2000 --seed 20260814`；"
         "也可用当前系统虚拟环境中的Python替换`python`。\n"
         "当前附件没有观测到80% SOH终点，所有T80均为早期SOH趋势外推；"

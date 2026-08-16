@@ -1,5 +1,5 @@
 {
-  "status": "experimental_candidate_comparison_not_authoritative",
+  "status": "supporting_generation_record_canonical_copies_in_q1_authoritative",
   "seed": 20260816,
   "selection_metric": "nested_outer_LOBO_strategy_equal_RMSE_cycles_151_200",
   "families": [

@@ -1,7 +1,7 @@
 ﻿Parameter,Value
 command,D:\Anaconda\python.exe scripts/q1/run_q1_final_analysis.py --bootstrap 2000 --seed 20260814
-inference_seconds,43.851786
-output_seconds,1.717130
+inference_seconds,34.191298
+output_seconds,1.918407
 python,3.13.9
 platform,Windows-11-10.0.26200-SP0
 numpy,2.3.5

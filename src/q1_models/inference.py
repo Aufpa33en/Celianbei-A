@@ -33,6 +33,7 @@ from .lifetime import (
     pairwise_lifetime_comparison,
     validate_lifetime_windows,
 )
+from .lifetime_model_selection import compare_lifetime_families
 
 
 @dataclass(frozen=True)
@@ -92,6 +93,29 @@ def run_final_inference(project_root: Path, settings: InferenceSettings) -> dict
         alpha=settings.alpha,
     )
     pairwise_lifetimes = pairwise_lifetime_comparison(battery_lifetimes)
+    family_tables = compare_lifetime_families(cycles)
+    selected_family = family_tables["nested_family_summary"].loc[
+        family_tables["nested_family_summary"]["SelectedFamily"].astype(bool)
+    ]
+    if len(selected_family) != 1 or selected_family.iloc[0]["Family"] != "linear":
+        raise AssertionError("authoritative lifetime-family comparison must select linear")
+    selected_candidate = family_tables["frozen_family_candidates"].loc[
+        family_tables["frozen_family_candidates"]["SelectedFamily"].astype(bool)
+    ]
+    if len(selected_candidate) != 1 or selected_candidate.iloc[0]["FrozenCandidate"] != "linear_w40_s1":
+        raise AssertionError("authoritative linear lifetime candidate no longer matches Q1 main T80")
+    linear_t80 = family_tables["battery_t80_by_family"].loc[
+        family_tables["battery_t80_by_family"]["Family"].eq("linear"),
+        ["BatteryId", "EstimatedT80"],
+    ]
+    matched_t80 = battery_lifetimes[["BatteryId", "EstimatedT80"]].merge(
+        linear_t80, on="BatteryId", suffixes=("_main", "_family"), validate="one_to_one"
+    )
+    if len(matched_t80) != 49 or not np.allclose(
+        matched_t80["EstimatedT80_main"], matched_t80["EstimatedT80_family"],
+        rtol=0.0, atol=1e-10,
+    ):
+        raise AssertionError("selected linear-family T80 must match the authoritative Q1 main estimate")
     cohort = batteries[["battery_id", "policy", "prediction_test"]].copy()
     cohort["IncludedInQ1Cycle200Inference"] = cohort["prediction_test"] == 0
     cohort["IncludedInQ1LifetimeInference"] = True
@@ -129,8 +153,28 @@ def run_final_inference(project_root: Path, settings: InferenceSettings) -> dict
             {"Parameter": "lifetime_selected_tail_window", "Value": lifetime_window},
             {"Parameter": "lifetime_window_selection", "Value": "predict_cycles_151_to_200_on_40_complete_batteries"},
             {"Parameter": "lifetime_primary_policy_statistic", "Value": "median_battery_EstimatedT80"},
+            {"Parameter": "lifetime_selected_family", "Value": "linear"},
+            {"Parameter": "lifetime_selected_family_candidate", "Value": "linear_w40_s1"},
+            {"Parameter": "lifetime_family_selection", "Value": "nested_outer_LOBO_strategy_equal_RMSE_cycles_151_200"},
+            {"Parameter": "lifetime_bootstrap_scope", "Value": "conditional_on_selected_linear_family"},
+            {"Parameter": "lifetime_family_uncertainty", "Value": "three_family_point_envelope_not_confidence_interval"},
         ]
     )
+    family_names = {
+        "candidate_validation_by_battery": "lifetime_family_candidate_validation_by_battery",
+        "nested_tuning_by_outer_battery": "lifetime_family_nested_tuning_by_outer_battery",
+        "nested_family_lobo_by_battery": "lifetime_family_nested_lobo_by_battery",
+        "nested_family_summary": "lifetime_family_validation_summary",
+        "frozen_family_candidates": "lifetime_family_frozen_candidates",
+        "frozen_candidate_origin_sensitivity": "lifetime_family_origin_sensitivity",
+        "battery_t80_by_family": "lifetime_family_battery_t80",
+        "strategy_t80_by_family": "lifetime_family_strategy_t80",
+        "strategy_t80_model_family_envelope": "lifetime_family_strategy_envelope",
+        "battery_t80_model_family_envelope": "lifetime_family_battery_envelope",
+    }
+    authoritative_family_tables = {
+        family_names[name]: frame for name, frame in family_tables.items()
+    }
     return {
         "analysis_settings": settings_table,
         "data_coverage": coverage,
@@ -155,6 +199,7 @@ def run_final_inference(project_root: Path, settings: InferenceSettings) -> dict
         "strategy_lifetime_summary": strategy_lifetimes,
         "strategy_lifetime_rank_stability": lifetime_rank_stability,
         "pairwise_strategy_lifetime_comparison": pairwise_lifetimes,
+        **authoritative_family_tables,
         **model_validation,
     }
 
