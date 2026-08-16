@@ -1,0 +1,986 @@
+This is XeTeX, Version 3.141592653-2.6-0.999998 (TeX Live 2026) (preloaded format=xelatex)
+ restricted \write18 enabled.
+entering extended mode
+(./main.tex
+LaTeX2e <2026-06-01>
+L3 programming layer <2026-05-26>
+(./cumcmthesis.cls
+Document Class: cumcmthesis 2017/09/16 v2.6 Standard LaTeX Template for CUMCM
+(d:/02_DevTools/texlive/2026/texmf-dist/tex/latex/base/article.cls
+Document Class: article 2025/01/22 v1.4n Standard LaTeX document class
+(d:/02_DevTools/texlive/2026/texmf-dist/tex/latex/base/size12.clo))
+(d:/02_DevTools/texlive/2026/texmf-dist/tex/generic/iftex/ifxetex.sty
+(d:/02_DevTools/texlive/2026/texmf-dist/tex/generic/iftex/iftex.sty))
+(d:/02_DevTools/texlive/2026/texmf-dist/tex/latex/ctex/ctex.sty
+(d:/02_DevTools/texlive/2026/texmf-dist/tex/latex/l3kernel/expl3.sty
+(d:/02_DevTools/texlive/2026/texmf-dist/tex/latex/l3backend/l3backend-xetex.def
+)) (d:/02_DevTools/texlive/2026/texmf-dist/tex/latex/ctex/ctexhook.sty)
+(d:/02_DevTools/texlive/2026/texmf-dist/tex/latex/ctex/ctexpatch.sty)
+(d:/02_DevTools/texlive/2026/texmf-dist/tex/latex/base/fix-cm.sty
+(d:/02_DevTools/texlive/2026/texmf-dist/tex/latex/base/ts1enc.def))
+(d:/02_DevTools/texlive/2026/texmf-dist/tex/latex/ctex/config/ctexopts.cfg)
+(d:/02_DevTools/texlive/2026/texmf-dist/tex/latex/ctex/engine/ctex-engine-xetex
+.def (d:/02_DevTools/texlive/2026/texmf-dist/tex/xelatex/xecjk/xeCJK.sty
+(d:/02_DevTools/texlive/2026/texmf-dist/tex/latex/l3packages/xtemplate/xtemplat
+e.sty) (d:/02_DevTools/texlive/2026/texmf-dist/tex/latex/fontspec/fontspec.sty
+(d:/02_DevTools/texlive/2026/texmf-dist/tex/latex/l3packages/xparse/xparse.sty)
+(d:/02_DevTools/texlive/2026/texmf-dist/tex/latex/fontspec/fontspec-xetex.sty
+(d:/02_DevTools/texlive/2026/texmf-dist/tex/latex/base/fontenc.sty)
+(d:/02_DevTools/texlive/2026/texmf-dist/tex/latex/fontspec/fontspec.cfg)))
+(d:/02_DevTools/texlive/2026/texmf-dist/tex/xelatex/xecjk/xeCJK.cfg)))
+(d:/02_DevTools/texlive/2026/texmf-dist/tex/latex/zhnumber/zhnumber.sty
+(d:/02_DevTools/texlive/2026/texmf-dist/tex/latex/zhnumber/zhnumber-utf8.cfg))
+(d:/02_DevTools/texlive/2026/texmf-dist/tex/latex/ctex/scheme/ctex-scheme-chine
+se.def
+(d:/02_DevTools/texlive/2026/texmf-dist/tex/latex/ctex/config/ctex-name-utf8.cf
+g)) (d:/02_DevTools/texlive/2026/texmf-dist/tex/latex/tools/indentfirst.sty)
+(d:/02_DevTools/texlive/2026/texmf-dist/tex/latex/ctex/ctex-c5size.clo)
+(d:/02_DevTools/texlive/2026/texmf-dist/tex/latex/ctex/fontset/ctex-fontset-win
+dows.def))
+(d:/02_DevTools/texlive/2026/texmf-dist/tex/latex/ctex/config/ctex.cfg)
+(d:/02_DevTools/texlive/2026/texmf-dist/tex/latex/geometry/geometry.sty
+(d:/02_DevTools/texlive/2026/texmf-dist/tex/latex/graphics/keyval.sty)
+(d:/02_DevTools/texlive/2026/texmf-dist/tex/generic/iftex/ifvtex.sty))
+(d:/02_DevTools/texlive/2026/texmf-dist/tex/latex/amsmath/amsmath.sty
+For additional information on amsmath, use the `?' option.
+(d:/02_DevTools/texlive/2026/texmf-dist/tex/latex/amsmath/amstext.sty
+(d:/02_DevTools/texlive/2026/texmf-dist/tex/latex/amsmath/amsgen.sty))
+(d:/02_DevTools/texlive/2026/texmf-dist/tex/latex/amsmath/amsbsy.sty)
+(d:/02_DevTools/texlive/2026/texmf-dist/tex/latex/amsmath/amsopn.sty))
+(d:/02_DevTools/texlive/2026/texmf-dist/tex/latex/amsfonts/amsfonts.sty)
+(d:/02_DevTools/texlive/2026/texmf-dist/tex/latex/amsfonts/amssymb.sty)
+(d:/02_DevTools/texlive/2026/texmf-dist/tex/latex/tools/bm.sty)
+(d:/02_DevTools/texlive/2026/texmf-dist/tex/latex/xcolor/xcolor.sty
+(d:/02_DevTools/texlive/2026/texmf-dist/tex/latex/graphics-cfg/color.cfg)
+(d:/02_DevTools/texlive/2026/texmf-dist/tex/latex/graphics-def/xetex.def)
+(d:/02_DevTools/texlive/2026/texmf-dist/tex/latex/graphics/mathcolor.ltx))
+(d:/02_DevTools/texlive/2026/texmf-dist/tex/latex/graphics/graphicx.sty
+(d:/02_DevTools/texlive/2026/texmf-dist/tex/latex/graphics/graphics.sty
+(d:/02_DevTools/texlive/2026/texmf-dist/tex/latex/graphics/trig.sty)
+(d:/02_DevTools/texlive/2026/texmf-dist/tex/latex/graphics-cfg/graphics.cfg)))
+(d:/02_DevTools/texlive/2026/texmf-dist/tex/latex/float/float.sty)
+(d:/02_DevTools/texlive/2026/texmf-dist/tex/latex/tools/array.sty)
+(d:/02_DevTools/texlive/2026/texmf-dist/tex/latex/tools/longtable.sty)
+(d:/02_DevTools/texlive/2026/texmf-dist/tex/latex/booktabs/booktabs.sty)
+(d:/02_DevTools/texlive/2026/texmf-dist/tex/latex/tools/tabularx.sty)
+(d:/02_DevTools/texlive/2026/texmf-dist/tex/latex/multirow/multirow.sty)
+(d:/02_DevTools/texlive/2026/texmf-dist/tex/latex/multirow/bigstrut.sty)
+(d:/02_DevTools/texlive/2026/texmf-dist/tex/latex/multirow/bigdelim.sty)
+(d:/02_DevTools/texlive/2026/texmf-dist/tex/latex/cprotect/cprotect.sty
+(d:/02_DevTools/texlive/2026/texmf-dist/tex/latex/base/ifthen.sty)
+(d:/02_DevTools/texlive/2026/texmf-dist/tex/latex/bigfoot/suffix.sty))
+(d:/02_DevTools/texlive/2026/texmf-dist/tex/latex/listings/listings.sty
+(d:/02_DevTools/texlive/2026/texmf-dist/tex/latex/listings/lstpatch.sty)
+(d:/02_DevTools/texlive/2026/texmf-dist/tex/latex/listings/lstmisc.sty)
+(d:/02_DevTools/texlive/2026/texmf-dist/tex/latex/listings/listings.cfg))
+(d:/02_DevTools/texlive/2026/texmf-dist/tex/xelatex/xecjk/xeCJK-listings.sty)
+(d:/02_DevTools/texlive/2026/texmf-dist/tex/latex/url/url.sty)
+(d:/02_DevTools/texlive/2026/texmf-dist/tex/latex/caption/subcaption.sty
+(d:/02_DevTools/texlive/2026/texmf-dist/tex/latex/caption/caption.sty
+(d:/02_DevTools/texlive/2026/texmf-dist/tex/latex/caption/caption3.sty)
+(d:/02_DevTools/texlive/2026/texmf-dist/tex/latex/caption/ltcaption.sty)))
+(d:/02_DevTools/texlive/2026/texmf-dist/tex/latex/tocloft/tocloft.sty)
+(d:/02_DevTools/texlive/2026/texmf-dist/tex/latex/enumitem/enumitem.sty)
+(d:/02_DevTools/texlive/2026/texmf-dist/tex/generic/ulem/ulem.sty)
+(d:/02_DevTools/texlive/2026/texmf-dist/tex/latex/tools/calc.sty)
+(d:/02_DevTools/texlive/2026/texmf-dist/tex/latex/appendix/appendix.sty)
+(d:/02_DevTools/texlive/2026/texmf-dist/tex/latex/etoolbox/etoolbox.sty)
+(d:/02_DevTools/texlive/2026/texmf-dist/tex/latex/hyperref/hyperref.sty
+(d:/02_DevTools/texlive/2026/texmf-dist/tex/latex/kvsetkeys/kvsetkeys.sty)
+(d:/02_DevTools/texlive/2026/texmf-dist/tex/generic/kvdefinekeys/kvdefinekeys.s
+ty) (d:/02_DevTools/texlive/2026/texmf-dist/tex/generic/pdfescape/pdfescape.sty
+(d:/02_DevTools/texlive/2026/texmf-dist/tex/generic/ltxcmds/ltxcmds.sty)
+(d:/02_DevTools/texlive/2026/texmf-dist/tex/generic/pdftexcmds/pdftexcmds.sty
+(d:/02_DevTools/texlive/2026/texmf-dist/tex/generic/infwarerr/infwarerr.sty)))
+(d:/02_DevTools/texlive/2026/texmf-dist/tex/latex/hycolor/hycolor.sty)
+(d:/02_DevTools/texlive/2026/texmf-dist/tex/latex/hyperref/nameref.sty
+(d:/02_DevTools/texlive/2026/texmf-dist/tex/latex/refcount/refcount.sty)
+(d:/02_DevTools/texlive/2026/texmf-dist/tex/generic/gettitlestring/gettitlestri
+ng.sty
+(d:/02_DevTools/texlive/2026/texmf-dist/tex/latex/kvoptions/kvoptions.sty)))
+(d:/02_DevTools/texlive/2026/texmf-dist/tex/generic/stringenc/stringenc.sty)
+(d:/02_DevTools/texlive/2026/texmf-dist/tex/latex/hyperref/pd1enc.def)
+(d:/02_DevTools/texlive/2026/texmf-dist/tex/generic/intcalc/intcalc.sty)
+(d:/02_DevTools/texlive/2026/texmf-dist/tex/latex/hyperref/puenc.def)
+(d:/02_DevTools/texlive/2026/texmf-dist/tex/generic/bitset/bitset.sty
+(d:/02_DevTools/texlive/2026/texmf-dist/tex/generic/bigintcalc/bigintcalc.sty))
+) (d:/02_DevTools/texlive/2026/texmf-dist/tex/latex/hyperref/hxetex.def
+(d:/02_DevTools/texlive/2026/texmf-dist/tex/latex/rerunfilecheck/rerunfilecheck
+.sty
+(d:/02_DevTools/texlive/2026/texmf-dist/tex/generic/uniquecounter/uniquecounter
+.sty))) (d:/02_DevTools/texlive/2026/texmf-dist/tex/latex/cleveref/cleveref.sty
+)
+==> First Aid for cleveref.sty applied!
+) (d:/02_DevTools/texlive/2026/texmf-dist/tex/latex/mdframed/mdframed.sty
+(d:/02_DevTools/texlive/2026/texmf-dist/tex/latex/zref/zref-abspage.sty
+(d:/02_DevTools/texlive/2026/texmf-dist/tex/latex/zref/zref-base.sty
+(d:/02_DevTools/texlive/2026/texmf-dist/tex/generic/etexcmds/etexcmds.sty)
+(d:/02_DevTools/texlive/2026/texmf-dist/tex/latex/auxhook/auxhook.sty)))
+(d:/02_DevTools/texlive/2026/texmf-dist/tex/latex/needspace/needspace.sty)
+(d:/02_DevTools/texlive/2026/texmf-dist/tex/latex/pgf/frontendlayer/tikz.sty
+(d:/02_DevTools/texlive/2026/texmf-dist/tex/latex/pgf/basiclayer/pgf.sty
+(d:/02_DevTools/texlive/2026/texmf-dist/tex/latex/pgf/utilities/pgfrcs.sty
+(d:/02_DevTools/texlive/2026/texmf-dist/tex/generic/pgf/utilities/pgfutil-commo
+n.tex)
+(d:/02_DevTools/texlive/2026/texmf-dist/tex/generic/pgf/utilities/pgfutil-latex
+.def)
+(d:/02_DevTools/texlive/2026/texmf-dist/tex/generic/pgf/utilities/pgfrcs.code.t
+ex (d:/02_DevTools/texlive/2026/texmf-dist/tex/generic/pgf/pgf.revision.tex)))
+(d:/02_DevTools/texlive/2026/texmf-dist/tex/latex/pgf/basiclayer/pgfcore.sty
+(d:/02_DevTools/texlive/2026/texmf-dist/tex/latex/pgf/systemlayer/pgfsys.sty
+(d:/02_DevTools/texlive/2026/texmf-dist/tex/generic/pgf/systemlayer/pgfsys.code
+.tex
+(d:/02_DevTools/texlive/2026/texmf-dist/tex/generic/pgf/utilities/pgfkeys.code.
+tex
+(d:/02_DevTools/texlive/2026/texmf-dist/tex/generic/pgf/utilities/pgfkeyslibrar
+yfiltered.code.tex))
+(d:/02_DevTools/texlive/2026/texmf-dist/tex/generic/pgf/systemlayer/pgf.cfg)
+(d:/02_DevTools/texlive/2026/texmf-dist/tex/generic/pgf/systemlayer/pgfsys-xete
+x.def
+(d:/02_DevTools/texlive/2026/texmf-dist/tex/generic/pgf/systemlayer/pgfsys-dvip
+dfmx.def
+(d:/02_DevTools/texlive/2026/texmf-dist/tex/generic/pgf/systemlayer/pgfsys-comm
+on-pdf.def))))
+(d:/02_DevTools/texlive/2026/texmf-dist/tex/generic/pgf/systemlayer/pgfsyssoftp
+ath.code.tex)
+(d:/02_DevTools/texlive/2026/texmf-dist/tex/generic/pgf/systemlayer/pgfsysproto
+col.code.tex))
+(d:/02_DevTools/texlive/2026/texmf-dist/tex/generic/pgf/basiclayer/pgfcore.code
+.tex
+(d:/02_DevTools/texlive/2026/texmf-dist/tex/generic/pgf/math/pgfmath.code.tex
+(d:/02_DevTools/texlive/2026/texmf-dist/tex/generic/pgf/math/pgfmathutil.code.t
+ex)
+(d:/02_DevTools/texlive/2026/texmf-dist/tex/generic/pgf/math/pgfmathparser.code
+.tex)
+(d:/02_DevTools/texlive/2026/texmf-dist/tex/generic/pgf/math/pgfmathfunctions.c
+ode.tex)
+(d:/02_DevTools/texlive/2026/texmf-dist/tex/generic/pgf/math/pgfmathfunctions.b
+asic.code.tex)
+(d:/02_DevTools/texlive/2026/texmf-dist/tex/generic/pgf/math/pgfmathfunctions.t
+rigonometric.code.tex)
+(d:/02_DevTools/texlive/2026/texmf-dist/tex/generic/pgf/math/pgfmathfunctions.r
+andom.code.tex)
+(d:/02_DevTools/texlive/2026/texmf-dist/tex/generic/pgf/math/pgfmathfunctions.c
+omparison.code.tex)
+(d:/02_DevTools/texlive/2026/texmf-dist/tex/generic/pgf/math/pgfmathfunctions.b
+ase.code.tex)
+(d:/02_DevTools/texlive/2026/texmf-dist/tex/generic/pgf/math/pgfmathfunctions.r
+ound.code.tex)
+(d:/02_DevTools/texlive/2026/texmf-dist/tex/generic/pgf/math/pgfmathfunctions.m
+isc.code.tex)
+(d:/02_DevTools/texlive/2026/texmf-dist/tex/generic/pgf/math/pgfmathfunctions.i
+ntegerarithmetics.code.tex)
+(d:/02_DevTools/texlive/2026/texmf-dist/tex/generic/pgf/math/pgfmathcalc.code.t
+ex)
+(d:/02_DevTools/texlive/2026/texmf-dist/tex/generic/pgf/math/pgfmathfloat.code.
+tex))
+(d:/02_DevTools/texlive/2026/texmf-dist/tex/generic/pgf/math/pgfint.code.tex)
+(d:/02_DevTools/texlive/2026/texmf-dist/tex/generic/pgf/basiclayer/pgfcorepoint
+s.code.tex)
+(d:/02_DevTools/texlive/2026/texmf-dist/tex/generic/pgf/basiclayer/pgfcorepathc
+onstruct.code.tex)
+(d:/02_DevTools/texlive/2026/texmf-dist/tex/generic/pgf/basiclayer/pgfcorepathu
+sage.code.tex)
+(d:/02_DevTools/texlive/2026/texmf-dist/tex/generic/pgf/basiclayer/pgfcorescope
+s.code.tex)
+(d:/02_DevTools/texlive/2026/texmf-dist/tex/generic/pgf/basiclayer/pgfcoregraph
+icstate.code.tex)
+(d:/02_DevTools/texlive/2026/texmf-dist/tex/generic/pgf/basiclayer/pgfcoretrans
+formations.code.tex)
+(d:/02_DevTools/texlive/2026/texmf-dist/tex/generic/pgf/basiclayer/pgfcorequick
+.code.tex)
+(d:/02_DevTools/texlive/2026/texmf-dist/tex/generic/pgf/basiclayer/pgfcoreobjec
+ts.code.tex)
+(d:/02_DevTools/texlive/2026/texmf-dist/tex/generic/pgf/basiclayer/pgfcorepathp
+rocessing.code.tex)
+(d:/02_DevTools/texlive/2026/texmf-dist/tex/generic/pgf/basiclayer/pgfcorearrow
+s.code.tex)
+(d:/02_DevTools/texlive/2026/texmf-dist/tex/generic/pgf/basiclayer/pgfcoreshade
+.code.tex)
+(d:/02_DevTools/texlive/2026/texmf-dist/tex/generic/pgf/basiclayer/pgfcoreimage
+.code.tex)
+(d:/02_DevTools/texlive/2026/texmf-dist/tex/generic/pgf/basiclayer/pgfcoreexter
+nal.code.tex)
+(d:/02_DevTools/texlive/2026/texmf-dist/tex/generic/pgf/basiclayer/pgfcorelayer
+s.code.tex)
+(d:/02_DevTools/texlive/2026/texmf-dist/tex/generic/pgf/basiclayer/pgfcoretrans
+parency.code.tex)
+(d:/02_DevTools/texlive/2026/texmf-dist/tex/generic/pgf/basiclayer/pgfcorepatte
+rns.code.tex)
+(d:/02_DevTools/texlive/2026/texmf-dist/tex/generic/pgf/basiclayer/pgfcorerdf.c
+ode.tex)))
+(d:/02_DevTools/texlive/2026/texmf-dist/tex/generic/pgf/modules/pgfmoduleshapes
+.code.tex)
+(d:/02_DevTools/texlive/2026/texmf-dist/tex/generic/pgf/modules/pgfmoduleplot.c
+ode.tex)
+(d:/02_DevTools/texlive/2026/texmf-dist/tex/latex/pgf/compatibility/pgfcomp-ver
+sion-0-65.sty)
+(d:/02_DevTools/texlive/2026/texmf-dist/tex/latex/pgf/compatibility/pgfcomp-ver
+sion-1-18.sty))
+(d:/02_DevTools/texlive/2026/texmf-dist/tex/latex/pgf/utilities/pgffor.sty
+(d:/02_DevTools/texlive/2026/texmf-dist/tex/latex/pgf/utilities/pgfkeys.sty
+(d:/02_DevTools/texlive/2026/texmf-dist/tex/generic/pgf/utilities/pgfkeys.code.
+tex)) (d:/02_DevTools/texlive/2026/texmf-dist/tex/latex/pgf/math/pgfmath.sty
+(d:/02_DevTools/texlive/2026/texmf-dist/tex/generic/pgf/math/pgfmath.code.tex))
+
+(d:/02_DevTools/texlive/2026/texmf-dist/tex/generic/pgf/utilities/pgffor.code.t
+ex))
+(d:/02_DevTools/texlive/2026/texmf-dist/tex/generic/pgf/frontendlayer/tikz/tikz
+.code.tex
+(d:/02_DevTools/texlive/2026/texmf-dist/tex/generic/pgf/libraries/pgflibraryplo
+thandlers.code.tex)
+(d:/02_DevTools/texlive/2026/texmf-dist/tex/generic/pgf/modules/pgfmodulematrix
+.code.tex)
+(d:/02_DevTools/texlive/2026/texmf-dist/tex/generic/pgf/frontendlayer/tikz/libr
+aries/tikzlibrarytopaths.code.tex)))
+(d:/02_DevTools/texlive/2026/texmf-dist/tex/latex/mdframed/md-frame-1.mdf))
+(d:/02_DevTools/texlive/2026/texmf-dist/tex/latex/setspace/setspace.sty)
+(d:/02_DevTools/texlive/2026/texmf-dist/tex/latex/placeins/placeins.sty)
+(d:/02_DevTools/texlive/2026/texmf-dist/tex/generic/pgf/libraries/pgflibraryarr
+ows.meta.code.tex)
+(d:/02_DevTools/texlive/2026/texmf-dist/tex/latex/listings/lstlang1.sty)
+(./main.aux)
+*geometry* driver: auto-detecting
+*geometry* detected driver: xetex
+(./main.out) (./main.out)
+(d:/02_DevTools/texlive/2026/texmf-dist/tex/latex/amsfonts/umsa.fd)
+(d:/02_DevTools/texlive/2026/texmf-dist/tex/latex/amsfonts/umsb.fd) [1]
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                removing `\leavevmode@ifvmode' on input line 73.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                \kern 2.00876pt
+(hyperref)                removed on input line 73.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                removing `\leavevmode@ifvmode' on input line 73.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                \kern 2.00876pt
+(hyperref)                removed on input line 73.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                removing `\leavevmode@ifvmode' on input line 78.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                \kern 2.00876pt
+(hyperref)                removed on input line 78.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                removing `\leavevmode@ifvmode' on input line 78.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                \kern 2.00876pt
+(hyperref)                removed on input line 78.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                removing `\leavevmode@ifvmode' on input line 86.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                \kern 2.00876pt
+(hyperref)                removed on input line 86.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                removing `\leavevmode@ifvmode' on input line 86.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                \kern 2.00876pt
+(hyperref)                removed on input line 86.
+
+
+LaTeX Font Warning: Font shape `TU/SimSun(1)/b/n' undefined
+(Font)              using `TU/SimSun(1)/m/n' instead on input line 94.
+
+[2]
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                removing `\leavevmode@ifvmode' on input line 97.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                \kern 2.00876pt
+(hyperref)                removed on input line 97.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                removing `\leavevmode@ifvmode' on input line 97.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                \kern 2.00876pt
+(hyperref)                removed on input line 97.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                removing `\leavevmode@ifvmode' on input line 100.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                \kern 2.00876pt
+(hyperref)                removed on input line 100.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                removing `\leavevmode@ifvmode' on input line 100.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                \kern 2.00876pt
+(hyperref)                removed on input line 100.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                removing `\leavevmode@ifvmode' on input line 103.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                \kern 2.00876pt
+(hyperref)                removed on input line 103.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                removing `\leavevmode@ifvmode' on input line 103.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                \kern 2.00876pt
+(hyperref)                removed on input line 103.
+
+[3]
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                removing `\leavevmode@ifvmode' on input line 106.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                \kern 2.00876pt
+(hyperref)                removed on input line 106.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                removing `\leavevmode@ifvmode' on input line 106.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                \kern 2.00876pt
+(hyperref)                removed on input line 106.
+
+[4]
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                removing `\leavevmode@ifvmode' on input line 145.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                \kern 2.00876pt
+(hyperref)                removed on input line 145.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                removing `\leavevmode@ifvmode' on input line 145.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                \kern 2.00876pt
+(hyperref)                removed on input line 145.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                removing `\leavevmode@ifvmode' on input line 148.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                \kern 2.00876pt
+(hyperref)                removed on input line 148.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                removing `\leavevmode@ifvmode' on input line 148.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                \kern 2.00876pt
+(hyperref)                removed on input line 148.
+
+[5]
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                removing `\leavevmode@ifvmode' on input line 173.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                \kern 2.00876pt
+(hyperref)                removed on input line 173.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                removing `\leavevmode@ifvmode' on input line 173.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                \kern 2.00876pt
+(hyperref)                removed on input line 173.
+
+[6]
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                removing `\leavevmode@ifvmode' on input line 184.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                \kern 2.00876pt
+(hyperref)                removed on input line 184.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                removing `\leavevmode@ifvmode' on input line 184.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                \kern 2.00876pt
+(hyperref)                removed on input line 184.
+
+[7]
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                removing `\leavevmode@ifvmode' on input line 210.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                \kern 2.00876pt
+(hyperref)                removed on input line 210.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                removing `\leavevmode@ifvmode' on input line 210.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                \kern 2.00876pt
+(hyperref)                removed on input line 210.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                removing `\leavevmode@ifvmode' on input line 235.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                \kern 2.00876pt
+(hyperref)                removed on input line 235.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                removing `\leavevmode@ifvmode' on input line 235.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                \kern 2.00876pt
+(hyperref)                removed on input line 235.
+
+[8]
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                removing `\leavevmode@ifvmode' on input line 238.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                \kern 2.00876pt
+(hyperref)                removed on input line 238.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                removing `\leavevmode@ifvmode' on input line 238.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                \kern 2.00876pt
+(hyperref)                removed on input line 238.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                removing `\leavevmode@ifvmode' on input line 246.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                \kern 2.00876pt
+(hyperref)                removed on input line 246.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                removing `\leavevmode@ifvmode' on input line 246.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                \kern 2.00876pt
+(hyperref)                removed on input line 246.
+
+[9]
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                removing `\leavevmode@ifvmode' on input line 253.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                \kern 2.00876pt
+(hyperref)                removed on input line 253.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                removing `\leavevmode@ifvmode' on input line 253.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                \kern 2.00876pt
+(hyperref)                removed on input line 253.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                removing `\leavevmode@ifvmode' on input line 270.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                \kern 2.00876pt
+(hyperref)                removed on input line 270.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                removing `\leavevmode@ifvmode' on input line 270.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                \kern 2.00876pt
+(hyperref)                removed on input line 270.
+
+[10]
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                removing `\leavevmode@ifvmode' on input line 280.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                \kern 2.00876pt
+(hyperref)                removed on input line 280.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                removing `\leavevmode@ifvmode' on input line 280.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                \kern 2.00876pt
+(hyperref)                removed on input line 280.
+
+[11]
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                removing `\leavevmode@ifvmode' on input line 293.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                \kern 2.00876pt
+(hyperref)                removed on input line 293.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                removing `\leavevmode@ifvmode' on input line 293.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                \kern 2.00876pt
+(hyperref)                removed on input line 293.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                removing `\leavevmode@ifvmode' on input line 296.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                \kern 2.00876pt
+(hyperref)                removed on input line 296.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                removing `\leavevmode@ifvmode' on input line 296.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                \kern 2.00876pt
+(hyperref)                removed on input line 296.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                removing `\leavevmode@ifvmode' on input line 301.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                \kern 2.00876pt
+(hyperref)                removed on input line 301.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                removing `\leavevmode@ifvmode' on input line 301.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                \kern 2.00876pt
+(hyperref)                removed on input line 301.
+
+[12]
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                removing `\leavevmode@ifvmode' on input line 317.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                \kern 2.00876pt
+(hyperref)                removed on input line 317.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                removing `\leavevmode@ifvmode' on input line 317.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                \kern 2.00876pt
+(hyperref)                removed on input line 317.
+
+[13]
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                removing `\leavevmode@ifvmode' on input line 357.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                \kern 2.00876pt
+(hyperref)                removed on input line 357.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                removing `\leavevmode@ifvmode' on input line 357.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                \kern 2.00876pt
+(hyperref)                removed on input line 357.
+
+[14]
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                removing `\leavevmode@ifvmode' on input line 384.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                \kern 2.00876pt
+(hyperref)                removed on input line 384.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                removing `\leavevmode@ifvmode' on input line 384.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                \kern 2.00876pt
+(hyperref)                removed on input line 384.
+
+[15]
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                removing `\leavevmode@ifvmode' on input line 394.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                \kern 2.00876pt
+(hyperref)                removed on input line 394.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                removing `\leavevmode@ifvmode' on input line 394.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                \kern 2.00876pt
+(hyperref)                removed on input line 394.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                removing `\leavevmode@ifvmode' on input line 402.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                \kern 2.00876pt
+(hyperref)                removed on input line 402.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                removing `\leavevmode@ifvmode' on input line 402.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                \kern 2.00876pt
+(hyperref)                removed on input line 402.
+
+[16] [17]
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                removing `\leavevmode@ifvmode' on input line 442.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                \kern 2.00876pt
+(hyperref)                removed on input line 442.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                removing `\leavevmode@ifvmode' on input line 442.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                \kern 2.00876pt
+(hyperref)                removed on input line 442.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                removing `\leavevmode@ifvmode' on input line 447.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                \kern 2.00876pt
+(hyperref)                removed on input line 447.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                removing `\leavevmode@ifvmode' on input line 447.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                \kern 2.00876pt
+(hyperref)                removed on input line 447.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                removing `\leavevmode@ifvmode' on input line 452.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                \kern 2.00876pt
+(hyperref)                removed on input line 452.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                removing `\leavevmode@ifvmode' on input line 452.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                \kern 2.00876pt
+(hyperref)                removed on input line 452.
+
+[18]
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                removing `\leavevmode@ifvmode' on input line 455.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                \kern 2.00876pt
+(hyperref)                removed on input line 455.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                removing `\leavevmode@ifvmode' on input line 455.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                \kern 2.00876pt
+(hyperref)                removed on input line 455.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                removing `\leavevmode@ifvmode' on input line 458.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                \kern 2.00876pt
+(hyperref)                removed on input line 458.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                removing `\leavevmode@ifvmode' on input line 458.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                \kern 2.00876pt
+(hyperref)                removed on input line 458.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                removing `\leavevmode@ifvmode' on input line 461.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                \kern 2.00876pt
+(hyperref)                removed on input line 461.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                removing `\leavevmode@ifvmode' on input line 461.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                \kern 2.00876pt
+(hyperref)                removed on input line 461.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                removing `\leavevmode@ifvmode' on input line 464.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                \kern 2.00876pt
+(hyperref)                removed on input line 464.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                removing `\leavevmode@ifvmode' on input line 464.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                \kern 2.00876pt
+(hyperref)                removed on input line 464.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                removing `\leavevmode@ifvmode' on input line 467.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                \kern 2.00876pt
+(hyperref)                removed on input line 467.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                removing `\leavevmode@ifvmode' on input line 467.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                \kern 2.00876pt
+(hyperref)                removed on input line 467.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                removing `\leavevmode@ifvmode' on input line 472.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                \kern 2.00876pt
+(hyperref)                removed on input line 472.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                removing `\leavevmode@ifvmode' on input line 472.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                \kern 2.00876pt
+(hyperref)                removed on input line 472.
+
+[19]
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                removing `\leavevmode@ifvmode' on input line 479.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                \kern 2.00876pt
+(hyperref)                removed on input line 479.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                removing `\leavevmode@ifvmode' on input line 479.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                \kern 2.00876pt
+(hyperref)                removed on input line 479.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                removing `\leavevmode@ifvmode' on input line 485.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                \kern 2.00876pt
+(hyperref)                removed on input line 485.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                removing `\leavevmode@ifvmode' on input line 485.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                \kern 2.00876pt
+(hyperref)                removed on input line 485.
+
+[20]
+Overfull \hbox (39.71388pt too wide) in paragraph at lines 536--536
+[]|\TU/TimesNewRoman(0)/m/n/12.05 data/processed/q1_cleaned/battery_summary_cle
+an.csv|  
+
+Overfull \hbox (8.91223pt too wide) in paragraph at lines 536--536
+[]|\TU/TimesNewRoman(0)/m/n/12.05 data/processed/q1_cleaned/cycle_train_clean.c
+sv|  
+
+Overfull \hbox (119.85698pt too wide) in paragraph at lines 536--536
+[]|\TU/TimesNewRoman(0)/m/n/12.05 result/q2/05_merged_robustness/paper/global_s
+trategy_permutation.csv|  
+
+Overfull \hbox (81.92418pt too wide) in paragraph at lines 536--536
+[]|\TU/TimesNewRoman(0)/m/n/12.05 result/q2/03_formal_validation/lifetime_boots
+trap_selection.csv|  
+
+Overfull \hbox (46.3449pt too wide) in paragraph at lines 536--536
+[]|\TU/TimesNewRoman(0)/m/n/12.05 result/q3/03_final_predictions/test_battery_s
+ummary.csv|  
+
+Overfull \hbox (9.54767pt too wide) in paragraph at lines 536--536
+[]|\TU/TimesNewRoman(0)/m/n/12.05 result/q3/03_final_predictions/eol_sensitivit
+y.csv|  
+
+Overfull \hbox (68.54442pt too wide) in paragraph at lines 536--536
+[]|\TU/TimesNewRoman(0)/m/n/12.05 result/q4/02_full_validation/typical_strategy
+_comparison.csv|  
+
+Overfull \hbox (25.58098pt too wide) in paragraph at lines 536--536
+[]|\TU/TimesNewRoman(0)/m/n/12.05 result/q4/02_full_validation/selection_freque
+ncy.csv|  
+
+Overfull \hbox (133.36026pt too wide) in paragraph at lines 536--536
+[]|\TU/TimesNewRoman(0)/m/n/12.05 result/q4/03_t80_pareto_sensitivity/paper/pol
+icy_t80_pareto_summary.csv|  
+(./code/clean_a_battery_data.m [21] [22] [23]) (./code/q1_core.py [24])
+(./code/q2_core.py [25] [26] [27]) [28] (./code/q3_core.py [29])
+(./code/q4_core.py [30] [31]) (./code/run_q1.py [32]) (./code/run_q2.py)
+(./code/run_q3.py [33]) (./code/run_q4.py [34] [35] [36] [37] [38])
+
+Package caption Warning: Unused \captionsetup[sub] on input line 7.
+See the caption package documentation for explanation.
+
+[39] (./main.aux)
+
+LaTeX Font Warning: Some font shapes were not available, defaults substituted.
+
+ )
+(see the transcript file for additional information)
+Output written on main.pdf (39 pages).
+Transcript written on main.log.
