@@ -507,32 +507,35 @@ Q3 部署模型对选择标准敏感：$L=150$ 单点最优为 $P1\_linear$，�
 
 % ===== 14. 附录 =====
 \begin{appendices}
-\section{支撑材料文件列表}
-\begin{longtable}{|c|>{\raggedright\arraybackslash}p{0.53\textwidth}|>{\raggedright\arraybackslash}p{0.25\textwidth}|}
-	\caption{支撑材料及其真实相对路径}\label{tab:files}\\
-	\hline
-	序号 & 文件名 & 材料说明 \\ \hline
-	1 & \path{data/processed/q1_cleaned/battery_summary_clean.csv} & 电池级清洗后摘要表 \\ \hline
-		2 & \path{data/processed/q1_cleaned/cycle_train_clean.csv} & 循环级清洗后数据表（raw+clean+flag） \\ \hline
-		3 & \path{src/clean_a_battery_data.m} & 数据清洗 MATLAB 入口（3 处修复·审计留痕） \\ \hline
-		4 & \path{src/q1_models/core.py} & Q1 两阶段函数型曲线模型核心 \\ \hline
-		5 & \path{scripts/q1/run_q1_final_analysis.py} & Q1 最终分析入口 \\ \hline
-		6 & \path{result/q1/paper/strategy_scalar_estimates.csv} & Q1 策略寿命估计（SOH200/损失/T80） \\ \hline
-		7 & \path{result/q1/paper/strategy_rank_stability.csv} & Q1 策略排名稳定性 \\ \hline
-		8 & \path{src/q2_models/core.py} & Q2 应力坐标与约束退化混合模型核心 \\ \hline
-		9 & \path{scripts/q2/run_q2_merged_robustness.py} & Q2 合并稳健性入口 \\ \hline
-		10 & \path{result/q2/05_merged_robustness/paper/global_strategy_permutation.csv} & Q2 全局置换检验 \\ \hline
-		11 & \path{result/q2/03_formal_validation/lifetime_bootstrap_selection.csv} & Q2 T80 寿命口径 bootstrap 选择 \\ \hline
-		12 & \path{src/q3_models/core.py} & Q3 六模型与部署选择核心 \\ \hline
-		13 & \path{scripts/q3/run_q3_full_validation.py} & Q3 全量验证入口 \\ \hline
-		14 & \path{result/q3/03_final_predictions/test_battery_summary.csv} & Q3 测试电池 151--200 预测 \\ \hline
-		15 & \path{result/q3/03_final_predictions/eol_sensitivity.csv} & Q3 80\% 寿命外推敏感性 \\ \hline
-		16 & \path{src/q4_models/core.py} & Q4 离散 Pareto 核心 \\ \hline
-		17 & \path{scripts/q4/run_q4_full_validation.py} & Q4 全量验证入口 \\ \hline
-		18 & \path{result/q4/02_full_validation/typical_strategy_comparison.csv} & Q4 典型策略对比与推荐 \\ \hline
-		19 & \path{result/q4/02_full_validation/selection_frequency.csv} & Q4 推荐 bootstrap 稳定性 \\ \hline
-		20 & \path{result/q4/03_t80_pareto_sensitivity/paper/policy_t80_pareto_summary.csv} & Q4 寿命 T80 Pareto 敏感性 \\ \hline
-\end{longtable}
+\section{支撑材料列表}
+\begin{table}[!htbp]
+\centering
+\small
+\begin{tabular}{|c|c|c|}
+\hline
+序号 & 文件名 & 材料说明 \\ \hline
+1 & battery\_summary\_clean.csv & 电池级清洗后摘要表 \\ \hline
+2 & cycle\_train\_clean.csv & 循环级清洗后数据表（raw+clean+flag） \\ \hline
+3 & clean\_a\_battery\_data.m & 数据清洗 MATLAB 入口（3 处修复·审计留痕） \\ \hline
+4 & q1\_core.py & Q1 两阶段函数型曲线模型核心 \\ \hline
+5 & run\_q1.py & Q1 最终分析入口 \\ \hline
+6 & strategy\_scalar\_estimates.csv & Q1 策略寿命估计（SOH200/损失/T80） \\ \hline
+7 & strategy\_rank\_stability.csv & Q1 策略排名稳定性 \\ \hline
+8 & q2\_core.py & Q2 应力坐标与约束退化混合模型核心 \\ \hline
+9 & run\_q2.py & Q2 合并稳健性入口 \\ \hline
+10 & global\_strategy\_permutation.csv & Q2 全局置换检验 \\ \hline
+11 & lifetime\_bootstrap\_selection.csv & Q2 T80 寿命口径 bootstrap 选择 \\ \hline
+12 & q3\_core.py & Q3 六模型与部署选择核心 \\ \hline
+13 & run\_q3.py & Q3 全量验证入口 \\ \hline
+14 & test\_battery\_summary.csv & Q3 测试电池 151--200 预测 \\ \hline
+15 & eol\_sensitivity.csv & Q3 80\% 寿命外推敏感性 \\ \hline
+16 & q4\_core.py & Q4 离散 Pareto 核心 \\ \hline
+17 & run\_q4.py & Q4 全量验证入口 \\ \hline
+18 & typical\_strategy\_comparison.csv & Q4 典型策略对比与推荐 \\ \hline
+19 & selection\_frequency.csv & Q4 推荐 bootstrap 稳定性 \\ \hline
+20 & policy\_t80\_pareto\_summary.csv & Q4 寿命 T80 Pareto 敏感性 \\ \hline
+\end{tabular}
+\end{table}
 
 \section{核心算法代码}
 以下为数据清洗、核心模型与各问实验入口源码，构成完整可运行管线（清洗→建模→预测→优化；完整 43 个源码文件见支撑材料）。
