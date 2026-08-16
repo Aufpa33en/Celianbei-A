@@ -349,6 +349,7 @@ y_{it}=a_i-r_i x_t-kx_t^2+\varepsilon_{it},\quad x_t=t/200,
 
 \begin{table}[H]\centering
 \caption{六类候选模型排名：$L=150$ 序与多长度综合序}\label{tab:q3models}
+\resizebox{\textwidth}{!}{%
 \begin{tabular}{clcccc}
 \toprule
 $L=150$ 排名 & 模型 & $L=150$ 策略等权 RMSE & 多长度综合排名 & 部署/角色 & 选定\\
@@ -360,7 +361,7 @@ $L=150$ 排名 & 模型 & $L=150$ 策略等权 RMSE & 多长度综合排名 & �
 5 & $A\_power$（幂律） & 0.000893 & 5 & 候选 & 否\\
 6 & $P0\_persistence$（持久化） & 0.002400 & 6 & 候选 & 否\\
 \bottomrule
-\end{tabular}
+\end{tabular}}
 \end{table}
 
 \begin{figure}[H]\centering
