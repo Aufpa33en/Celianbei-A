@@ -102,13 +102,16 @@ def battery_degradation_summary(cycles: pd.DataFrame, battery_meta: pd.DataFrame
     meta = battery_meta.set_index("battery_id")
     for battery_id, group in cycles.groupby("battery_id", observed=True):
         group = group.sort_values("cycle")
-        baseline = float(group.loc[group["cycle"].between(1, 5), "SOH_clean"].mean())
+        row = meta.loc[battery_id]
+        baseline = float(row["baseline_soh_cycles_1_5"])
+        expected_baseline = float(group.loc[group["cycle"].between(1, 5), "SOH_clean"].median())
+        if not np.isclose(baseline, expected_baseline, rtol=0.0, atol=1e-12):
+            raise ValueError(f"Battery {battery_id} has an inconsistent first-five-cycle SOH baseline")
         end_soh = float(group.loc[group["cycle"].between(196, 200), "SOH_clean"].mean())
         x = group["cycle"].to_numpy(dtype=float) / 200.0
-        degradation = 1.0 - group["SOH_clean"].to_numpy(dtype=float) / baseline
+        degradation = 1.0 - group["SOH_relative_clean"].to_numpy(dtype=float)
         design = np.column_stack((np.ones_like(x), x, x**2))
         coef = np.linalg.lstsq(design, degradation, rcond=None)[0]
-        row = meta.loc[battery_id]
         records.append(
             {
                 "battery_id": int(battery_id),
