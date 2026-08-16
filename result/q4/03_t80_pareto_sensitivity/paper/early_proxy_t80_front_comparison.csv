@@ -1,0 +1,10 @@
+﻿Policy,PointParetoTimeMaxT80,PointParetoTimeMinSOH200Loss,FrontAgreement
+3_6C-80PER_3_6C,True,True,True
+4_8C_80PER_4_8C_NEWSTRUCTURE,True,True,True
+5C_67PER_4C_NEWSTRUCTURE,True,False,False
+5_3C_54PER_4C_NEWSTRUCTURE,True,True,True
+5_6C_36PER_4_3C_NEWSTRUCTURE,False,False,True
+5_6C_19PER_4_6C_NEWSTRUCTURE,False,False,True
+80PER_3_6C,False,False,True
+4_8C_80PER_4_8C,False,False,True
+3_7C_31PER_5_9C_NEWSTRUCTURE,False,False,True

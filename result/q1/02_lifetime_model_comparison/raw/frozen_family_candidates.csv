@@ -1,0 +1,4 @@
+﻿Family,FrozenCandidate,TailWindow,Shape,FullCohortStrategyEqualRMSE,SelectedFamily
+exponential,exponential_w60_s0.001,60,0.001,0.0008279760499127739,False
+linear,linear_w40_s1,40,1.0,0.0007062176485190712,True
+power,power_w60_s1.25,60,1.25,0.000831089730863404,False

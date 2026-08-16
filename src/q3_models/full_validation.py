@@ -231,10 +231,22 @@ def _choose_family(
         model: sum(SCORE_WEIGHTS[L] * worst_by_l[L][model] for L in config.early_lengths)
         for model in MODELS
     }
+    return _choose_family_from_scores(scores, worst, config), scores, worst
+
+
+def _choose_family_from_scores(
+    scores: dict[str, float],
+    worst: dict[str, float],
+    config: Q3Config,
+) -> str:
+    """Apply the frozen family tie rule to one information scope."""
     best = min(scores.values())
-    tied = [model for model in MODELS if (scores[model] - best) / max(best, 1e-15) <= config.tie_relative_tolerance]
+    tied = [
+        model for model in MODELS
+        if (scores[model] - best) / max(best, 1e-15) <= config.tie_relative_tolerance
+    ]
     tied.sort(key=lambda model: (worst[model], MODELS.index(model)))
-    return tied[0], scores, worst
+    return tied[0]
 
 
 def _prediction_rows(
@@ -394,6 +406,110 @@ def _bootstrap_selection(
     return pd.DataFrame(rows), pair
 
 
+def _l150_paired_bootstrap(
+    battery_metrics: pd.DataFrame,
+    selector_battery_metrics: pd.DataFrame,
+    repetitions: int,
+    seed: int,
+    config: Q3Config,
+) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+    """Battery-paired stability for the final L=150 family-selection rule."""
+    fixed = battery_metrics.loc[
+        battery_metrics["prediction_variant"].eq("raw")
+        & battery_metrics["L"].eq(150)
+        & battery_metrics["model"].isin(MODELS)
+    ].copy()
+    nested = selector_battery_metrics.loc[
+        selector_battery_metrics["prediction_variant"].eq("raw")
+    ].copy()
+    if len(fixed) != 40 * len(MODELS) or len(nested) != 40:
+        raise AssertionError("L=150 paired bootstrap requires 40 batteries for every method")
+    policies = sorted(fixed["policy"].unique())
+    grouped_ids = {
+        policy: sorted(fixed.loc[fixed["policy"].eq(policy), "battery_id"].unique())
+        for policy in policies
+    }
+    fixed_mse = fixed.assign(mse=fixed["rmse"] ** 2).set_index(
+        ["model", "battery_id"]
+    )["mse"]
+    nested_mse = nested.assign(mse=nested["rmse"] ** 2).set_index("battery_id")["mse"]
+
+    def score(sampled: dict[str, list[int]], lookup: pd.Series, model: str | None) -> tuple[float, float]:
+        policy_rmse, battery_rmse = [], []
+        for policy in policies:
+            if model is None:
+                values = [float(lookup.loc[int(battery_id)]) for battery_id in sampled[policy]]
+            else:
+                values = [float(lookup.loc[(model, int(battery_id))]) for battery_id in sampled[policy]]
+            policy_rmse.append(float(np.sqrt(np.mean(values))))
+            battery_rmse.extend(float(np.sqrt(value)) for value in values)
+        return float(np.mean(policy_rmse)), float(max(battery_rmse))
+
+    rng = np.random.default_rng(seed)
+    trial_rows = []
+    winner_counts = {model: 0 for model in MODELS}
+    method_scores = {"L150_NESTED_selector": np.empty(repetitions)}
+    method_scores.update({model: np.empty(repetitions) for model in MODELS})
+    for replicate in range(repetitions):
+        sampled = {
+            policy: rng.choice(ids, size=len(ids), replace=True).tolist()
+            for policy, ids in grouped_ids.items()
+        }
+        nested_score, _ = score(sampled, nested_mse, None)
+        method_scores["L150_NESTED_selector"][replicate] = nested_score
+        current_scores, current_worst = {}, {}
+        for model in MODELS:
+            current_scores[model], current_worst[model] = score(sampled, fixed_mse, model)
+            method_scores[model][replicate] = current_scores[model]
+        winner = _choose_family_from_scores(current_scores, current_worst, config)
+        winner_counts[winner] += 1
+        trial_rows.append(
+            {
+                "replicate": replicate,
+                "nested_selector_score": nested_score,
+                **{f"score_{model}": current_scores[model] for model in MODELS},
+                "nested_minus_fixed_P1": nested_score - current_scores["P1_linear"],
+                "fixed_candidate_winner": winner,
+            }
+        )
+
+    point_sample = {policy: ids for policy, ids in grouped_ids.items()}
+    point_scores = {"L150_NESTED_selector": score(point_sample, nested_mse, None)[0]}
+    point_scores.update({model: score(point_sample, fixed_mse, model)[0] for model in MODELS})
+    comparisons = [("L150_NESTED_selector", "P1_linear")]
+    comparisons.extend(("P1_linear", model) for model in MODELS if model != "P1_linear")
+    comparison_rows = []
+    for method_a, method_b in comparisons:
+        difference = method_scores[method_a] - method_scores[method_b]
+        comparison_rows.append(
+            {
+                "method_a": method_a,
+                "method_b": method_b,
+                "point_difference_a_minus_b": point_scores[method_a] - point_scores[method_b],
+                "bootstrap_ci95_low": float(np.quantile(difference, 0.025)),
+                "bootstrap_ci95_high": float(np.quantile(difference, 0.975)),
+                "probability_a_lower": float(np.mean(difference < 0)),
+                "repetitions": repetitions,
+                "seed": seed,
+                "bootstrap_unit": "whole_battery_within_policy_paired_across_methods",
+            }
+        )
+    candidate_rows = [
+        {
+            "model": model,
+            "point_strategy_equal_rmse": point_scores[model],
+            "bootstrap_median": float(np.median(method_scores[model])),
+            "bootstrap_ci95_low": float(np.quantile(method_scores[model], 0.025)),
+            "bootstrap_ci95_high": float(np.quantile(method_scores[model], 0.975)),
+            "winner_frequency": winner_counts[model] / repetitions,
+            "repetitions": repetitions,
+            "seed": seed,
+        }
+        for model in MODELS
+    ]
+    return pd.DataFrame(trial_rows), pd.DataFrame(comparison_rows), pd.DataFrame(candidate_rows)
+
+
 @dataclass
 class _AblationTransformer:
     medians: np.ndarray
@@ -551,6 +667,8 @@ def run_full_validation(
     prediction_rows = []
     selector_prediction_rows = []
     selector_fold_rows = []
+    l150_selector_prediction_rows = []
+    l150_selector_fold_rows = []
     tuning_rows = []
     for fold, target in enumerate(complete, start=1):
         scores_by_l: dict[int, dict[str, float]] = {}
@@ -602,6 +720,30 @@ def run_full_validation(
                      "model": "all_models", "stage": "outer_predict", "seconds": predict_seconds},
                 ]
             )
+        l150_scores = scores_by_l[150]
+        l150_worst = worst_by_l[150]
+        l150_chosen = _choose_family_from_scores(l150_scores, l150_worst, config)
+        l150_selector_fold_rows.append(
+            {
+                "version": config.version,
+                "outer_fold": fold,
+                "held_out_battery_id": target.battery_id,
+                "held_out_policy": target.policy,
+                "n_outer_train": 39,
+                "outer_id_in_train": False,
+                "selection_scope": "L150_only_matches_final_prediction_information",
+                "selected_family": l150_chosen,
+                **{f"score_{model}": l150_scores[model] for model in MODELS},
+                **{f"worst_{model}": l150_worst[model] for model in MODELS},
+            }
+        )
+        l150_rows = _prediction_rows(
+            target, 150, {"L150_NESTED_selector": target_predictions[150][l150_chosen]}, config
+        )
+        for row in l150_rows:
+            row["selected_base_model"] = l150_chosen
+            row["selection_scope"] = "L150_only_matches_final_prediction_information"
+        l150_selector_prediction_rows.extend(l150_rows)
         chosen, family_scores, family_worst = _choose_family(scores_by_l, worst_by_l, config)
         selector_fold_rows.append(
             {
@@ -626,8 +768,12 @@ def run_full_validation(
             print(f"Q3 full validation outer folds: {fold}/{len(complete)}", flush=True)
     predictions = pd.DataFrame(prediction_rows)
     selector_predictions = pd.DataFrame(selector_prediction_rows)
+    l150_selector_predictions = pd.DataFrame(l150_selector_prediction_rows)
     battery, summary = _summary_tables(predictions, config)
     selector_battery, selector_summary = _summary_tables(selector_predictions, config)
+    l150_selector_battery, l150_selector_summary = _summary_tables(
+        l150_selector_predictions, config
+    )
     selection = _select_from_summary(summary, battery, config)
     stage_started = time.perf_counter()
     bootstrap, pairwise = _bootstrap_selection(
@@ -635,6 +781,14 @@ def run_full_validation(
     )
     runtime_rows.append({"version": config.version, "scope": "run", "outer_battery_id": np.nan,
                          "model": "ALL", "L": np.nan, "stage": "bootstrap",
+                         "seconds": time.perf_counter() - stage_started})
+    stage_started = time.perf_counter()
+    l150_trials, l150_pairwise, l150_candidate_bootstrap = _l150_paired_bootstrap(
+        battery, l150_selector_battery, bootstrap_repetitions, config.seed, config
+    )
+    runtime_rows.append({"version": config.version, "scope": "run", "outer_battery_id": np.nan,
+                         "model": "L150_NESTED_selector", "L": 150,
+                         "stage": "l150_paired_bootstrap",
                          "seconds": time.perf_counter() - stage_started})
     stage_started = time.perf_counter()
     ablation_battery, ablation_summary = run_c_ablation(complete, predictions, config)
@@ -711,6 +865,13 @@ def run_full_validation(
         "nested_selector_battery_metrics.csv": selector_battery,
         "nested_selector_summary.csv": selector_summary,
         "nested_selector_folds.csv": pd.DataFrame(selector_fold_rows),
+        "l150_nested_selector_predictions.csv": l150_selector_predictions,
+        "l150_nested_selector_battery_metrics.csv": l150_selector_battery,
+        "l150_nested_selector_summary.csv": l150_selector_summary,
+        "l150_nested_selector_folds.csv": pd.DataFrame(l150_selector_fold_rows),
+        "l150_paired_bootstrap_trials.csv": l150_trials,
+        "l150_paired_bootstrap_summary.csv": l150_pairwise,
+        "l150_candidate_bootstrap_summary.csv": l150_candidate_bootstrap,
         "deployment_tuning.csv": pd.DataFrame(deployment_tuning_rows),
         "deployment_freeze.csv": deployment_freeze,
         "record_shape_checks.csv": shape_checks,
@@ -809,6 +970,88 @@ def _eol_sensitivity(
     return rows
 
 
+def _t80_residual_trajectory_bootstrap(
+    records: dict[int, BatteryRecord],
+    full: dict[str, pd.DataFrame],
+    final_predictions: pd.DataFrame,
+    selected_model: str,
+    config: Q3Config,
+    repetitions: int = 2000,
+) -> tuple[pd.DataFrame, pd.DataFrame]:
+    """Propagate held-out 151--200 trajectory errors into diagnostic T80 draws.
+
+    Entire 50-cycle outer-residual trajectories are resampled so the strong
+    within-battery serial dependence is not destroyed.  This remains a
+    post-selection diagnostic rather than a calibrated T80 confidence interval.
+    """
+    residual = full["predictions_long.csv"]
+    residual = residual.loc[
+        residual["L"].eq(150) & residual["model"].eq(selected_model),
+        ["battery_id", "cycle", "y_true", "y_pred_raw"],
+    ].copy()
+    residual["signed_residual"] = residual["y_true"] - residual["y_pred_raw"]
+    trajectories = residual.pivot(
+        index="battery_id", columns="cycle", values="signed_residual"
+    ).sort_index(axis=1)
+    if trajectories.shape != (40, 50) or list(trajectories.columns) != list(range(151, 201)):
+        raise AssertionError("T80 propagation requires 40 complete outer-residual trajectories")
+
+    selected = final_predictions.loc[final_predictions["model"].eq(selected_model)].copy()
+    target_ids = sorted(selected["battery_id"].unique())
+    rng = np.random.default_rng(config.seed + 301)
+    sampled_rows = rng.integers(0, len(trajectories), size=(len(target_ids), repetitions))
+    draw_rows: list[dict[str, object]] = []
+    summary_rows: list[dict[str, object]] = []
+    for target_index, (battery_id, group) in enumerate(selected.groupby("battery_id", sort=True)):
+        record = records[int(battery_id)]
+        predicted = group.sort_values("cycle")["y_pred_raw"].to_numpy(dtype=float)
+        values = []
+        statuses = []
+        source_ids = trajectories.index.to_numpy()
+        for draw, source_row in enumerate(sampled_rows[target_index], start=1):
+            future_absolute = predicted + trajectories.iloc[source_row].to_numpy(dtype=float)
+            future_relative = future_absolute / record.baseline
+            stitched = np.concatenate((record.relative_soh[:150], future_relative))
+            fit = fit_power_law(np.arange(1, 201, dtype=float), stitched, config)
+            t80, status = power_law_eol(fit, record.baseline, config)
+            if status == "before_or_at_observation":
+                t80 = np.nan
+            values.append(t80)
+            statuses.append(status)
+            draw_rows.append(
+                {
+                    "version": config.version,
+                    "battery_id": int(battery_id),
+                    "policy": record.policy,
+                    "draw": draw,
+                    "source_outer_battery_id": int(source_ids[source_row]),
+                    "t80": t80,
+                    "status": status,
+                    "method": "raw_P1_plus_outer_residual_trajectory_stitched_power_start_1",
+                    "seed": config.seed + 301,
+                }
+            )
+        finite = np.asarray([value for value in values if np.isfinite(value)], dtype=float)
+        counts = pd.Series(statuses).value_counts()
+        summary_rows.append(
+            {
+                "version": config.version,
+                "battery_id": int(battery_id),
+                "policy": record.policy,
+                "repetitions": repetitions,
+                "finite_draws": len(finite),
+                "finite_fraction": len(finite) / repetitions,
+                "t80_median": np.median(finite) if len(finite) else np.nan,
+                "t80_q025": np.quantile(finite, 0.025) if len(finite) else np.nan,
+                "t80_q975": np.quantile(finite, 0.975) if len(finite) else np.nan,
+                "beyond_5000_draws": int(counts.get("beyond_5000", 0)),
+                "no_finite_intersection_draws": int(counts.get("no_finite_intersection", 0)),
+                "interval_status": "post_selection_residual_propagation_diagnostic_not_confidence_interval",
+            }
+        )
+    return pd.DataFrame(draw_rows), pd.DataFrame(summary_rows)
+
+
 def run_final_prediction(
     project_root: Path,
     full: dict[str, pd.DataFrame],
@@ -875,6 +1118,13 @@ def run_final_prediction(
             )
     runtime_rows.append({"version": config.version, "scope": "final", "stage": "refit_predict_and_eol",
                          "seconds": time.perf_counter() - predict_started})
+    final_predictions = pd.DataFrame(prediction_rows)
+    uncertainty_started = time.perf_counter()
+    t80_draws, t80_summary = _t80_residual_trajectory_bootstrap(
+        records, full, final_predictions, selected_model, config
+    )
+    runtime_rows.append({"version": config.version, "scope": "final", "stage": "t80_residual_trajectory_bootstrap",
+                         "seconds": time.perf_counter() - uncertainty_started})
     hyper = pd.DataFrame(
         [
             {"version": config.version, "parameter": "selected_model", "value": selected_model,
@@ -898,9 +1148,11 @@ def run_final_prediction(
     runtime_rows.append({"version": config.version, "scope": "final", "stage": "final_compute_total",
                          "seconds": time.perf_counter() - final_started})
     return {
-        "final_predictions.csv": pd.DataFrame(prediction_rows),
+        "final_predictions.csv": final_predictions,
         "prediction_interval_calibration.csv": calibration,
         "eol_sensitivity.csv": pd.DataFrame(eol_rows),
+        "t80_uncertainty_draws.csv": t80_draws,
+        "t80_uncertainty_summary.csv": t80_summary,
         "final_hyperparameters.csv": hyper,
         "final_runtime.csv": pd.DataFrame(runtime_rows),
     }

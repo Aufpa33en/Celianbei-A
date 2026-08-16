@@ -1,0 +1,7 @@
+﻿excluded_policy,remaining_strategy,selection_status,selected_model,selected_improvement_vs_constant
+3_7C_31PER_5_9C_NEWSTRUCTURE,5,constant_only,constant_mean,0.0
+4_8C_80PER_4_8C_NEWSTRUCTURE,5,selected_explanatory,linear_J_high_70,0.3809327152361778
+5C_67PER_4C_NEWSTRUCTURE,5,selected_explanatory,linear_J,0.19480038740000483
+5_3C_54PER_4C_NEWSTRUCTURE,5,selected_explanatory,linear_J,0.34719599394690204
+5_6C_19PER_4_6C_NEWSTRUCTURE,5,selected_explanatory,linear_J,0.24807136673160424
+5_6C_36PER_4_3C_NEWSTRUCTURE,5,selected_explanatory,linear_J,0.17590308162972235

@@ -1,0 +1,7 @@
+﻿model,feature,n_strategy,loco_rmse_log_t80,loco_mae_log_t80,full_intercept,full_slope_original_scale,expected_negative_direction,relative_rmse_improvement_vs_constant,eligible_explanatory,selected_primary_explanatory,selection_status
+linear_J,J,6,0.6416451863401639,0.4496826588012506,47.521668017634035,-10.003161730098254,True,0.2029008279033424,True,True,selected_eligible_explanatory_model
+linear_J_high_70,J_high_70,6,0.7973705999548333,0.5569099570827274,12.676224211532274,-9.159931223236029,True,0.009447185751561893,True,False,selected_eligible_explanatory_model
+constant_mean,none,6,0.8049753516270832,0.5936191843786728,8.46265584884369,,False,0.0,False,False,selected_eligible_explanatory_model
+linear_J_high_60,J_high_60,6,0.8297576837896171,0.5670297678943238,13.071524742132029,-4.946907577769227,True,-0.030786448445212278,False,False,selected_eligible_explanatory_model
+linear_J_high_50,J_high_50,6,0.8785586561853145,0.5974676617192555,13.55143535119665,-3.591234652330951,True,-0.09141063066030353,False,False,selected_eligible_explanatory_model
+linear_H,H,6,1.0663165632977296,0.636346781065204,17.258999585226142,-5.710323256225776,True,-0.3246574086304652,False,False,selected_eligible_explanatory_model

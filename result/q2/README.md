@@ -1,64 +1,35 @@
-# 第二问结果目录
+# 第二问权威结果
 
-## 当前阶段
+## 当前主口径
 
-第二问已完成论文筛选、严格模型推导、smoke test、2000次正式bootstrap、720种策略均值交换性敏感性以及本地/远程结果合并审计。由于策略均值不满足可交换性，当前没有参数效应的确认性`p`值；论文文字以`04_paper_materials/第二问完整回答.md`为准，`05_merged_robustness/`只提供独立响应和候选失败证据。
+循环寿命以每块电池前150循环预测的SOH=80%交点T80定义。问题2参数主分析使用`03_formal_validation/lifetime_*.csv`；早期SOH200、相对损失和末段衰减率分析保留为辅助稳健性证据，不再替代循环寿命。
 
-- 权威推导：`docs/q2_literature_screening_and_model_derivation.md`
-- 初步路线记录：`docs/q2_model_direction_and_literature.md`
+## 主要结论
 
-## 与第一问的关系
-
-第二问继承第一问的清洗数据、40 块完整电池队列、函数型岭回归策略曲线和电池级自助推断。第二问新增参数效应模型，用于分析`C1、Q1、C2`和不同 SOC 区间的倍率应力。
-
-## 计划输入
-
-- `data/processed/q1_cleaned/cycle_train_clean.csv`
-- `data/processed/q1_cleaned/battery_summary_clean.csv`
-- `result/q1/`中的策略曲线、SOH200估计和敏感性结果
-
-## smoke阶段历史结论
-
-- 参数完整策略标签8个、唯一坐标7个。
-- 除3.6C基准外有7个等`T0`策略标签，但明确标注`NEWSTRUCTURE`的只有6个；主选择队列使用这6个同结构策略。
-- 最佳纯预测基准：`nearest_coordinate`。
-- 当前最佳连续解释候选：`ridge_Jhigh70`，即70%—80% SOC倍率暴露的单变量岭回归。
-- 在同结构队列中，`ridge_Jhigh70`相对常数模型的相对退化RMSE只改善1.06%，SOH200 RMSE改善39.14%；因此它是正式实验入口，不是已经确证的最终机理。
-- 模型C线性化层次代理只带来有限曲线外推改善；各线性版本残差一阶相关实测约0.81—0.87，仍需处理AR(1)，完整模型C暂不作为首选。
-
-## 正式验证结论
-
-- 50%、60%、70%高SOC阈值和`H`的bootstrap选择频率分别为37.65%、22.50%、14.00%、23.80%，没有稳定的唯一阈值。
-- 在不成立的“6个策略均值可交换”假设下，四候选最大统计量尾部比例为0.06528；该数仅作敏感性，不与0.05比较，也不称为`p`值。
-- 删除3.7C—5.9C极端策略后，常数模型胜出；关联对单个策略敏感。
-- 因此不选择`Jhigh70`或其他阈值作为独立显著参数模型。论文应写成“高SOC倍率暴露呈方向一致的描述性关联，但阈值和独立效应不能由当前设计稳定识别”。
+- 九种策略的T80中位数约1000.8—8537.6循环；36组寿命两两精确置换经Holm校正后为0组显著，不能解释为寿命等价。
+- 参数效应限定在6个明确新结构策略，响应为策略内电池`log(T80)`均值。
+- `linear_J`点估计LOCO RMSE较常数模型改善20.29%，全流程bootstrap入选频率77.55%。
+- 条件于已选局部线性T80族，其RMSE改善bootstrap 95%区间为[-10.29%, 47.86%]，跨0；删除3.7C–5.9C极端策略后常数模型胜出。
+- 幂律、加速指数冻结T80的点敏感性也选择`linear_J`且斜率为负，但三族比较没有联合置信区间。
+- 最大方向统计量排列尾部比例0.1556仅为非交换性诊断，不是确认性p值。
+- 因此只能报告“总倍率应力增加与预测T80缩短存在探索性关联”，不能确认C1、Q1、C2或某个SOC阈值的独立显著因果效应。
 
 ## 结果结构
 
-- `00_design/`：参数坐标、`T0`、实际充电时间和SOC暴露设计审计。
-- `01_smoke_test/`：电池/策略摘要以及所有留一坐标预测。
-- `02_model_selection/`：模型比较、系数稳定性、层次诊断和当前选择。
-- `03_formal_validation/`：正式bootstrap、策略均值交换性诊断、敏感性分析和最终判定。
-- `04_paper_materials/`：依据既有结果整理的第二问完整文字回答和证据索引；不存放数据或程序副本。
-- `05_merged_robustness/`：末段退化率全局置换、4.8C匹配诊断及`J+H`候选的坐标留出失败证据；不替代正式参数验证。
-- `result_manifest.csv`：每个CSV的路径、行数和列数。
+- `00_design/`：原参数坐标、名义时间和暴露量设计审计。
+- `01_smoke_test/`、`02_model_selection/`：原SOH200/相对损失辅助模型。
+- `03_formal_validation/lifetime_*.csv`：T80主响应的留一策略验证、bootstrap、删除诊断与排列诊断。
+- `03_formal_validation/正式验证结论.md`：T80主分析正式判定。
+- `03_formal_validation/lifetime_family_*.csv`：三种冻结T80模型族的点敏感性，不解释为跨族置信区间。
+- `04_paper_materials/第二问完整回答.md`：按五个小问组织的论文文本。
+- `04_paper_materials/tables/lifetime_family_*.csv`：可直接用于论文的三族汇总表。
+- `04_paper_materials/figures/fig_q2_t80_parameter_evidence.png`：T80参数效应论文图。
+- `05_merged_robustness/`：末段退化率、4.8C匹配诊断及J+H失败证据，仅作辅助。
 
-## 候选模型
+## 复现命令
 
-1. 第一问函数型岭回归：离散策略比较基线。
-2. 策略等权的`C1、q、C2`岭回归：描述性参数效应基线。
-3. 含策略、电池和AR(1)三层误差的约束退化混合模型：主候选。
-4. `J`、`H`、阶段暴露及固定高SOC阈值暴露：低维应力候选与敏感性分析。
-5. `J+H`末段对数退化率：合并时复核的候选；因同结构队列验证失败而否决。
-
-设计检查显示：8 个参数完整的策略标签只对应 7 个不同参数坐标；参数模型主验证必须按唯一坐标分组留出，共享坐标的两个策略同时留出。原始三参数的独立显著性无法可靠识别，只能报告条件关联、删除稳定性与不可辨识性。
-
-## 计划输出
-
-- 参数设计与可辨识性检查；
-- 模型比较和留一策略验证；
-- 参数效应、区间和显著性结果；
-- SOC区间衰减特征；
-- 第二问五个小问的文字回答。
-
-smoke test的阶段性选择理由见`02_model_selection/模型选择说明.md`；最终判定见`03_formal_validation/正式验证结论.md`；按题目五个小问组织的权威论文材料见`04_paper_materials/第二问完整回答.md`；合并稳健性证据见`05_merged_robustness/README.md`。
+```text
+python -X utf8 scripts/q2/run_q2_lifetime_validation.py --bootstrap 2000 --seed 20260816
+python -X utf8 tests/test_q2_lifetime_validation.py
+python -X utf8 tests/test_q2_lifetime_family_sensitivity.py
+```

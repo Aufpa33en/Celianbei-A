@@ -1,6 +1,7 @@
 ﻿version,scope,stage,seconds
-q3_full_v2,final,load_and_validate,0.057788199999777135
-q3_full_v2,final,interval_calibration,0.00580309999986639
-q3_full_v2,final,refit_predict_and_eol,0.906384099999741
-q3_full_v2,final,final_compute_total,0.9706829999995534
-q3_full_v2,final,write_outputs_except_runtime,0.062300100000356906
+q3_full_v2,final,load_and_validate,0.05019960000208812
+q3_full_v2,final,interval_calibration,0.008641300002636854
+q3_full_v2,final,refit_predict_and_eol,0.8248198000001139
+q3_full_v2,final,t80_residual_trajectory_bootstrap,10.583523900000728
+q3_full_v2,final,final_compute_total,11.47011030000067
+q3_full_v2,final,write_outputs_except_runtime,0.13827880000098958
