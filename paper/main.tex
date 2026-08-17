@@ -94,8 +94,8 @@
 \section{问题分析}
 % ===== 四问方法链总览图 =====
 \begin{figure}[H]\centering
-\includegraphics[width=0.92\textwidth]{flowchart2.png}
-\caption{四问方法链总览：数据清洗 → 寿命描述(Q1) → 参数效应(Q2)，Q2 应力同时作为 Q3 早期特征；Q1 的策略级充电时间与 SOH、Q2 的退化响应、Q3 的 T80 共同支撑 Q4 策略优化，贯穿留一验证与 bootstrap 不确定性量化}\label{fig:overview}
+\includegraphics[width=0.98\textwidth]{flowchart2.png}
+\caption{四问建模关系：Q1 描述寿命，Q2 构造应力并分析参数效应，Q3 完成早期预测，前三问结果共同输入 Q4 的时间--寿命 Pareto 优化；分组验证、bootstrap 和敏感性分析贯穿全流程}\label{fig:overview}
 \end{figure}
 
 \subsection{问题一的分析}
